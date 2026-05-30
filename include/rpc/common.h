@@ -53,4 +53,31 @@ inline uint64_t NetworkToHost64(uint64_t net64) {
     return HostToNetwork64(net64);
 }
 
+// ============================================================
+// 消息类型标记 — 协议帧层使用
+// ============================================================
+enum class MessageType : uint8_t {
+    Request  = 0x01,  // 请求（客户端 → 服务端）
+    Response = 0x02,  // 正常响应（服务端 → 客户端）
+    Error    = 0x03,  // 错误响应（服务端 → 客户端）
+};
+
+// ============================================================
+// 协议帧常量
+// ============================================================
+constexpr uint16_t kProtocolMagic   = 0xBABE;            // 帧魔数
+constexpr size_t   kFrameHeaderSize = 13;                 // 帧头固定字节数
+constexpr size_t   kMaxFrameSize    = 10 * 1024 * 1024;   // 单帧上限 10MB
+
+// ============================================================
+// 2 字节字节序转换（用于方法名长度字段）
+// ============================================================
+inline uint16_t HostToNetwork16(uint16_t host16) {
+    return ((host16 & 0x00FF) << 8) | ((host16 & 0xFF00) >> 8);
+}
+
+inline uint16_t NetworkToHost16(uint16_t net16) {
+    return HostToNetwork16(net16);
+}
+
 } // namespace rpc

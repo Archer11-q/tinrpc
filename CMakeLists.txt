@@ -14,6 +14,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # ============================================================
 add_library(rpc_lib STATIC
     src/serializer.cpp
+    src/protocol.cpp
+    src/buffer.cpp
 )
 
 # ============================================================
@@ -29,3 +31,8 @@ add_executable(test_serializer
     tests/test_serializer.cpp
 )
 target_link_libraries(test_serializer rpc_lib)
+
+add_executable(test_protocol
+    tests/test_protocol.cpp
+)
+target_link_libraries(test_protocol rpc_lib)
