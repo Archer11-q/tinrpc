@@ -1,0 +1,38 @@
+# Build outputs
+cmake-build-*/
+build/
+out/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Compiled binaries
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+*.dylib
+
+# CMake generated
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.ninja
+.ninja_deps
+.ninja_log
+compile_commands.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# My notes (keep docs/)
+claude聊天记录/
+实现原理/
