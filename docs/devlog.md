@@ -95,7 +95,54 @@ RPC 高频路径下异常代价过高，`optional` 能在**类型系统层面表
 
 这三类覆盖了 TCP 字节流的所有实际场景。
 
-### 下一版本计划（v0.3）
-- 实现 epoll 网络 IO 层（边缘触发 + 非阻塞 IO）
-- Reactor 事件分发
-- 将 Buffer 的 Append 与 socket recv 对接
+---
+
+## v0.3 — 网络 IO 层（2026-05-31）
+
+### 决策：epoll 边缘触发（ET）vs 水平触发（LT）
+
+**背景**：epoll 提供两种触发模式，需要选择默认行为。
+
+**对比**：
+
+| 模式 | 行为 | 优点 | 缺点 |
+|------|------|------|------|
+| LT | 缓冲区有数据就持续通知 | 编程简单，漏读会再次通知 | 每次 wait 都返回未处理完的 fd，多余系统调用 |
+| ET | 状态变化时通知一次 | 每次事件只通知一次，减少系统调用 | 必须循环读到 EAGAIN，漏读导致数据永久丢失 |
+
+**最终决策**：ET 模式。高性能服务器（Nginx、Redis）都用 ET。代价是编程复杂度——必须循环读到 EAGAIN，但这是 RD 该承受的成本。面试能讲清楚 ET 漏读的后果和 EAGAIN 的意义本身就是加分项。
+
+### 决策：EventHandler 多态 vs 函数指针回调
+
+**背景**：EventLoop 收到 epoll 事件后需要调用对应的处理逻辑。两种方式：
+- **函数指针/回调**：`std::function<void(int fd, uint32_t events)>`，注册时绑定
+- **多态**：`EventHandler` 抽象基类，每个 fd 类型一个子类
+
+**最终决策**：EventHandler 多态。
+**原因**：
+1. 每种 fd（监听 socket、客户端 socket、未来定时器 fd）行为不同，天然是"同一接口、不同实现"的多态场景
+2. 每个 handler 可以持有自己的状态（Buffer、FrameCallback），比函数指针 + 外部状态管理更内聚
+3. 面试能讲 Reactor 模式的多态设计
+
+### 决策：v0.3 只做接收不做发送
+
+**背景**：RPC 的发送路径同样涉及非阻塞 write、发送缓冲区、一次 send 写不完整等问题。
+
+**最终决策**：v0.3 只实现接收路径。
+**原因**：接收路径涉及 epoll、ET 循环读、Buffer、ProtocolFrame——这四层串联是面试核心话题。发送路径相对简单（send 循环到 EAGAIN），放在 v0.5 与 Stub 层一起实现，届时接收+发送形成完整的双向数据通道。
+
+### 问题：Connection::OnClose 中 close(fd) 与 Socket RAII 的冲突
+
+**问题**：`Socket` 类在析构时自动 `close(fd)`，但 `Connection` 中的客户端 fd 没有用 `Socket` 对象管理——它是 accept 返回的裸 fd。OnClose 时需要谁负责关闭？
+
+**解决方案**：`Connection` 在 `OnClose` 中直接 `close(fd_)`。Acceptor 创建的客户端 socket 不通过 Socket RAII 管理（避免所有权复杂化）。后续可以考虑让 Connection 持有一个 Socket 对象，用移动语义转移所有权。
+
+### 问题：集成测试中服务端与客户端的时间同步
+
+**问题**：测试中服务端线程需要在客户端 connect 之前就进入 `epoll_wait`，否则客户端先 connect 再 start loop 会导致连接事件丢失（ET 模式下，不在 epoll 中的 fd 的连接请求不会触发事件）。
+
+**解决方案**：服务端先调用 `loop.Run()` 进入事件循环，客户端再 connect。用 `std::atomic<bool> loop_running` 作为同步信号——服务端进入 Run 后置 true，客户端检测到 true 后才 connect。
+
+### 下一版本计划（v0.4）
+- 实现线程池：任务队列 + worker 线程 + 异步回调支持
+- 将 Connection 的 `FrameCallback` 执行从 IO 线程转移到工作线程

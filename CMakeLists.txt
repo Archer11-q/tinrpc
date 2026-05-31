@@ -16,6 +16,10 @@ add_library(rpc_lib STATIC
     src/serializer.cpp
     src/protocol.cpp
     src/buffer.cpp
+    src/socket.cpp
+    src/event_loop.cpp
+    src/acceptor.cpp
+    src/connection.cpp
 )
 
 # ============================================================
@@ -36,3 +40,8 @@ add_executable(test_protocol
     tests/test_protocol.cpp
 )
 target_link_libraries(test_protocol rpc_lib)
+
+add_executable(test_network
+    tests/test_network.cpp
+)
+target_link_libraries(test_network rpc_lib pthread)
