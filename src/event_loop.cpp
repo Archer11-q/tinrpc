@@ -99,4 +99,11 @@ void EventLoop::Unregister(int fd) {
     handlers_.erase(fd);
 }
 
+void EventLoop::UpdateEvents(int fd, uint32_t events) {
+    epoll_event ev{};
+    ev.events = events;
+    ev.data.fd = fd;
+    epoll_ctl(epfd_, EPOLL_CTL_MOD, fd, &ev);
+}
+
 } // namespace rpc

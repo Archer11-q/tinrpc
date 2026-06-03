@@ -20,6 +20,9 @@ add_library(rpc_lib STATIC
     src/event_loop.cpp
     src/acceptor.cpp
     src/connection.cpp
+    src/thread_pool.cpp
+    src/dispatch.cpp
+    src/rpc_client.cpp
 )
 
 # ============================================================
@@ -45,3 +48,13 @@ add_executable(test_network
     tests/test_network.cpp
 )
 target_link_libraries(test_network rpc_lib pthread)
+
+add_executable(test_thread_pool
+    tests/test_thread_pool.cpp
+)
+target_link_libraries(test_thread_pool rpc_lib pthread)
+
+add_executable(test_rpc
+    tests/test_rpc.cpp
+)
+target_link_libraries(test_rpc rpc_lib pthread)

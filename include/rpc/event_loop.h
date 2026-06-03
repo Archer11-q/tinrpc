@@ -40,6 +40,10 @@ public:
     // 从 epoll 移除一个 fd 并销毁其 handler
     void Unregister(int fd);
 
+    // 修改已注册 fd 的 epoll 事件掩码（EPOLL_CTL_MOD）
+    // 用于 Connection 在仅监听可读 和 同时监听可读可写 之间切换
+    void UpdateEvents(int fd, uint32_t events);
+
 private:
     int epfd_ = -1;         // epoll 实例 fd
     int wakeup_fd_ = -1;    // eventfd，用于 Stop() 唤醒 epoll_wait

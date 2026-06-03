@@ -188,7 +188,7 @@ void TestFullDataPath() {
     std::thread server_thread([&]() {
         auto acceptor = std::make_unique<TestAcceptor>(
             listen_sock.Fd(), &loop,
-            [&mtx, &received_frame, &frame_received, &cv](const rpc::Frame& f) {
+            [&mtx, &received_frame, &frame_received, &cv](const rpc::Frame& f, rpc::Connection* /*conn*/) {
                 std::lock_guard<std::mutex> lk(mtx);
                 received_frame = f;
                 frame_received = true;

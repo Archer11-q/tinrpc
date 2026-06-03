@@ -9,8 +9,8 @@
 
 namespace rpc {
 
-Acceptor::Acceptor(uint16_t port, EventLoop* loop)
-    : loop_(loop)
+Acceptor::Acceptor(uint16_t port, EventLoop* loop, FrameCallback cb)
+    : loop_(loop), cb_(std::move(cb))
 {
     // 设置 socket 重用地址，避免重启时 "Address already in use"
     int opt = 1;
@@ -39,7 +39,7 @@ void Acceptor::OnRead() {
         Socket::SetNonBlocking(client_fd);
 
         // 创建 Connection 并注册到 EventLoop
-        auto conn = std::make_unique<Connection>(client_fd, loop_); // 绑定 客户端fd 和 事件循环
+        auto conn = std::make_unique<Connection>(client_fd, loop_, cb_); // 绑定 客户端fd、事件循环、回调
         loop_->Register(std::move(conn), EPOLLIN | EPOLLET);  // 注册可读事件，边缘触发到Evenloop
     }
 }

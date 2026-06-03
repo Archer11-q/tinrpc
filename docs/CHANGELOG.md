@@ -56,3 +56,38 @@
 
 ---
 
+## v0.4 — 线程池（2026-06-01）
+
+### 新增功能
+- 实现 `rpc::ThreadPool` 类，基于生产者-消费者模型，支持 N 个 worker 线程并发执行任务
+- 任务队列：`std::queue<std::function<void()>>` + `std::mutex` + `std::condition_variable`
+- 优雅关闭：`Shutdown()` 等待所有已提交任务执行完毕，然后唤醒所有 worker 退出
+- 共计 6 项单元测试：基本入队、多 worker 并行、Shutdown 等待、空队列关停、值捕获、关停后拒绝
+
+### 设计思路
+- 任务粒度 = 一个完整 Frame 的回调（最自然的可处理单元）
+- `notify_one` 用于任务唤醒（一个任务只需一个 worker），`notify_all` 用于关停广播
+- `std::mutex` + `std::condition_variable` 而非无锁队列，保持零外部依赖，正确性易保证
+- Worker 线程数默认 = `std::thread::hardware_concurrency()`
+
+---
+
+## v0.5 — Stub / Dispatch（2026-06-03）
+
+### 新增功能
+- 实现 `rpc::Dispatch` 类：方法注册表 `map<string, Handler>`，替代手写 if-else 方法名分发
+- 实现 `rpc::RpcClient` 类：客户端代理，管理连接、分配 request_id、pending 表、响应匹配
+- `Connection` 新增 `Send()` 和 `OnWrite()`：非阻塞发送 + 发送缓冲区 + EPOLLOUT 驱动
+- `EventLoop` 新增 `UpdateEvents()`：支持运行时修改 epoll 事件掩码（EPOLL_CTL_MOD）
+- `FrameCallback` 签名升级为 `void(const Frame&, Connection*)`，回调可发送响应
+- `Acceptor` 构造函数新增 `FrameCallback` 参数，透传给每个 Connection
+- `Connection` 新增析构函数，RAII 自动关闭 fd
+- 共计 4 项集成测试：Dispatch 基本功能、RPC 端到端、发送路径、未注册方法错误响应
+
+### 设计思路
+- Stub 用 `std::future` / `std::promise` 实现异步调用转同步等待，客户端调用 `Call()` 立即返回 future
+- request_id 由 `std::atomic<uint32_t>` 分配，响应匹配通过 `pending_requests_` map 查找
+- 发送路径与 v0.3 读路径对称设计：非阻塞 send + 缓冲区 + EPOLLOUT，写不完等下次通知
+- RpcClient 内部持有 EventLoop 后台线程，网络 IO 完全异步，不阻塞调用方
+- Dispatch 的 Handler 返回 `std::optional<vector<uint8_t>>`，与序列化层错误处理风格一致
+

@@ -146,3 +146,75 @@ RPC 高频路径下异常代价过高，`optional` 能在**类型系统层面表
 ### 下一版本计划（v0.4）
 - 实现线程池：任务队列 + worker 线程 + 异步回调支持
 - 将 Connection 的 `FrameCallback` 执行从 IO 线程转移到工作线程
+
+---
+
+## v0.4 — 线程池（2026-06-01）
+
+### 决策：`std::mutex` + `std::condition_variable` vs 无锁队列
+
+**背景**：任务队列需要支持多生产者（多个 IO 线程）和多消费者（多个 worker 线程）并发访问。
+
+**最终决策**：标准库方案。
+**原因**：
+1. 引入第三方无锁队列违背"零外部依赖"原则
+2. 自实现无锁队列正确性极难保证（ABA 问题、内存序）
+3. 标准库方案性能对于当前 QPS 目标足够，性能差异留到 v0.6 benchmark
+4. `condition_variable` 是面试高频考点（wait 原理、虚假唤醒、notify_one vs notify_all），自己实现一遍理解更深
+
+### 决策：Shutdown 等待所有任务完成（drain），不丢弃
+
+**背景**：关闭线程池时队列中可能还有积压任务。
+
+**最终决策**：等待 drain。RPC 框架中每个任务对应一个客户端请求，丢弃任务 = 请求无响应，不可接受。
+
+### 问题：WorkerLoop 中条件变量判断顺序
+
+**问题**：`cv_.wait(lock, [this] { return stop_ || !tasks_.empty(); })` 和退出判断 `if (stop_ && tasks_.empty())` 的顺序必须正确。如果 wait 条件是 `!tasks_.empty() || stop_`（顺序不同），在 Shutdown 时可能出现：stop_ 为 true → wait 返回 → 但 tasks_ 不为空（还有未处理的任务）。
+
+**解决方案**：wait 条件用 `!tasks_.empty() || stop_`，退出判断用 `if (stop_ && tasks_.empty())`。这样保证先处理完所有任务，再响应关停信号。
+
+### 下一版本计划（v0.5）
+- 实现 Stub / Dispatch：远程调用透明化
+- 实现发送路径：Connection 的 Send/OnWrite
+
+---
+
+## v0.5 — Stub / Dispatch（2026-06-03）
+
+### 决策：FrameCallback 签名升级为 `void(const Frame&, Connection*)`
+
+**背景**：v0.3/v0.4 的 FrameCallback 是 `void(const Frame&)`，回调只能读取请求，无法发送响应。v0.5 需要完成 RPC 闭环，回调必须能写回响应。
+
+**最终决策**：增加 `Connection*` 参数。回调通过 `conn->Send()` 发送响应帧，形成完整的请求-响应闭环。比引入单独的 ResponseWriter 对象更简洁——Connection 本身就封装了发送能力。
+
+### 决策：RpcClient 使用直接 send() 而非 Connection::Send()
+
+**背景**：客户端发送请求帧时，直接调用 `send(fd, ...)` 而不是通过 `Connection::Send()`。
+
+**最终决策**：客户端直接 send()。原因：
+1. 客户端是请求-响应模式，一次只发一个请求，不会同时写大量数据导致缓冲区满
+2. Connection 在 Register 后所有权转移给 EventLoop，客户端无法持有指针来调用 Send()
+3. 如果未来需要客户端的高吞吐发送，可以再接入 Connection::Send() 的缓冲机制
+
+### 决策：Dispatch 的 Handler 返回 `optional<vector<uint8_t>>`
+
+**背景**：处理函数可能失败（参数解析错误、方法不存在等）。
+
+**最终决策**：返回 `optional`。与序列化层 `Read*()` 的错误处理风格一致——在类型层面表达"可能失败"，调用方直接检查。返回 `nullopt` 时 RpcClient 发送 Error 帧。
+
+### 问题：Acceptor 与 CreateListenSocket 端口冲突
+
+**问题**：测试中先用 `CreateListenSocket` 创建监听 socket 获取端口号，再用 `Acceptor` 创建另一个监听 socket 绑定同一端口——第二个 bind 失败。
+
+**解决方案**：`Acceptor` 直接使用端口 0（内核分配），通过 `getsockname(acceptor->GetFd())` 获取实际端口号。不再需要单独的 CreateListenSocket 函数。
+
+### 问题：Connection 析构与 OnClose 的 fd 双重关闭
+
+**问题**：`Connection::OnClose` 中 `close(fd_)`，但如果通过 `Unregister` 销毁 Connection（不走 OnClose），fd 就泄漏了。
+
+**解决方案**：新增 `~Connection()` 析构函数，检查 `fd_ >= 0` 则 close。`OnClose` 中 close 后将 `fd_ = -1`，防止析构函数双重关闭。
+
+### 下一版本计划（v0.6）
+- Benchmark：RPC vs HTTP+JSON 性能对比
+- 可能优化点：ThreadPool 接入 Connection、连接池、超时机制
