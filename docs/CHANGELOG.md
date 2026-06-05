@@ -91,3 +91,27 @@
 - RpcClient 内部持有 EventLoop 后台线程，网络 IO 完全异步，不阻塞调用方
 - Dispatch 的 Handler 返回 `std::optional<vector<uint8_t>>`，与序列化层错误处理风格一致
 
+---
+
+## v0.6 — Benchmark（2026-06-04）
+
+### 新增功能
+- 新增 `bench/bench_server.cpp`：双模式 benchmark 服务端
+  - `--mode rpc`：使用现有 Acceptor + Dispatch + EventLoop 的 TinyRPC 服务端
+  - `--mode http`：自实现最小化 HTTP/1.1 解析 + 朴素 JSON 序列化的 HTTP+JSON 服务端（复用 EventLoop 网络层）
+  - 支持 HTTP keep-alive，与 RPC 持久连接公平对比
+- 新增 `bench/bench_client.cpp`：多线程压测客户端
+  - 支持 `--threads`（并发线程数）、`--requests`（每线程请求数）、`--warmup`（预热请求数）
+  - RPC 模式使用 `RpcClient`，HTTP 模式使用原生 socket + HTTP 响应解析
+  - 输出 avg / min / max / p50 / p95 / p99 延迟分位数 + QPS
+- 新增 `docs/06-benchmark.md`：Benchmark 理论文档（指标体系、压测方法学、优化方向）
+- 更新的文档：
+  - `README.md`：添加 Benchmark 章节和对比数据
+  - `CMakeLists.txt`：添加 `bench_server`、`bench_client` 构建目标
+
+### 设计思路
+- Benchmark 代码放在独立 `bench/` 目录，与框架核心代码隔离，用完可整体移除，零侵入
+- HTTP+JSON 对照组复用 TinyRPC 的 EventLoop 网络层，仅替换协议解析部分——确保对比的是**协议层**差异而非网络层差异
+- HTTP 解析采用最小化实现（仅支持 POST + Content-Length + JSON），避免完整 HTTP/1.1 实现的工程量
+- 第一次 benchmark 数据揭示：极小消息下框架异步开销（EventLoop + promise/future）可能高于朴素同步 HTTP 实现，这是真实的工程 trade-off
+

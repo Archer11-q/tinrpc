@@ -218,3 +218,64 @@ RPC 高频路径下异常代价过高，`optional` 能在**类型系统层面表
 ### 下一版本计划（v0.6）
 - Benchmark：RPC vs HTTP+JSON 性能对比
 - 可能优化点：ThreadPool 接入 Connection、连接池、超时机制
+
+---
+
+## v0.6 — Benchmark（2026-06-04）
+
+### 决策：Benchmark 代码放在独立 `bench/` 目录，不混入框架
+
+**背景**：v0.6 需要实现 HTTP+JSON 对照组和压测工具，但这些都是**工具性代码**——只为跑数据、出报告，不属于 RPC 框架本身。
+
+**最终决策**：所有 benchmark 文件放在 `bench/` 目录，不修改 `include/rpc/` 和 `src/`。对比完成后整个目录可保留或删除，零侵入。HTTP 解析和 JSON 序列化均为最小化实现（~50 行），不单独拆头文件。
+
+### 决策：HTTP 对照组复用 EventLoop，仅替换协议层
+
+**背景**：公平对比需要确保差异来源是**协议**（二进制 TLV vs 文本 JSON + HTTP 头），而非网络 IO 实现。
+
+**最终决策**：HTTP 服务端复用 TinyRPC 的 `EventLoop` + `Socket` 基础设施，仅替换 `Connection` 为自实现的 `HttpConnection`（HTTP 解析 + JSON + 业务调用）。这样两者在 epoll 使用、非阻塞 IO 上完全一致，差异只来自协议。
+
+### 问题：HTTP 连接 hang → 根因是 keep-alive 不匹配 + OnClose 自毁
+
+**最初误判**：以为 HTTP 客户端 `connect()` 后立即 `send()` 导致 EPOLLET 竞态（数据早于 `epoll_ctl(ADD)` 到达，无状态变化事件丢失），于是将 HTTP 连接切换为 LT 模式。
+
+**实际根因**：后续排查发现 EPOLLET 竞态理论不成立（Linux 内核在 `epoll_ctl(ADD)` 时会检查 fd 当前状态，已有数据会立即报告）。真正的 hang 原因有两个：
+1. HTTP 服务端处理一个请求后立即 `close()`，客户端使用 keep-alive 期望持久连接 → 第二个请求起 send 全失败
+2. `OnClose()` 中先 `Unregister`（销毁 this）再访问 `fd_` 成员 → Use-After-Free
+
+**最终方案**：修复 keep-alive 和 OnClose 两个 Bug 后，HTTP 切回 ET 模式（`EPOLLIN | EPOLLET`）完全正常工作。**统一 ET 后整体 QPS 提升约 40%**，说明之前的 LT/ET 混用压制了性能上限。
+
+### 问题：HTTP 连接模型不匹配（keep-alive vs close）
+
+**问题**：初版 HTTP 服务端处理一个请求后立即关闭连接（HTTP/1.0 风格），而客户端使用 `Connection: keep-alive` 期望持久连接。第一次 warmup 后连接断开，后续所有 send 失败。
+
+**解决方案**：改写 `HttpConnection::OnRead()` 为 keep-alive 模式——处理完请求后从 `read_buf_` 中移除已消耗数据，继续等待下一个 EPOLLIN 事件。同时支持 HTTP pipelining（一个 OnRead 中处理多个完整请求），用 `while (ProcessOneRequest())` 循环处理。
+
+### 最终 Benchmark 结果（ET 统一）
+
+**Layer 1：纯序列化（无网络）**
+
+| 场景 | TLV 解码 | JSON 解码 | 加速比 | 体积节省 |
+|------|---------|----------|-------|---------|
+| 大整数(6字段) | 442 ns | 1,803 ns | **4.1x** | 29% |
+| 多字段混合 | 704 ns | 1,907 ns | **2.7x** | 19% |
+| +10KB字符串 | 1,270 ns | 2,325 ns | **1.8x** | 0.3% |
+
+**Layer 2+3：端到端（变并发，每线程 5,000 次）**
+
+| 线程 | RPC QPS | HTTP QPS | RPC p99 | HTTP p99 |
+|------|---------|----------|---------|----------|
+| 1 | 5,021 | 7,989 | 360 μs | 175 μs |
+| 4 | 22,319 | 24,488 | 269 μs | 258 μs |
+| 8 | 22,608 | 24,385 | 476 μs | 483 μs |
+
+**分析**：
+- Layer 1：TLV 二进制协议本身完胜 JSON（解码快 1.8x~4.1x，体积省 20~30%）
+- Layer 2+3：两端均 ET + Reactor。1 线程 HTTP 更快（RPC 异步框架开销），4~8 线程 QPS 接近（22k vs 24k），epoll Reactor 抵消了框架开销
+- 统一 ET 后整体 QPS 提升 ~40%（对比 LT/ET 混用时），说明变量统一对 benchmark 可信度至关重要
+- 这是真实的工程 trade-off，而非伪造的"RPC 无条件更快"数据
+
+### 下一版本计划
+- 大消息体 benchmark（1KB / 10KB / 100KB payload）
+- 高并发压力测试（64+ 线程，找 QPS 饱和点）
+- 可能的优化：ThreadPool 接入、减少内存拷贝

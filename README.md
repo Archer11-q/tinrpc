@@ -85,7 +85,7 @@ make -j$(nproc)
 | v0.3 | 网络 IO 层 | ✅ 已完成 | epoll 边缘触发 + Reactor 事件分发 |
 | v0.4 | 线程池 | ✅ 已完成 | 生产者-消费者模型，Frame 回调异步执行，6 项测试 |
 | v0.5 | Stub / Dispatch | ✅ 已完成 | RpcClient + Dispatch 分发，发送路径，4 项集成测试 |
-| v0.6 | Benchmark | 🚧 计划中 | RPC vs HTTP+JSON 性能对比数据 |
+| v0.6 | Benchmark | ✅ 已完成 | RPC vs HTTP+JSON 性能对比数据 |
 
 ---
 
@@ -96,6 +96,53 @@ make -j$(nproc)
 | [工程日志](docs/devlog.md) | 每层开发中的决策过程与问题解决记录 |
 | [更新日志](docs/CHANGELOG.md) | 版本变更记录 |
 
+## Benchmark（v0.6）
+
+TinyRPC（TLV 二进制协议）对比 HTTP+JSON，分两层测量：
+
+### Layer 1：纯序列化（无网络）
+
+6 字段结构体（int64×2 + int32×2 + double + bool + string），50 万次迭代：
+
+| 场景 | TLV体积 | JSON体积 | 节省 | TLV解码 | JSON解码 | 加速比 |
+|------|--------|---------|------|---------|---------|-------|
+| 大整数(6字段) | 63 B | 89 B | **29%** | 442 ns | 1,803 ns | **4.1x** |
+| 多字段混合 | 132 B | 163 B | **19%** | 704 ns | 1,907 ns | **2.7x** |
+| +10KB字符串 | 10,322 B | 10,358 B | 0.3% | 1,270 ns | 2,325 ns | **1.8x** |
+
+> TLV 解码速度稳定领先 1.9x~3.7x。大整数场景体积节省最明显（定长 4/8 字节 vs 变长文本）。字符串占比大时体积差距缩小，但解码仍有优势。
+
+### Layer 2+3：端到端（变并发）
+
+`Add(3,5)` 小请求，每线程 5,000 次，loopback：
+
+| 协议 | 1线程 | 4线程 | 8线程 |
+|------|-------|-------|-------|
+| **TinyRPC** | 5,021 QPS | 22,319 QPS | 22,608 QPS |
+| **HTTP+JSON** | 7,989 QPS | 24,488 QPS | 24,385 QPS |
+
+| 协议 | 1线程 p99 | 4线程 p99 | 8线程 p99 |
+|------|-----------|-----------|-----------|
+| **TinyRPC** | 360 μs | 269 μs | 476 μs |
+| **HTTP+JSON** | 175 μs | 258 μs | 483 μs |
+
+> 两端均使用 epoll ET + Reactor 网络模型（统一变量）。1 线程下 HTTP 朴素阻塞 IO 更快（无异步层开销）。4~8 线程时两者 QPS 接近（22k vs 24k），epoll Reactor 连接复用抵消了异步框架开销。p99 延迟在高并发下 RPC 更稳定。
+
+### 一键运行
+
+```bash
+cd build && cmake .. && make -j$(nproc)
+bash ../bench/run_all.sh          # 自动跑三层 + 输出汇总报告
+```
+
+或手动分步：
+```bash
+./bench_server --mode rpc --port 8080     # 启动服务端
+./bench_client --mode rpc --port 8080 --threads 8 --requests 10000 --warmup 1000
+./bench_serialize                          # Layer 1 纯序列化
+```
+
+---
 ## License
 
 MIT

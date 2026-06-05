@@ -15,10 +15,10 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架，面向后端开发学习
 |------|------|------|
 | v0.1 | 序列化层（TLV 编码） | ✅ |
 | v0.2 | 协议帧层（粘包/拆包） | ✅ |
-| v0.3 | 网络 IO 层（epoll + Reactor） | ✅ 已完成并推送 |
-| v0.4 | 线程池 | 🚧 下一步 |
-| v0.5 | Stub / Dispatch | 🚧 |
-| v0.6 | Benchmark | 🚧 |
+| v0.3 | 网络 IO 层（epoll + Reactor） | ✅ |
+| v0.4 | 线程池 | ✅ |
+| v0.5 | Stub / Dispatch | ✅ |
+| v0.6 | Benchmark | ✅ |
 
 ## 项目文件结构
 
@@ -33,18 +33,31 @@ D:\CLion\rpc\
 │   ├── event_handler.h   # EventHandler — 抽象基类
 │   ├── event_loop.h      # EventLoop — epoll 事件循环
 │   ├── acceptor.h        # Acceptor — 监听新连接
-│   └── connection.h      # Connection — 客户端连接处理
+│   ├── connection.h      # Connection — 客户端连接处理
+│   ├── thread_pool.h     # ThreadPool — 生产者-消费者
+│   ├── dispatch.h        # Dispatch — 方法注册表
+│   └── rpc_client.h      # RpcClient — 客户端代理 + pending 表
 ├── src/                  # 对应实现文件
 │   ├── serializer.cpp / protocol.cpp / buffer.cpp
 │   ├── socket.cpp / event_loop.cpp / acceptor.cpp / connection.cpp
+│   ├── thread_pool.cpp / dispatch.cpp / rpc_client.cpp
+├── bench/                # Benchmark 工具（独立目录，用完可删）
+│   ├── bench_server.cpp  # 双模式服务端（--mode rpc|http）
+│   └── bench_client.cpp  # 多线程压测客户端
 ├── tests/
-│   ├── test_serializer.cpp   # 11 项
-│   ├── test_protocol.cpp     # 16 项
-│   └── test_network.cpp      # 7 项
+│   ├── test_serializer.cpp    # 11 项
+│   ├── test_protocol.cpp      # 16 项
+│   ├── test_network.cpp       # 7 项
+│   ├── test_thread_pool.cpp   # 6 项
+│   └── test_rpc.cpp           # 4 项
+│   （共 44 项测试，全部通过）
 ├── docs/
 │   ├── 01-serialization-layer.md     # 序列化层理论
 │   ├── 02-protocol-frame-layer.md    # 协议帧层理论
 │   ├── 03-epoll-network-io.md        # 网络 IO 层理论
+│   ├── 04-thread-pool.md             # 线程池理论
+│   ├── 05-stub-dispatch.md           # Stub/Dispatch 理论
+│   ├── 06-benchmark.md               # Benchmark 理论
 │   ├── CHANGELOG.md
 │   └── devlog.md
 ├── main.cpp              # 空壳，尚未使用
@@ -53,35 +66,35 @@ D:\CLion\rpc\
 └── .gitignore
 ```
 
-## 当前架构（v0.3 完成时）
+## 当前架构（v0.5 完整 RPC 闭环）
 
 ```
-┌──────────────────────────────────────────┐
-│  6. 服务注册与发现      静态配置           │  🚧
-├──────────────────────────────────────────┤
-│  5. Stub / Dispatch     远程调用透明化     │  🚧
-├──────────────────────────────────────────┤
-│  4. 协议帧层            二进制帧格式       │  ✅ v0.2
-├──────────────────────────────────────────┤
-│  3. 序列化层            TLV 编码          │  ✅ v0.1
-├──────────────────────────────────────────┤
-│  2. 线程池              任务调度           │  🚧  ← 下一步
-├──────────────────────────────────────────┤
-│  1. 网络 IO 层          epoll + Reactor   │  ✅ v0.3
-└──────────────────────────────────────────┘
+客户端                                        服务端
+
+stub->Call("Add", body)
+  → Serializer(参数)
+  → ProtocolFrame::Encode(id, Request, "Add", body)
+  → send()
+  → return future<int>                       epoll_wait → Connection::OnRead [IO线程]
+                                                  → Buffer → ProtocolFrame::Decode
+                                                  → FrameCallback(frame, conn)
+                                                        → Dispatch::Call("Add", body)
+                                                        → Add(a,b) → result
+                                                        → ProtocolFrame::Encode(id, Response, ...)
+                                                        → conn->Send(rsp_bytes)
+  → future.get()  ← promise.set_value ──── ← OnRead → FrameCallback → 匹配 request_id
+  → Serializer(rsp_body).ReadInt32() → 8
 ```
 
-数据流（接收路径）：
-```
-socket recv → Connection::OnRead → Buffer::Append
-  → Buffer::TryPopFrame → ProtocolFrame::Decode → FrameCallback
-```
-
-## 当前代码的关键设计决策
+## 关键设计决策（最新）
 
 1. **序列化**：自实现 TLV，不用 Protobuf。位运算字节序转换，零外部依赖。`std::optional<T>` 错误处理。
 2. **协议帧**：13 字节帧头（魔数 0xBABE + 总长度 + 请求ID + 消息类型 + 方法名长度）。Buffer + ProtocolFrame 分离。
-3. **网络 IO**：epoll ET 模式 + 非阻塞 IO + Reactor 模式。EventLoop 用 eventfd 做 wakeup 机制（Stop() 唤醒 epoll_wait）。v0.3 只实现接收路径，发送在 v0.5。
+3. **网络 IO**：epoll ET 模式 + 非阻塞 IO + Reactor 模式。EventLoop 用 eventfd 做 wakeup 机制。
+4. **FrameCallback 签名**：`void(const Frame&, Connection* conn)` — 第二个参数允许回调发送响应。
+5. **RpcClient 使用直接 send()**：客户端请求通过 `send()` 直接发送。Connection 所有权在 Register 后转移给 EventLoop。
+6. **Benchmark 独立目录**：所有对比代码在 `bench/` 下，与框架隔离，零侵入。
+7. **理论文档不上传**：`docs/0*-*.md` 在 `.gitignore`，仅 `CHANGELOG.md` 和 `devlog.md` 上传 GitHub。
 
 ## 开发协作模式（必须遵守）
 
@@ -92,14 +105,6 @@ socket recv → Connection::OnRead → Buffer::Append
 3. **逐层递进**：每层独立完成 + 测试通过 + 更新文档 + git tag + push。不跨层、不跳跃。
 4. **不提前优化**：用户明确不采用"每版本记录已知不足"的模式。优化留到 v0.6 benchmark 之后。但 devlog 继续记录设计决策。
 5. **AI 执笔，用户审阅**：AI 生成代码，用户有权质疑和修改任何设计。代码必须匹配用户已有的代码风格（中文注释）。
-
-## v0.4 线程池 — 简要上下文
-
-v0.3 的 `Connection::OnRead` 解码 Frame 后通过 `FrameCallback` 回调。当前回调在 **IO 线程内执行**。v0.4 的目标：
-
-- 实现一个 `ThreadPool` 类（任务队列 + N 个 worker 线程）
-- 将 Frame 回调的执行从 IO 线程**转移到工作线程**，避免慢业务逻辑阻塞 epoll_wait
-- 为 v0.5 的异步 RPC 调用打基础
 
 ## Git 工作流
 

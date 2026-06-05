@@ -58,3 +58,21 @@ add_executable(test_rpc
     tests/test_rpc.cpp
 )
 target_link_libraries(test_rpc rpc_lib pthread)
+
+# ============================================================
+# Benchmark — 性能对比
+# ============================================================
+add_executable(bench_server
+    bench/bench_server.cpp
+)
+target_link_libraries(bench_server rpc_lib pthread)
+
+add_executable(bench_client
+    bench/bench_client.cpp
+)
+target_link_libraries(bench_client rpc_lib pthread)
+
+add_executable(bench_serialize
+    bench/bench_serialize.cpp
+)
+target_link_libraries(bench_serialize rpc_lib pthread)

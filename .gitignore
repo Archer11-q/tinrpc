@@ -33,6 +33,9 @@ compile_commands.json
 .DS_Store
 Thumbs.db
 
+# Claude Code local config
+.claude/
+
 # My notes (keep docs/)
 claude聊天记录/
 实现原理/
