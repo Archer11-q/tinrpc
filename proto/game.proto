@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+package game;
+
+// ============================================================
+// TinyRPC 游戏协议定义
+// ============================================================
+
+// ---- 基础数据类型（用于序列化对比测试） ----
+
+// 简单测试消息 — 字段类型与 TLV Serializer 对齐，用于公平对比
+message EchoRequest {
+    int32  int_val  = 1;
+    string str_val  = 2;
+    double dbl_val  = 3;
+    bool   bool_val = 4;
+}
+
+// ---- 游戏业务消息 ----
+
+// 玩家段位
+enum PlayerRank {
+    RANK_UNSPECIFIED = 0;  // 未指定
+    RANK_BRONZE      = 1;  // 青铜
+    RANK_SILVER      = 2;  // 白银
+    RANK_GOLD        = 3;  // 黄金
+    RANK_PLATINUM    = 4;  // 白金
+    RANK_DIAMOND     = 5;  // 钻石
+}
+
+// 房间状态
+enum RoomStatus {
+    ROOM_STATE_UNSPECIFIED = 0;  // 未指定
+    ROOM_STATE_WAITING     = 1;  // 等待中
+    ROOM_STATE_PLAYING     = 2;  // 游戏中
+    ROOM_STATE_FINISHED    = 3;  // 已结束
+}
+
+// 玩家信息
+message PlayerInfo {
+    string player_id   = 1;  // 玩家 ID
+    string player_name = 2;  // 玩家名称
+    PlayerRank rank    = 3;  // 玩家段位
+}
+
+// 房间信息（含 repeated 嵌套消息 — TLV 需要手动处理）
+message RoomInfo {
+    string room_id          = 1;  // 房间 ID
+    int32  player_count     = 2;  // 当前人数
+    RoomStatus room_state   = 3;  // 房间状态
+    repeated PlayerInfo players = 4;  // 玩家列表
+}

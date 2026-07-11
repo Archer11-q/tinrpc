@@ -62,36 +62,51 @@ RPC 通信层（已完成）
 
 ```
 D:\CLion\rpc\
-├── include/rpc/
-│   ├── common.h          # 类型枚举、字节序转换、协议常量
-│   ├── serializer.h      # TLV 序列化器
-│   ├── protocol.h        # ProtocolFrame — 帧编解码
-│   ├── buffer.h          # Buffer — 接收缓冲+粘包/拆包
-│   ├── socket.h          # Socket — RAII socket 封装
-│   ├── event_handler.h   # EventHandler — 抽象基类
-│   ├── event_loop.h      # EventLoop — epoll 事件循环
-│   ├── acceptor.h        # Acceptor — 监听新连接
-│   ├── connection.h      # Connection — 客户端连接处理
-│   ├── thread_pool.h     # ThreadPool — 生产者-消费者
-│   ├── dispatch.h        # Dispatch — 方法注册表
-│   └── rpc_client.h      # RpcClient — 客户端代理 + pending 表
-├── src/                  # 对应实现文件
-│   ├── serializer.cpp / protocol.cpp / buffer.cpp
-│   ├── socket.cpp / event_loop.cpp / acceptor.cpp / connection.cpp
-│   ├── thread_pool.cpp / dispatch.cpp / rpc_client.cpp
-├── proto/                # [待建] Protobuf 协议定义
-│   └── game.proto        # LoginReq/Res, Room, Frame, Match 等消息
-├── game/                 # [待建] 游戏业务模块
-│   ├── timer_manager.h/cpp
-│   ├── game_room.h/cpp
-│   ├── room_manager.h/cpp
-│   ├── broadcast.h/cpp
-│   ├── frame_sync.h/cpp
-│   ├── match_queue.h/cpp
-│   └── game_service.cpp
-├── stress/               # [待建] 游戏业务压测工具
+├── include/
+│   ├── rpc/                  # RPC 框架头文件（已有）
+│   │   ├── common.h          # 类型枚举、字节序转换、协议常量
+│   │   ├── serializer.h      # TLV 序列化器
+│   │   ├── protocol.h        # ProtocolFrame — 帧编解码
+│   │   ├── buffer.h          # Buffer — 接收缓冲+粘包/拆包
+│   │   ├── socket.h          # Socket — RAII socket 封装
+│   │   ├── event_handler.h   # EventHandler — 抽象基类
+│   │   ├── event_loop.h      # EventLoop — epoll 事件循环
+│   │   ├── acceptor.h        # Acceptor — 监听新连接
+│   │   ├── connection.h      # Connection — 客户端连接处理
+│   │   ├── thread_pool.h     # ThreadPool — 生产者-消费者
+│   │   ├── dispatch.h        # Dispatch — 方法注册表
+│   │   └── rpc_client.h      # RpcClient — 客户端代理 + pending 表
+│   └── game/                 # [待建] 游戏模块头文件
+│       ├── timer_manager.h
+│       ├── game_room.h
+│       ├── room_manager.h
+│       ├── broadcast.h
+│       ├── frame_sync.h
+│       └── match_queue.h
+├── src/                      # 实现文件
+│   ├── serializer.cpp        # RPC 框架（已有，位置不动）
+│   ├── protocol.cpp
+│   ├── buffer.cpp
+│   ├── socket.cpp
+│   ├── event_loop.cpp
+│   ├── acceptor.cpp
+│   ├── connection.cpp
+│   ├── thread_pool.cpp
+│   ├── dispatch.cpp
+│   ├── rpc_client.cpp
+│   └── game/                 # [待建] 游戏模块实现
+│       ├── timer_manager.cpp
+│       ├── game_room.cpp
+│       ├── room_manager.cpp
+│       ├── broadcast.cpp
+│       ├── frame_sync.cpp
+│       ├── match_queue.cpp
+│       └── game_service.cpp
+├── proto/                    # [待建] Protobuf 协议定义（.proto，非 C++ 源码）
+│   └── game.proto            # LoginReq/Res, Room, Frame, Match 等消息
+├── stress/                   # [待建] 游戏业务压测工具
 │   └── stress_client.cpp
-├── bench/                # Benchmark 工具（RPC 框架层，已完成）
+├── bench/                    # Benchmark 工具（RPC 框架层，已完成）
 ├── tests/
 │   ├── test_serializer.cpp    # 11 项
 │   ├── test_protocol.cpp      # 16 项

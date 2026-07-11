@@ -279,3 +279,68 @@ RPC 高频路径下异常代价过高，`optional` 能在**类型系统层面表
 - 大消息体 benchmark（1KB / 10KB / 100KB payload）
 - 高并发压力测试（64+ 线程，找 QPS 饱和点）
 - 可能的优化：ThreadPool 接入、减少内存拷贝
+
+---
+
+## v0.7 — Protobuf 集成（2026-07-11）
+
+### 项目转型背景
+
+项目从纯 RPC 框架转向**游戏服务端**方向。游戏业务需要 enum、repeated、嵌套 message 等 TLV 无法原生支持的类型。需要选择游戏业务层的主力序列化方案。
+
+### 决策：游戏业务层采用 Protobuf，TLV 保留作为技术展示
+
+**背景**：TLV 已完成 11 项测试且端到端 RPC 闭环跑通，但游戏消息（房间、帧同步、匹配）需要复杂数据结构。
+
+**选项**：
+- **扩展 TLV**：为 TLV 增加 repeated/enum/nested 支持 → 本质是重新发明 Protobuf
+- **全面替换为 Protobuf**：删除 TLV 代码 → 丢失"从零造轮子"的展示价值
+- **双轨共存**：TLV 保留不动，游戏业务层新增 Protobuf
+
+**最终决策**：双轨共存。
+- TLV 的 `serializer.h/cpp` **一行不改**，保留作为理解序列化原理的证明
+- 新增 `proto/game.proto` 定义游戏消息，protoc 生成 C++ 代码
+- 协议帧层 `Frame.body` 是 `vector<uint8_t>`，不关心内容格式 → Dispatch 的 handler 内部自由选用 TLV 或 Protobuf 解析 body
+- 后续新增的游戏业务模块统一使用 Protobuf
+
+### TLV vs Protobuf 对比测试数据
+
+测试环境：WSL2 (Linux), GCC, C++20, RelWithDebInfo。50 万次循环取均值。
+
+**简单类型**（int32 + string(11B) + double + bool）：
+
+| 方案 | 体积 | 编码(ns/次) | 解码(ns/次) |
+|------|------|------------|------------|
+| TLV | 44 B | 103.0 | 29.6 |
+| Protobuf | 26 B | 58.5 | 58.6 |
+| **Proto/TLV** | **59.1%** | **56.8%** | **197.9%** |
+
+**RoomInfo**（含 repeated 嵌套消息，5 个 string + 5 个 int）：
+
+| 方案 | 体积 | 编码(ns/次) | 解码(ns/次) |
+|------|------|------------|------------|
+| TLV | 98 B | 183.4 | 212.3 |
+| Protobuf | 50 B | 102.5 | 248.7 |
+| **Proto/TLV** | **51.0%** | **55.9%** | **117.1%** |
+
+**分析**：
+- Protobuf 体积约为 TLV 的 **51%~59%**，节省近一半。TLV 每字段需 1B Type + 4B Length = 5B 开销，Protobuf 用 varint + field number 编码只需 1~2B
+- Protobuf 编码速度快约 **43~44%**，受益于更紧凑的内存布局和更少的写入操作
+- TLV 解码比 Protobuf 快（简单类型快 2x，RoomInfo 相差不大），因为 TLV 解码是纯逐字节读取，无 varint 解码和嵌套消息的递归解析开销
+- 解码的绝对值很小（~200ns），在 RPC 网络延迟（μs~ms 级）面前可忽略
+
+**结论**：Protobuf 在体积和编码速度上全面优于 TLV，且原生支持 enum/repeated/nested 等游戏必需的复杂类型。**游戏业务层正式采用 Protobuf proto3。**
+
+### 决策：`proto/` 和 `include/game/` 独立于 RPC 框架
+
+**背景**：Protobuf 协议和游戏模块需要放置位置。
+
+**最终决策**：
+- `proto/game.proto` — 协议定义（.proto 非 C++ 源码，独立目录）
+- `include/game/` — 游戏模块头文件（与 `include/rpc/` 平级）
+- `src/game/` — 游戏模块实现（与 `src/` 下 RPC 实现平级）
+- RPC 框架现有文件**位置不动、代码不改**
+
+### 下一版本计划（v0.8）
+- 游戏房间服务器：GameRoom 状态机 + RoomManager + Broadcast + TimerManager
+- 房间 RPC Service 注册（handler 内部使用 Protobuf 解析 body）
