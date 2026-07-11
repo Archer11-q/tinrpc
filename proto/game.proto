@@ -6,17 +6,7 @@ package game;
 // TinyRPC 游戏协议定义
 // ============================================================
 
-// ---- 基础数据类型（用于序列化对比测试） ----
-
-// 简单测试消息 — 字段类型与 TLV Serializer 对齐，用于公平对比
-message EchoRequest {
-    int32  int_val  = 1;
-    string str_val  = 2;
-    double dbl_val  = 3;
-    bool   bool_val = 4;
-}
-
-// ---- 游戏业务消息 ----
+// ---- 枚举 ----
 
 // 玩家段位
 enum PlayerRank {
@@ -36,6 +26,8 @@ enum RoomStatus {
     ROOM_STATE_FINISHED    = 3;  // 已结束
 }
 
+// ---- 基础数据结构 ----
+
 // 玩家信息
 message PlayerInfo {
     string player_id   = 1;  // 玩家 ID
@@ -43,10 +35,102 @@ message PlayerInfo {
     PlayerRank rank    = 3;  // 玩家段位
 }
 
-// 房间信息（含 repeated 嵌套消息 — TLV 需要手动处理）
+// 房间信息
 message RoomInfo {
     string room_id          = 1;  // 房间 ID
-    int32  player_count     = 2;  // 当前人数
-    RoomStatus room_state   = 3;  // 房间状态
-    repeated PlayerInfo players = 4;  // 玩家列表
+    string room_name        = 2;  // 房间名称
+    int32  player_count     = 3;  // 当前人数
+    int32  max_players      = 4;  // 最大人数
+    RoomStatus room_state   = 5;  // 房间状态
+    repeated PlayerInfo players = 6;  // 玩家列表
+}
+
+// 玩家分数（用于 GameOverNtf）
+message PlayerScore {
+    string player_id   = 1;
+    string player_name = 2;
+    int32  score       = 3;  // 得分
+    int32  rank        = 4;  // 排名（1 = 第一名）
+}
+
+// ---- 登录 ----
+
+// 客户端 → 服务端：使用 token 登录
+message LoginReq {
+    string token = 1;  // 登录凭证
+}
+
+// 服务端 → 客户端：返回玩家信息
+message LoginRes {
+    bool success            = 1;  // 是否成功
+    PlayerInfo player_info  = 2;  // 玩家信息（成功时返回）
+    string error_msg        = 3;  // 错误描述（失败时返回）
+}
+
+// ---- 房间操作 ----
+
+// 创建房间
+message CreateRoomReq {
+    string player_id  = 1;  // 房主 ID
+    string room_name  = 2;  // 房间名称
+    int32  max_players = 3;  // 最大人数（默认 2）
+}
+
+message CreateRoomRes {
+    bool success      = 1;
+    RoomInfo room_info = 2;  // 房间完整信息（成功时返回）
+    string error_msg  = 3;
+}
+
+// 加入房间
+message JoinRoomReq {
+    string player_id = 1;  // 玩家 ID
+    string room_id   = 2;  // 目标房间 ID
+}
+
+message JoinRoomRes {
+    bool success      = 1;
+    RoomInfo room_info = 2;  // 房间完整信息（成功时返回，含所有玩家）
+    string error_msg  = 3;
+}
+
+// 离开房间
+message LeaveRoomReq {
+    string player_id = 1;
+    string room_id   = 2;
+}
+
+message LeaveRoomRes {
+    bool success     = 1;
+    string error_msg = 2;
+}
+
+// ---- 游戏流程 ----
+
+// 开始游戏（通常由房主发起）
+message StartGameReq {
+    string room_id   = 1;
+    string player_id = 2;  // 发起请求的玩家（服务端校验是否为房主）
+}
+
+message StartGameRes {
+    bool success     = 1;
+    string error_msg = 2;
+}
+
+// 游戏结束通知（服务端主动推送，非请求-响应）
+message GameOverNtf {
+    string room_id              = 1;
+    repeated PlayerScore scores = 2;  // 所有玩家的分数和排名
+    int32  game_duration_sec    = 3;  // 游戏时长（秒）
+}
+
+// ---- 以下为序列化对比测试保留 ----
+
+// 简单测试消息 — 字段类型与 TLV Serializer 对齐
+message EchoRequest {
+    int32  int_val  = 1;
+    string str_val  = 2;
+    double dbl_val  = 3;
+    bool   bool_val = 4;
 }

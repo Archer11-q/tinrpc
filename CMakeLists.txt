@@ -107,3 +107,11 @@ add_executable(test_proto_vs_tlv
     tests/test_proto_vs_tlv.cpp
 )
 target_link_libraries(test_proto_vs_tlv rpc_lib pthread)
+
+# ============================================================
+# 游戏协议消息正确性测试
+# ============================================================
+add_executable(test_game_proto
+    tests/test_game_proto.cpp
+)
+target_link_libraries(test_game_proto rpc_lib pthread)
