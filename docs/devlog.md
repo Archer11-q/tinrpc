@@ -344,3 +344,61 @@ RPC 高频路径下异常代价过高，`optional` 能在**类型系统层面表
 ### 下一版本计划（v0.8）
 - 游戏房间服务器：GameRoom 状态机 + RoomManager + Broadcast + TimerManager
 - 房间 RPC Service 注册（handler 内部使用 Protobuf 解析 body）
+
+---
+
+## v0.8 — 游戏房间服务器（2026-07-12）
+
+### 决策：TimerManager 用小顶堆而非时间轮
+
+**背景**：游戏服务器需要定时器管理房间超时（空闲 5 分钟、等待 10 分钟、结算 30 秒）。需要在两种经典定时器方案中选择。
+
+**方案对比**：
+
+| 维度 | 小顶堆 | 时间轮 |
+|------|--------|--------|
+| 添加定时器 | O(log n) | O(1) |
+| 触发（tick） | O(log n) | O(1) |
+| 取消 | O(1) 惰性 | O(1) 惰性 |
+| 实现复杂度 | **简单**，`std::push_heap` | 中等，需处理轮转 |
+| 内存 | O(活跃 timer 数) | O(槽数)，固定 |
+| 适用场景 | timer < 1000 | timer > 10000 |
+
+**本项目的实际参数**：
+- 同时存在的 timer：房间数 × 1~2 = 最多几百个
+- timer 时长：分钟级
+- 操作频率：低频（创建房间 / 游戏结束）
+
+**最终决策**：小顶堆。
+
+**原因**：
+1. timer 数量最多几百个，`O(log 100) ≈ 7 次比较`，与时间轮的 O(1) 无实际差异
+2. 用 `std::vector` + `std::push_heap` / `std::pop_heap` 只需 ~60 行实现
+3. 时间轮的 O(1) 优势在 10 万级 timer 才显著，本项目差 3 个数量级
+4. 惰性删除（Cancel 只标记 `cancelled = true`，Tick 时跳过）避免 O(n) 的查找删除
+
+### TimerManager 接口设计
+
+```cpp
+class TimerManager {
+    uint64_t Schedule(int64_t delay_ms, Callback callback);  // 注册 → 返回 timer_id
+    void     Cancel(uint64_t timer_id);                       // 惰性删除
+    size_t   Tick();                                          // 驱动：触发所有到期回调
+};
+```
+
+设计要点：
+- **单线程模型**：TimerManager 不加锁。与 EventLoop 单线程模型一致，EventLoop 通过 `epoll_wait` 的 timeout 参数周期性调用 `Tick()`
+- **惰性删除**：Cancel 不立即从堆中移除（需要 O(n) 遍历），只标记 `cancelled = true`。Tick 时在堆顶遇到已取消的 timer 再弹出跳过
+- **Vector 而非 priority_queue**：`std::priority_queue` 不暴露底层容器，无法惰性删除。用 `std::vector` + `std::push_heap/pop_heap` 直接操作底层数组
+
+### 决策：TimerManager 归属 `game/` 而非 `rpc/`
+
+**背景**：定时器不依赖任何 RPC 框架组件（EventLoop、Connection、ProtocolFrame），它是纯数据结构 + 时间比较。
+
+**最终决策**：放在 `include/game/timer_manager.h` + `src/game/timer_manager.cpp`，作为游戏业务的基础设施模块。与 `rpc/` 完全隔离，后续 EventLoop 集成时只需在 `Tick()` 调用点做桥接。
+
+### 下一版本计划
+- GameRoom 状态机实现
+- RoomManager 房间管理器
+- Broadcast 广播系统

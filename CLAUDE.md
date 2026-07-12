@@ -21,6 +21,9 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 | v0.4 | 线程池 | ✅ |
 | v0.5 | Stub / Dispatch | ✅ |
 | v0.6 | Benchmark | ✅ |
+| v0.7 | Protobuf 集成 + 游戏协议 | ✅ |
+| v0.8 | TimerManager 定时器 | 🚧 |
+| v0.8 | GameRoom / RoomManager / Broadcast | 🔲 |
 
 ## 演化方向
 
@@ -76,9 +79,9 @@ D:\CLion\rpc\
 │   │   ├── thread_pool.h     # ThreadPool — 生产者-消费者
 │   │   ├── dispatch.h        # Dispatch — 方法注册表
 │   │   └── rpc_client.h      # RpcClient — 客户端代理 + pending 表
-│   └── game/                 # [待建] 游戏模块头文件
-│       ├── timer_manager.h
-│       ├── game_room.h
+│   └── game/                 # 游戏模块头文件
+│       ├── timer_manager.h    ✅ v0.8
+│       ├── game_room.h        🔲
 │       ├── room_manager.h
 │       ├── broadcast.h
 │       ├── frame_sync.h
@@ -94,9 +97,9 @@ D:\CLion\rpc\
 │   ├── thread_pool.cpp
 │   ├── dispatch.cpp
 │   ├── rpc_client.cpp
-│   └── game/                 # [待建] 游戏模块实现
-│       ├── timer_manager.cpp
-│       ├── game_room.cpp
+│   └── game/                 # 游戏模块实现
+│       ├── timer_manager.cpp  ✅ v0.8
+│       ├── game_room.cpp     🔲
 │       ├── room_manager.cpp
 │       ├── broadcast.cpp
 │       ├── frame_sync.cpp

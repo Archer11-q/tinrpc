@@ -89,7 +89,8 @@ make -j$(nproc)
 | v0.4 | 线程池 | ✅ 已完成 | 生产者-消费者模型，Frame 回调异步执行，6 项测试 |
 | v0.5 | Stub / Dispatch | ✅ 已完成 | RpcClient + Dispatch 分发，发送路径，4 项集成测试 |
 | v0.6 | Benchmark | ✅ 已完成 | RPC vs HTTP+JSON 三层性能对比 |
-| v0.7+ | 游戏服务端 | 🔲 规划中 | 游戏协议（Protobuf）、房间服务器、帧同步、匹配系统 |
+| v0.7 | 游戏协议 | ✅ 已完成 | Protobuf proto3 协议定义，TLV vs Proto 对比测试 |
+| v0.8 | 游戏房间服务器 | 🚧 进行中 | TimerManager、GameRoom 状态机、RoomManager、Broadcast |
 
 ---
 

@@ -38,6 +38,7 @@ add_library(rpc_lib STATIC
     src/thread_pool.cpp
     src/dispatch.cpp
     src/rpc_client.cpp
+    src/game/timer_manager.cpp
     ${PROTO_SRCS}
 )
 
@@ -115,3 +116,11 @@ add_executable(test_game_proto
     tests/test_game_proto.cpp
 )
 target_link_libraries(test_game_proto rpc_lib pthread)
+
+# ============================================================
+# TimerManager 小顶堆定时器测试
+# ============================================================
+add_executable(test_timer_manager
+    tests/test_timer_manager.cpp
+)
+target_link_libraries(test_timer_manager rpc_lib pthread)

@@ -20,10 +20,12 @@ enum PlayerRank {
 
 // 房间状态
 enum RoomStatus {
-    ROOM_STATE_UNSPECIFIED = 0;  // 未指定
-    ROOM_STATE_WAITING     = 1;  // 等待中
-    ROOM_STATE_PLAYING     = 2;  // 游戏中
-    ROOM_STATE_FINISHED    = 3;  // 已结束
+    ROOM_STATE_UNSPECIFIED = 0;  // 未指定（proto3 默认值，保留）
+    ROOM_STATE_IDLE        = 1;  // 空闲
+    ROOM_STATE_WAITING     = 2;  // 等待中
+    ROOM_STATE_PLAYING     = 3;  // 游戏中
+    ROOM_STATE_FINISHED    = 4;  // 结算中
+    ROOM_STATE_DESTROYED   = 5;  // 已销毁
 }
 
 // ---- 基础数据结构 ----
