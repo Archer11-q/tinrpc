@@ -138,6 +138,28 @@ message RoomBroadcastMsg {
     int64  timestamp = 4;  // 发送时间戳（毫秒）
 }
 
+// ---- 房间事件通知（服务端主动推送） ----
+
+// 玩家加入通知（服务端 → 房间内所有玩家）
+message PlayerJoinNtf {
+    string room_id      = 1;  // 房间 ID
+    string player_id    = 2;  // 加入的玩家 ID
+    int32  player_count = 3;  // 加入后的房间人数
+}
+
+// 玩家离开通知（服务端 → 房间内剩余玩家）
+message PlayerLeaveNtf {
+    string room_id      = 1;  // 房间 ID
+    string player_id    = 2;  // 离开的玩家 ID
+    int32  player_count = 3;  // 离开后的房间人数
+}
+
+// 游戏开始通知（服务端 → 房间内所有玩家）
+message GameStartNtf {
+    string room_id   = 1;  // 房间 ID
+    int64  timestamp = 2;  // 开始时间戳（毫秒）
+}
+
 // ---- 以下为序列化对比测试保留 ----
 
 // 简单测试消息 — 字段类型与 TLV Serializer 对齐

@@ -24,7 +24,7 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 | v0.7 | Protobuf 集成 + 游戏协议 | ✅ |
 | v0.8 | TimerManager 定时器 | ✅ |
 | v0.8 | GameRoom / RoomManager | ✅ |
-| v0.8 | Broadcast | ✅ |
+| v0.8 | Broadcast + 房间事件通知 | ✅ |
 
 ## 演化方向
 

@@ -143,3 +143,11 @@ add_executable(test_broadcast
     tests/test_broadcast.cpp
 )
 target_link_libraries(test_broadcast rpc_lib pthread)
+
+# ============================================================
+# 房间事件通知自动广播测试
+# ============================================================
+add_executable(test_room_events
+    tests/test_room_events.cpp
+)
+target_link_libraries(test_room_events rpc_lib pthread)
