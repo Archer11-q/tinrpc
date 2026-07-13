@@ -127,6 +127,17 @@ message GameOverNtf {
     int32  game_duration_sec    = 3;  // 游戏时长（秒）
 }
 
+// ---- 房间内广播 ----
+
+// 房间广播消息（服务端推送，非请求-响应）
+// 服务端向房间内所有玩家推送的消息
+message RoomBroadcastMsg {
+    string room_id   = 1;  // 房间 ID
+    string sender_id = 2;  // 发送者 player_id
+    string content   = 3;  // 消息内容
+    int64  timestamp = 4;  // 发送时间戳（毫秒）
+}
+
 // ---- 以下为序列化对比测试保留 ----
 
 // 简单测试消息 — 字段类型与 TLV Serializer 对齐

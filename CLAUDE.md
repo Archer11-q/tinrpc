@@ -22,8 +22,9 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 | v0.5 | Stub / Dispatch | ✅ |
 | v0.6 | Benchmark | ✅ |
 | v0.7 | Protobuf 集成 + 游戏协议 | ✅ |
-| v0.8 | TimerManager 定时器 | 🚧 |
-| v0.8 | GameRoom / RoomManager / Broadcast | 🔲 |
+| v0.8 | TimerManager 定时器 | ✅ |
+| v0.8 | GameRoom / RoomManager | ✅ |
+| v0.8 | Broadcast | ✅ |
 
 ## 演化方向
 
@@ -34,9 +35,9 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 ├── 游戏协议层           ← Protobuf proto3，定义 LoginReq、Room、Frame、Match 等消息
 ├── TimerManager         ← 跨模块基础设施，小顶堆定时器
 ├── 游戏房间服务器
-│   ├── GameRoom          ← 房间状态机（空闲→等待→游戏中→结算→销毁）
-│   ├── RoomManager       ← 房间 CRUD + 超时淘汰
-│   └── Broadcast         ← 房间内广播
+│   ├── GameRoom          ← 房间状态机（空闲→等待→游戏中→结算→销毁）✅
+│   ├── RoomManager       ← 房间 CRUD + 超时淘汰 ✅
+│   └── Broadcast         ← 房间内广播 ✅
 ├── 帧同步系统
 │   ├── FrameSyncManager  ← 输入收集 + 帧广播 + 步进驱动
 │   ├── InputBuffer       ← Jitter Buffer
@@ -81,9 +82,9 @@ D:\CLion\rpc\
 │   │   └── rpc_client.h      # RpcClient — 客户端代理 + pending 表
 │   └── game/                 # 游戏模块头文件
 │       ├── timer_manager.h    ✅ v0.8
-│       ├── game_room.h        🔲
-│       ├── room_manager.h
-│       ├── broadcast.h
+│       ├── game_room.h        ✅ v0.8
+│       ├── room_manager.h     ✅ v0.8
+│       ├── broadcast.h        ✅ v0.8
 │       ├── frame_sync.h
 │       └── match_queue.h
 ├── src/                      # 实现文件
@@ -99,9 +100,9 @@ D:\CLion\rpc\
 │   ├── rpc_client.cpp
 │   └── game/                 # 游戏模块实现
 │       ├── timer_manager.cpp  ✅ v0.8
-│       ├── game_room.cpp     🔲
-│       ├── room_manager.cpp
-│       ├── broadcast.cpp
+│       ├── game_room.cpp     ✅ v0.8
+│       ├── room_manager.cpp  ✅ v0.8
+│       ├── broadcast.cpp     ✅ v0.8
 │       ├── frame_sync.cpp
 │       ├── match_queue.cpp
 │       └── game_service.cpp

@@ -39,6 +39,9 @@ add_library(rpc_lib STATIC
     src/dispatch.cpp
     src/rpc_client.cpp
     src/game/timer_manager.cpp
+    src/game/game_room.cpp
+    src/game/room_manager.cpp
+    src/game/broadcast.cpp
     ${PROTO_SRCS}
 )
 
@@ -124,3 +127,19 @@ add_executable(test_timer_manager
     tests/test_timer_manager.cpp
 )
 target_link_libraries(test_timer_manager rpc_lib pthread)
+
+# ============================================================
+# GameRoom / RoomManager 状态机测试
+# ============================================================
+add_executable(test_game_room
+    tests/test_game_room.cpp
+)
+target_link_libraries(test_game_room rpc_lib pthread)
+
+# ============================================================
+# Broadcast 房间广播测试
+# ============================================================
+add_executable(test_broadcast
+    tests/test_broadcast.cpp
+)
+target_link_libraries(test_broadcast rpc_lib pthread)
