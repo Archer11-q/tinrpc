@@ -79,8 +79,8 @@ void TestCreateRoomReturnsId() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string id1 = mgr.CreateRoom("player_a", cfg);
-    std::string id2 = mgr.CreateRoom("player_b", cfg);
+    auto _r_id1 = mgr.CreateRoom("player_a", cfg); assert(_r_id1); std::string id1 = _r_id1.room_id;
+    auto _r_id2 = mgr.CreateRoom("player_b", cfg); assert(_r_id2); std::string id2 = _r_id2.room_id;
 
     assert(id1 != id2);                  // 每次创建返回不同 ID
     assert(id1 == "room_001");
@@ -94,7 +94,7 @@ void TestCreateRoomThenGetRoom() {
     game::GameRoom::Config cfg;
     cfg.max_players = 3;
 
-    std::string id = mgr.CreateRoom("owner", cfg);
+    auto _r_id = mgr.CreateRoom("owner", cfg); assert(_r_id); std::string id = _r_id.room_id;
     game::GameRoom* room = mgr.GetRoom(id);
 
     assert(room != nullptr);
@@ -114,7 +114,7 @@ void TestJoinRoomSuccess() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
 
-    std::string id = mgr.CreateRoom("owner", cfg);
+    auto _r_id = mgr.CreateRoom("owner", cfg); assert(_r_id); std::string id = _r_id.room_id;
 
     // 加入前把房间状态改为 WAITING（模拟开放）
     mgr.GetRoom(id)->SetState(game::ROOM_STATE_WAITING);
@@ -132,7 +132,7 @@ void TestJoinRoomFull() {
     game::GameRoom::Config cfg;
     cfg.max_players = 2;  // 仅 2 人
 
-    std::string id = mgr.CreateRoom("owner", cfg);
+    auto _r_id = mgr.CreateRoom("owner", cfg); assert(_r_id); std::string id = _r_id.room_id;
     mgr.GetRoom(id)->SetState(game::ROOM_STATE_WAITING);
 
     assert(mgr.JoinRoom(id, "player_2"));   // 第2人，满
@@ -147,7 +147,7 @@ void TestJoinRoomDuplicate() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string id = mgr.CreateRoom("owner", cfg);
+    auto _r_id = mgr.CreateRoom("owner", cfg); assert(_r_id); std::string id = _r_id.room_id;
     mgr.GetRoom(id)->SetState(game::ROOM_STATE_WAITING);
 
     assert(mgr.JoinRoom(id, "player_2"));
@@ -167,7 +167,7 @@ void TestJoinRoomWrongState() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
 
-    std::string id = mgr.CreateRoom("owner", cfg);
+    auto _r_id = mgr.CreateRoom("owner", cfg); assert(_r_id); std::string id = _r_id.room_id;
     // 不改为 WAITING，保持 IDLE 状态
     // IDLE 允许加入
     assert(mgr.JoinRoom(id, "player_2"));
@@ -187,7 +187,7 @@ void TestLeaveRoomSuccess() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
 
-    std::string id = mgr.CreateRoom("owner", cfg);
+    auto _r_id = mgr.CreateRoom("owner", cfg); assert(_r_id); std::string id = _r_id.room_id;
     mgr.GetRoom(id)->SetState(game::ROOM_STATE_WAITING);
     mgr.JoinRoom(id, "player_2");
 
@@ -210,7 +210,7 @@ void TestLeaveRoomPlayerNotInRoom() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string id = mgr.CreateRoom("owner", cfg);
+    auto _r_id = mgr.CreateRoom("owner", cfg); assert(_r_id); std::string id = _r_id.room_id;
     assert(!mgr.LeaveRoom(id, "stranger"));  // stranger 不在房间
     assert(mgr.GetRoom(id)->player_count() == 1);  // 房主不受影响
 }
@@ -224,7 +224,7 @@ void TestAutoDestroyWhenEmpty() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string id = mgr.CreateRoom("owner", cfg);
+    auto _r_id = mgr.CreateRoom("owner", cfg); assert(_r_id); std::string id = _r_id.room_id;
     // 房主离开
     assert(mgr.LeaveRoom(id, "owner"));
 
@@ -239,7 +239,7 @@ void TestAutoDestroyLastPlayer() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
 
-    std::string id = mgr.CreateRoom("owner", cfg);
+    auto _r_id = mgr.CreateRoom("owner", cfg); assert(_r_id); std::string id = _r_id.room_id;
     mgr.GetRoom(id)->SetState(game::ROOM_STATE_WAITING);
     mgr.JoinRoom(id, "player_2");
     mgr.JoinRoom(id, "player_3");
@@ -265,8 +265,8 @@ void TestCleanupDestroyed() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string id1 = mgr.CreateRoom("player_a", cfg);
-    std::string id2 = mgr.CreateRoom("player_b", cfg);
+    auto _r_id1 = mgr.CreateRoom("player_a", cfg); assert(_r_id1); std::string id1 = _r_id1.room_id;
+    auto _r_id2 = mgr.CreateRoom("player_b", cfg); assert(_r_id2); std::string id2 = _r_id2.room_id;
     assert(mgr.room_count() == 2);
 
     // 让 room1 的玩家离开 → 自动销毁
@@ -286,7 +286,7 @@ void TestRemoveRoom() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string id = mgr.CreateRoom("owner", cfg);
+    auto _r_id = mgr.CreateRoom("owner", cfg); assert(_r_id); std::string id = _r_id.room_id;
     assert(mgr.room_count() == 1);
 
     assert(mgr.RemoveRoom(id));
@@ -307,7 +307,7 @@ void TestRoomTimeoutDestroyed() {
     game::GameRoom::Config cfg;
 
     // 超时 10ms
-    std::string room_id = mgr.CreateRoom("owner", cfg, 10);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg, 10); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     assert(mgr.room_count() == 1);
 
     // 等到超时
@@ -324,7 +324,7 @@ void TestRoomTimeoutStateBeforeCleanup() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg, 10);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg, 10); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
 
     // 手动 Tick 该房间的定时器，触发到期回调 → 标记 DESTROYED
@@ -345,7 +345,7 @@ void TestRoomTimeoutZeroDisables() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg, 0);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg, 0); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
     // Tick 所有房间的定时器
@@ -362,7 +362,7 @@ void TestPlayingRoomNotDestroyedByTimeout() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg, 10);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg, 10); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
     mgr.JoinRoom(room_id, "player_2");
 
@@ -378,6 +378,141 @@ void TestPlayingRoomNotDestroyedByTimeout() {
 
     assert(mgr.GetRoom(room_id) != nullptr);
     assert(mgr.GetRoom(room_id)->state() == game::ROOM_STATE_PLAYING);
+}
+
+// ============================================================
+// 任务7：ErrorCode 错误码验证
+// ============================================================
+
+// 21. CreateRoom 失败 — 玩家已在其他房间
+void TestCreateRoomPlayerAlreadyInRoom() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+
+    auto r1 = mgr.CreateRoom("owner", cfg);
+    assert(r1);
+
+    // 同一玩家再创建房间 → 失败
+    auto r2 = mgr.CreateRoom("owner", cfg);
+    assert(!r2);
+    assert(r2.code == game::ERR_PLAYER_ALREADY_IN_ROOM);
+}
+
+// 22. JoinRoom 错误码 — 房间不存在
+void TestJoinRoomErrorNotFound() {
+    game::RoomManager mgr;
+    auto r = mgr.JoinRoom("room_999", "player_x");
+    assert(!r);
+    assert(r.code == game::ERR_ROOM_NOT_FOUND);
+}
+
+// 23. JoinRoom 错误码 — 已满员
+void TestJoinRoomErrorFull() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+    cfg.max_players = 2;
+
+    auto cr = mgr.CreateRoom("owner", cfg); assert(cr);
+    mgr.GetRoom(cr.room_id)->SetState(game::ROOM_STATE_WAITING);
+    assert(mgr.JoinRoom(cr.room_id, "player_2"));
+
+    auto r = mgr.JoinRoom(cr.room_id, "player_3");
+    assert(!r);
+    assert(r.code == game::ERR_ROOM_FULL);
+}
+
+// 24. JoinRoom 错误码 — 状态不允许
+void TestJoinRoomErrorNotJoinable() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+
+    auto cr = mgr.CreateRoom("owner", cfg); assert(cr);
+    mgr.GetRoom(cr.room_id)->SetState(game::ROOM_STATE_PLAYING);
+
+    auto r = mgr.JoinRoom(cr.room_id, "player_2");
+    assert(!r);
+    assert(r.code == game::ERR_ROOM_NOT_JOINABLE);
+}
+
+// 25. JoinRoom 错误码 — 已在其他房间
+void TestJoinRoomErrorAlreadyInOtherRoom() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+
+    auto cr1 = mgr.CreateRoom("owner", cfg); assert(cr1);
+    auto cr2 = mgr.CreateRoom("player_2", cfg); assert(cr2);
+    mgr.GetRoom(cr2.room_id)->SetState(game::ROOM_STATE_WAITING);
+
+    // player_2 已在 room2 中，尝试加入 room1 → 失败
+    auto r = mgr.JoinRoom(cr1.room_id, "player_2");
+    assert(!r);
+    assert(r.code == game::ERR_PLAYER_ALREADY_IN_ROOM);
+}
+
+// 26. LeaveRoom 错误码 — 房间不存在
+void TestLeaveRoomErrorNotFound() {
+    game::RoomManager mgr;
+    auto r = mgr.LeaveRoom("room_999", "player_x");
+    assert(!r);
+    assert(r.code == game::ERR_ROOM_NOT_FOUND);
+}
+
+// 27. LeaveRoom 错误码 — 玩家不在房间
+void TestLeaveRoomErrorPlayerNotInRoom() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+
+    auto cr = mgr.CreateRoom("owner", cfg); assert(cr);
+    auto r = mgr.LeaveRoom(cr.room_id, "stranger");
+    assert(!r);
+    assert(r.code == game::ERR_PLAYER_NOT_IN_ROOM);
+}
+
+// 28. StartGame 错误码 — 房间不存在
+void TestStartGameErrorNotFound() {
+    game::RoomManager mgr;
+    auto r = mgr.StartGame("room_999", "owner");
+    assert(!r);
+    assert(r.code == game::ERR_ROOM_NOT_FOUND);
+}
+
+// 29. StartGame 错误码 — 不是房主
+void TestStartGameErrorNotOwner() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+
+    auto cr = mgr.CreateRoom("owner", cfg); assert(cr);
+    mgr.GetRoom(cr.room_id)->SetState(game::ROOM_STATE_WAITING);
+
+    auto r = mgr.StartGame(cr.room_id, "player_2");
+    assert(!r);
+    assert(r.code == game::ERR_NOT_OWNER);
+}
+
+// 30. StartGame 错误码 — 状态不允许
+void TestStartGameErrorWrongState() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+
+    auto cr = mgr.CreateRoom("owner", cfg); assert(cr);
+    // 不改为 WAITING，保持 IDLE
+
+    auto r = mgr.StartGame(cr.room_id, "owner");
+    assert(!r);
+    assert(r.code == game::ERR_WRONG_ROOM_STATE);
+}
+
+// 31. GetPlayerRoom — 正确返回玩家所在房间
+void TestGetPlayerRoom() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+
+    auto cr1 = mgr.CreateRoom("owner", cfg); assert(cr1);
+    auto cr2 = mgr.CreateRoom("player_2", cfg); assert(cr2);
+
+    assert(mgr.GetPlayerRoom("owner") == cr1.room_id);
+    assert(mgr.GetPlayerRoom("player_2") == cr2.room_id);
+    assert(mgr.GetPlayerRoom("stranger") == "");  // 不在任何房间
 }
 
 // ============================================================
@@ -418,6 +553,19 @@ int main() {
     RunTest("超时后状态 DESTROYED 但仍在 map",     TestRoomTimeoutStateBeforeCleanup);
     RunTest("timeout=0 不注册超时",               TestRoomTimeoutZeroDisables);
     RunTest("PLAYING 状态不被超时销毁",            TestPlayingRoomNotDestroyedByTimeout);
+
+    printf("\n[任务7] ErrorCode 错误码验证\n");
+    RunTest("CreateRoom 玩家已在其他房间",          TestCreateRoomPlayerAlreadyInRoom);
+    RunTest("JoinRoom ROOM_NOT_FOUND",              TestJoinRoomErrorNotFound);
+    RunTest("JoinRoom ROOM_FULL",                   TestJoinRoomErrorFull);
+    RunTest("JoinRoom ROOM_NOT_JOINABLE",           TestJoinRoomErrorNotJoinable);
+    RunTest("JoinRoom 已在其他房间",                 TestJoinRoomErrorAlreadyInOtherRoom);
+    RunTest("LeaveRoom ROOM_NOT_FOUND",             TestLeaveRoomErrorNotFound);
+    RunTest("LeaveRoom PLAYER_NOT_IN_ROOM",         TestLeaveRoomErrorPlayerNotInRoom);
+    RunTest("StartGame ROOM_NOT_FOUND",             TestStartGameErrorNotFound);
+    RunTest("StartGame ERR_NOT_OWNER",              TestStartGameErrorNotOwner);
+    RunTest("StartGame ERR_WRONG_ROOM_STATE",       TestStartGameErrorWrongState);
+    RunTest("GetPlayerRoom 正确返回所在房间",        TestGetPlayerRoom);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

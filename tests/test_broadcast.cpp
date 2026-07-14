@@ -59,7 +59,7 @@ void TestBroadcastToAllPlayers() {
     cfg.max_players = 4;
 
     // 创建房间 → 房主 owner 自动加入
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
 
     // 2 个玩家加入
@@ -133,7 +133,7 @@ void TestBroadcastToOnePlayer() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string room_id = mgr.CreateRoom("solo_player", cfg);
+    auto _r_room_id = mgr.CreateRoom("solo_player", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
 
     std::vector<SendRecord> records;
     auto send_mock = [&records](const std::string& player_id,
@@ -209,7 +209,7 @@ void TestBroadcastExceptSender() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
     mgr.JoinRoom(room_id, "player_2");
     mgr.JoinRoom(room_id, "player_3");
@@ -246,7 +246,7 @@ void TestBroadcastExceptNonExistent() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
     mgr.JoinRoom(room_id, "player_2");
 

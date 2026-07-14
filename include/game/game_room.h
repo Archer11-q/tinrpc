@@ -10,12 +10,41 @@
 namespace game {
 
 // ============================================================
+// Result — 操作结果（ok + ErrorCode）
+//
+// 提供 operator bool() 向后兼容旧代码中 assert(result) 的写法。
+// 调用方可通过 .code 获取具体错误码。
+// ============================================================
+struct Result {
+    bool      ok   = true;
+    ErrorCode code = ERR_NONE;
+    std::string room_id;  // 仅 CreateRoom 成功时有效
+
+    Result() : ok(true), code(ERR_NONE) {}
+    Result(bool ok_, ErrorCode code_) : ok(ok_), code(code_) {}
+
+    explicit operator bool() const { return ok; }
+
+    static Result Success() { return {}; }
+    static Result Failure(ErrorCode c) { return {false, c}; }
+    static Result CreateSuccess(const std::string& rid) {
+        Result r;
+        r.room_id = rid;
+        return r;
+    }
+};
+
+// ============================================================
 // GameRoom — 游戏房间状态机
 //
 // 职责：
 // - 管理房间内玩家列表
 // - 维护房间状态（IDLE → WAITING → PLAYING → FINISHED → DESTROYED）
 // - 通过内置 TimerManager 管理超时
+//
+// 线程模型：所有方法必须在 EventLoop IO 线程调用，由调用方保证。
+// 当前阶段无锁——players_ 和 state_ 的读写全部收敛在同一个 IO 线程内。
+// 未来若 ThreadPool worker 需要修改房间状态，通过 eventfd 投回 IO 线程执行。
 //
 // 不感知网络，只操作数据和状态。
 // ============================================================
@@ -48,12 +77,12 @@ public:
 
     // ---- 玩家操作 ----
 
-    // 添加玩家。返回 false 表示：人数已满 / 已存在 / 状态不允许
-    bool AddPlayer(const std::string& player_id);
+    // 添加玩家。失败时 .code 对应：ROOM_FULL / ROOM_NOT_JOINABLE / PLAYER_ALREADY_IN_ROOM
+    Result AddPlayer(const std::string& player_id);
 
-    // 移除玩家。返回 false 表示玩家不在房间内
+    // 移除玩家。失败时 .code 对应：PLAYER_NOT_IN_ROOM
     // 移除后若房间为空，自动将状态设为 DESTROYED
-    bool RemovePlayer(const std::string& player_id);
+    Result RemovePlayer(const std::string& player_id);
 
     // 检查玩家是否在房间内
     bool HasPlayer(const std::string& player_id) const;

@@ -402,3 +402,76 @@ class TimerManager {
 - GameRoom 状态机实现
 - RoomManager 房间管理器
 - Broadcast 广播系统
+
+---
+
+### 决策：GameRoom / RoomManager 线程安全模型（单线程，无锁）
+
+**背景**：GameRoom 的 `players_`、`state_` 等字段在并发场景下存在竞态条件。需要确认是否需要 `std::mutex` 保护。
+
+**调用链分析**：
+
+```
+客户端 send()                        定时器到期
+    │                                    │
+    ▼                                    ▼
+┌──────────────────────────────────────────────────────┐
+│      epoll_wait → EventLoop::Run() [唯一 IO 线程]      │
+│                                                        │
+│  Connection::OnRead                                    │
+│    → Buffer → ProtocolFrame::Decode                    │
+│    → FrameCallback → Dispatch::Call("JoinRoom", body) │
+│        → handler(body)                                 │
+│            → RoomManager::JoinRoom(rid, pid)          │
+│                → GameRoom::AddPlayer(pid)              │
+│                    → players_.push_back()              │
+│                    → state_ 校验                        │
+│                                                        │
+│  CheckRoomTimeout()（同线程）                           │
+│    → room->timer().Tick()                               │
+│        → 超时回调: room->SetState(DESTROYED)           │
+└──────────────────────────────────────────────────────┘
+```
+
+**结论**：所有 `players_` 和 `state_` 的读写路径最终都收敛到 `epoll_wait` 返回后的同一个 IO 线程内。不存在"线程 A 写，线程 B 读"的并发场景。当前阶段**不需要锁**。
+
+**选项对比**：
+
+| 方案 | 优点 | 缺点 |
+|------|------|------|
+| 无锁（当前） | 零开销、无死锁风险、代码简单 | 依赖调用方保证在 IO 线程使用 |
+| `std::mutex` 每房间 | 未来接入 ThreadPool 后可直接跨线程调用 | 单线程下纯浪费、引入死锁风险、虚假安全感 |
+| 状态变更投回 IO 线程 | Reactor 标准做法、保持无锁 | 需要 eventfd 通知机制、增加复杂度 |
+
+**最终决策**：**当前阶段无锁**。
+
+头文件在类注释中标注 `线程模型：所有方法必须在 EventLoop IO 线程调用，由调用方保证`。
+
+**未来方案**：当 ThreadPool worker 线程需要修改房间状态时（如帧同步结算、匹配完成），**不采用加锁**，而是将状态变更封装为 task 通过 eventfd 投回 IO 线程执行。这是 Reactor 模式的标准做法（参考 Netty、Redis），比加锁方案更简单、性能更好。
+
+---
+
+### 决策：JoinRoom/LeaveRoom 返回值从 `bool` 升级为 `Result` + `ErrorCode`
+
+**背景**：当前 `JoinRoom` / `LeaveRoom` 只返回 `bool`，调用方只知道失败，不知道失败原因。客户端收到 `success=false` 后需要知道"房间已满"还是"玩家已在其他房间"才能给用户正确的提示。
+
+**最终决策**：新增 `ErrorCode` proto 枚举和 `GameRoom::Result` 结构体。所有房间操作方法（CreateRoom、JoinRoom、LeaveRoom、StartGame 及其 *AndNotify 版本）统一返回 `Result`。
+
+**ErrorCode 设计**：
+
+```protobuf
+enum ErrorCode {
+    ERR_NONE                   = 0;  // 成功
+    ERR_ROOM_NOT_FOUND         = 1;  // 房间不存在
+    ERR_ROOM_FULL              = 2;  // 房间已满
+    ERR_ROOM_NOT_JOINABLE      = 3;  // 状态不允许加入（PLAYING/FINISHED/DESTROYED）
+    ERR_PLAYER_ALREADY_IN_ROOM = 4;  // 玩家已在房间中
+    ERR_PLAYER_NOT_IN_ROOM     = 5;  // 玩家不在房间中
+    ERR_NOT_OWNER              = 6;  // 不是房主，无权执行此操作
+    ERR_WRONG_ROOM_STATE       = 7;  // 房间状态不允许此操作
+}
+```
+
+**向后兼容**：`Result` 提供 `operator bool()`，现有测试中 `assert(mgr.JoinRoom(...))` 的写法无需修改。
+
+**新增 `player_room_` 映射**：RoomManager 维护 `unordered_map<player_id, room_id>`，JoinRoom 时检查玩家是否已在其他房间，LeaveRoom/RemoveRoom 时清除映射。

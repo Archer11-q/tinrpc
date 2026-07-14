@@ -16,11 +16,43 @@ std::string RoomManager::GenerateRoomId() {
     return oss.str();
 }
 
-std::string RoomManager::CreateRoom(const std::string& player_id,
-                                     const GameRoom::Config& config,
-                                     int64_t timeout_ms) {
+// ============================================================
+// player_room_ 映射维护
+// ============================================================
+
+void RoomManager::RemovePlayerFromMap(const std::string& player_id) {
+    player_room_.erase(player_id);
+}
+
+void RoomManager::ClearRoomPlayers(GameRoom* room) {
+    for (const auto& pid : room->players()) {
+        RemovePlayerFromMap(pid);
+    }
+}
+
+std::string RoomManager::GetPlayerRoom(const std::string& player_id) const {
+    auto it = player_room_.find(player_id);
+    return it != player_room_.end() ? it->second : "";
+}
+
+// ============================================================
+// 房间 CRUD
+// ============================================================
+
+Result RoomManager::CreateRoom(const std::string& player_id,
+                                const GameRoom::Config& config,
+                                int64_t timeout_ms) {
+    // 检查玩家是否已在其他房间
+    auto it = player_room_.find(player_id);
+    if (it != player_room_.end()) {
+        return Result::Failure(ERR_PLAYER_ALREADY_IN_ROOM);
+    }
+
     std::string room_id = GenerateRoomId();
     auto room = std::make_unique<GameRoom>(room_id, player_id, config);
+
+    // 注册玩家→房间映射
+    player_room_[player_id] = room_id;
 
     // 注册超时定时器
     if (timeout_ms > 0) {
@@ -36,24 +68,73 @@ std::string RoomManager::CreateRoom(const std::string& player_id,
         rooms_[room_id] = std::move(room);
     }
 
-    return room_id;
+    return Result::CreateSuccess(room_id);
 }
 
-bool RoomManager::JoinRoom(const std::string& room_id, const std::string& player_id) {
+Result RoomManager::JoinRoom(const std::string& room_id, const std::string& player_id) {
     auto* room = GetRoom(room_id);
     if (!room) {
-        return false;  // 房间不存在
+        return Result::Failure(ERR_ROOM_NOT_FOUND);
     }
-    return room->AddPlayer(player_id);
+
+    // 检查玩家是否已在其他房间
+    auto it = player_room_.find(player_id);
+    if (it != player_room_.end() && it->second != room_id) {
+        return Result::Failure(ERR_PLAYER_ALREADY_IN_ROOM);
+    }
+
+    // 委托给 GameRoom（校验人数/状态/重复）
+    Result r = room->AddPlayer(player_id);
+    if (!r.ok) {
+        return r;  // 透传 GameRoom 的错误码
+    }
+
+    // 注册玩家→房间映射
+    player_room_[player_id] = room_id;
+    return Result::Success();
 }
 
-bool RoomManager::LeaveRoom(const std::string& room_id, const std::string& player_id) {
+Result RoomManager::LeaveRoom(const std::string& room_id, const std::string& player_id) {
     auto* room = GetRoom(room_id);
     if (!room) {
-        return false;  // 房间不存在
+        return Result::Failure(ERR_ROOM_NOT_FOUND);
     }
-    return room->RemovePlayer(player_id);
+
+    Result r = room->RemovePlayer(player_id);
+    if (!r.ok) {
+        return r;  // 透传 GameRoom 的错误码
+    }
+
+    // 清除玩家→房间映射
+    RemovePlayerFromMap(player_id);
+
+    return Result::Success();
 }
+
+Result RoomManager::StartGame(const std::string& room_id,
+                               const std::string& requester_id) {
+    auto* room = GetRoom(room_id);
+    if (!room) {
+        return Result::Failure(ERR_ROOM_NOT_FOUND);
+    }
+
+    // 只有房主可以开始游戏
+    if (requester_id != room->owner_id()) {
+        return Result::Failure(ERR_NOT_OWNER);
+    }
+
+    // 只有在 WAITING 状态下才能开始
+    if (room->state() != ROOM_STATE_WAITING) {
+        return Result::Failure(ERR_WRONG_ROOM_STATE);
+    }
+
+    room->SetState(ROOM_STATE_PLAYING);
+    return Result::Success();
+}
+
+// ============================================================
+// 查询 / 移除 / 清理
+// ============================================================
 
 GameRoom* RoomManager::GetRoom(const std::string& room_id) {
     auto it = rooms_.find(room_id);
@@ -64,6 +145,10 @@ GameRoom* RoomManager::GetRoom(const std::string& room_id) {
 }
 
 bool RoomManager::RemoveRoom(const std::string& room_id) {
+    auto* room = GetRoom(room_id);
+    if (room) {
+        ClearRoomPlayers(room);
+    }
     return rooms_.erase(room_id) > 0;
 }
 
@@ -71,6 +156,7 @@ size_t RoomManager::CleanupDestroyed() {
     size_t removed = 0;
     for (auto it = rooms_.begin(); it != rooms_.end(); ) {
         if (it->second->state() == ROOM_STATE_DESTROYED) {
+            ClearRoomPlayers(it->second.get());
             it = rooms_.erase(it);
             removed++;
         } else {
@@ -89,36 +175,16 @@ size_t RoomManager::CheckRoomTimeout() {
     return CleanupDestroyed();
 }
 
-bool RoomManager::StartGame(const std::string& room_id,
-                              const std::string& requester_id) {
-    auto* room = GetRoom(room_id);
-    if (!room) {
-        return false;  // 房间不存在
-    }
-
-    // 只有房主可以开始游戏
-    if (requester_id != room->owner_id()) {
-        return false;
-    }
-
-    // 只有在 WAITING 状态下才能开始
-    if (room->state() != ROOM_STATE_WAITING) {
-        return false;
-    }
-
-    room->SetState(ROOM_STATE_PLAYING);
-    return true;
-}
-
 // ============================================================
 // 带通知的操作（成功后自动广播事件）
 // ============================================================
 
-bool RoomManager::JoinRoomAndNotify(const std::string& room_id,
-                                     const std::string& player_id,
-                                     Broadcast* broadcast) {
-    if (!JoinRoom(room_id, player_id)) {
-        return false;
+Result RoomManager::JoinRoomAndNotify(const std::string& room_id,
+                                       const std::string& player_id,
+                                       Broadcast* broadcast) {
+    Result r = JoinRoom(room_id, player_id);
+    if (!r.ok) {
+        return r;
     }
 
     // 加入成功 → 向房间内其他人广播 PlayerJoinNtf
@@ -134,24 +200,24 @@ bool RoomManager::JoinRoomAndNotify(const std::string& room_id,
         ntf.SerializeToString(&buf);
         std::vector<uint8_t> data(buf.begin(), buf.end());
 
-        // 排除加入者自身（他自己知道加入了）
+        // 排除加入者自身
         broadcast->BroadcastToRoomExcept(room_id, player_id, data);
     }
 
-    return true;
+    return Result::Success();
 }
 
-bool RoomManager::LeaveRoomAndNotify(const std::string& room_id,
-                                      const std::string& player_id,
-                                      Broadcast* broadcast) {
-    // 先记录离开前的房间状态（用于判断房间是否已销毁）
+Result RoomManager::LeaveRoomAndNotify(const std::string& room_id,
+                                        const std::string& player_id,
+                                        Broadcast* broadcast) {
     auto* room = GetRoom(room_id);
     if (!room) {
-        return false;
+        return Result::Failure(ERR_ROOM_NOT_FOUND);
     }
 
-    if (!LeaveRoom(room_id, player_id)) {
-        return false;
+    Result r = LeaveRoom(room_id, player_id);
+    if (!r.ok) {
+        return r;
     }
 
     // 离开成功 → 向剩余玩家广播 PlayerLeaveNtf
@@ -165,21 +231,21 @@ bool RoomManager::LeaveRoomAndNotify(const std::string& room_id,
         ntf.SerializeToString(&buf);
         std::vector<uint8_t> data(buf.begin(), buf.end());
 
-        // 房间未销毁 → 广播给剩余玩家
+        // 房间未销毁 → 广播给剩余玩家；已销毁 → 无剩余玩家，不广播
         if (room->state() != ROOM_STATE_DESTROYED) {
             broadcast->BroadcastToRoom(room_id, data);
         }
-        // 房间已销毁 → 没有剩余玩家，不需要广播
     }
 
-    return true;
+    return Result::Success();
 }
 
-bool RoomManager::StartGameAndNotify(const std::string& room_id,
-                                      const std::string& requester_id,
-                                      Broadcast* broadcast) {
-    if (!StartGame(room_id, requester_id)) {
-        return false;
+Result RoomManager::StartGameAndNotify(const std::string& room_id,
+                                        const std::string& requester_id,
+                                        Broadcast* broadcast) {
+    Result r = StartGame(room_id, requester_id);
+    if (!r.ok) {
+        return r;
     }
 
     // 开始成功 → 向所有人广播 GameStartNtf
@@ -200,7 +266,7 @@ bool RoomManager::StartGameAndNotify(const std::string& room_id,
         broadcast->BroadcastToRoom(room_id, data);
     }
 
-    return true;
+    return Result::Success();
 }
 
 } // namespace game

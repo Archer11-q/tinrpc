@@ -112,7 +112,7 @@ void TestJoinAndNotifyOthersReceive() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
 
     // Mock 发送回调
@@ -145,7 +145,7 @@ void TestJoinAndNotifySoloOwner() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
 
     std::vector<SendRecord> records;
@@ -168,7 +168,7 @@ void TestJoinAndNotifyMultipleJoins() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
 
     std::vector<SendRecord> records;
@@ -223,7 +223,7 @@ void TestJoinAndNotifyFailure() {
     game::GameRoom::Config cfg;
     cfg.max_players = 2;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
     mgr.JoinRoom(room_id, "player_2");  // 已满
 
@@ -250,7 +250,7 @@ void TestLeaveAndNotifyRemainingReceive() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
     mgr.JoinRoom(room_id, "player_2");
     mgr.JoinRoom(room_id, "player_3");
@@ -283,7 +283,7 @@ void TestLeaveAndNotifyLastPlayer() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
 
     std::vector<SendRecord> records;
     auto send_mock = [&records](const std::string& pid,
@@ -306,7 +306,7 @@ void TestLeaveAndNotifyFailure() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
 
     std::vector<SendRecord> records;
     auto send_mock = [&records](const std::string& pid,
@@ -331,7 +331,7 @@ void TestStartGameAndNotifyAllReceive() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
     mgr.JoinRoom(room_id, "player_2");
     mgr.JoinRoom(room_id, "player_3");
@@ -373,7 +373,7 @@ void TestStartGameAndNotifyNotOwner() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
     mgr.JoinRoom(room_id, "player_2");
 
@@ -396,7 +396,7 @@ void TestStartGameAndNotifyWrongState() {
     game::RoomManager mgr;
     game::GameRoom::Config cfg;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     // 不改为 WAITING，保持 IDLE
 
     std::vector<SendRecord> records;
@@ -418,7 +418,7 @@ void TestNotifyWithNullBroadcast() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
 
-    std::string room_id = mgr.CreateRoom("owner", cfg);
+    auto _r_room_id = mgr.CreateRoom("owner", cfg); assert(_r_room_id); std::string room_id = _r_room_id.room_id;
     mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
 
     // broadcast = nullptr, 不应崩溃

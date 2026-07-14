@@ -17,30 +17,30 @@ GameRoom::GameRoom(const std::string& room_id,
     players_.push_back(owner_id);
 }
 
-bool GameRoom::AddPlayer(const std::string& player_id) {
+Result GameRoom::AddPlayer(const std::string& player_id) {
     // 只在 IDLE 或 WAITING 状态下允许加入
     if (state_ != ROOM_STATE_IDLE && state_ != ROOM_STATE_WAITING) {
-        return false;
+        return Result::Failure(ERR_ROOM_NOT_JOINABLE);
     }
 
     // 检查人数上限
     if (is_full()) {
-        return false;
+        return Result::Failure(ERR_ROOM_FULL);
     }
 
     // 检查是否已在房间内
     if (HasPlayer(player_id)) {
-        return false;
+        return Result::Failure(ERR_PLAYER_ALREADY_IN_ROOM);
     }
 
     players_.push_back(player_id);
-    return true;
+    return Result::Success();
 }
 
-bool GameRoom::RemovePlayer(const std::string& player_id) {
+Result GameRoom::RemovePlayer(const std::string& player_id) {
     auto it = std::find(players_.begin(), players_.end(), player_id);
     if (it == players_.end()) {
-        return false;
+        return Result::Failure(ERR_PLAYER_NOT_IN_ROOM);
     }
 
     players_.erase(it);
@@ -50,7 +50,7 @@ bool GameRoom::RemovePlayer(const std::string& player_id) {
         state_ = ROOM_STATE_DESTROYED;
     }
 
-    return true;
+    return Result::Success();
 }
 
 bool GameRoom::HasPlayer(const std::string& player_id) const {
