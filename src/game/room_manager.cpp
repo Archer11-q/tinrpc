@@ -17,10 +17,25 @@ std::string RoomManager::GenerateRoomId() {
 }
 
 std::string RoomManager::CreateRoom(const std::string& player_id,
-                                     const GameRoom::Config& config) {
+                                     const GameRoom::Config& config,
+                                     int64_t timeout_ms) {
     std::string room_id = GenerateRoomId();
     auto room = std::make_unique<GameRoom>(room_id, player_id, config);
-    rooms_[room_id] = std::move(room);
+
+    // 注册超时定时器
+    if (timeout_ms > 0) {
+        GameRoom* raw_ptr = room.get();  // 在 move 之前取裸指针
+        rooms_[room_id] = std::move(room);
+
+        raw_ptr->timer().Schedule(timeout_ms, [raw_ptr]() {
+            // 游戏中不超时销毁（游戏时长由游戏逻辑控制）
+            if (raw_ptr->state() == ROOM_STATE_PLAYING) return;
+            raw_ptr->SetState(ROOM_STATE_DESTROYED);
+        });
+    } else {
+        rooms_[room_id] = std::move(room);
+    }
+
     return room_id;
 }
 
@@ -63,6 +78,15 @@ size_t RoomManager::CleanupDestroyed() {
         }
     }
     return removed;
+}
+
+size_t RoomManager::CheckRoomTimeout() {
+    // 驱动所有房间的定时器
+    for (auto& [id, room] : rooms_) {
+        room->timer().Tick();
+    }
+    // 清理已标记销毁的房间
+    return CleanupDestroyed();
 }
 
 bool RoomManager::StartGame(const std::string& room_id,

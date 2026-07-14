@@ -6,12 +6,17 @@
 
 #include "game/game_room.h"
 #include "game/room_manager.h"
+#include "game/broadcast.h"
 #include "game.pb.h"
 
 #include <cstdio>
 #include <cstdlib>
 #include <cassert>
 #include <string>
+#include <vector>
+#include <set>
+#include <thread>
+#include <chrono>
 
 // ============================================================
 // 简易测试框架
@@ -293,6 +298,89 @@ void TestRemoveRoom() {
 }
 
 // ============================================================
+// 任务6：房间超时定时器 — CheckRoomTimeout
+// ============================================================
+
+// 17. 创建房间设置短超时 → 到期后 CheckRoomTimeout → 房间被销毁
+void TestRoomTimeoutDestroyed() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+
+    // 超时 10ms
+    std::string room_id = mgr.CreateRoom("owner", cfg, 10);
+    assert(mgr.room_count() == 1);
+
+    // 等到超时
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+
+    size_t removed = mgr.CheckRoomTimeout();
+    assert(removed == 1);
+    assert(mgr.room_count() == 0);
+    assert(mgr.GetRoom(room_id) == nullptr);
+}
+
+// 18. 超时后，房间状态为 DESTROYED 但仍在 map 中（CleanupDestroyed 之前）
+void TestRoomTimeoutStateBeforeCleanup() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+
+    std::string room_id = mgr.CreateRoom("owner", cfg, 10);
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+
+    // 手动 Tick 该房间的定时器，触发到期回调 → 标记 DESTROYED
+    mgr.GetRoom(room_id)->timer().Tick();
+
+    // 状态已变为 DESTROYED，但还在 map 里
+    assert(mgr.GetRoom(room_id)->state() == game::ROOM_STATE_DESTROYED);
+    assert(mgr.room_count() == 1);
+
+    // CleanupDestroyed 后移除
+    size_t removed = mgr.CleanupDestroyed();
+    assert(removed == 1);
+    assert(mgr.room_count() == 0);
+}
+
+// 19. timeout_ms=0 时不注册超时，房间不会被自动销毁
+void TestRoomTimeoutZeroDisables() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+
+    std::string room_id = mgr.CreateRoom("owner", cfg, 0);
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+
+    // Tick 所有房间的定时器
+    mgr.CheckRoomTimeout();
+
+    // 房间不应被销毁（没有注册超时定时器）
+    assert(mgr.GetRoom(room_id) != nullptr);
+    assert(mgr.GetRoom(room_id)->state() != game::ROOM_STATE_DESTROYED);
+}
+
+// 20. PLAYING 状态的房间不会被超时销毁
+void TestPlayingRoomNotDestroyedByTimeout() {
+    game::RoomManager mgr;
+    game::GameRoom::Config cfg;
+    cfg.max_players = 4;
+
+    std::string room_id = mgr.CreateRoom("owner", cfg, 10);
+    mgr.GetRoom(room_id)->SetState(game::ROOM_STATE_WAITING);
+    mgr.JoinRoom(room_id, "player_2");
+
+    // 开始游戏 → PLAYING
+    mgr.StartGame(room_id, "owner");
+    assert(mgr.GetRoom(room_id)->state() == game::ROOM_STATE_PLAYING);
+
+    // 等到超时
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+
+    // 定时器触发，但 PLAYING 状态不应被销毁
+    mgr.CheckRoomTimeout();
+
+    assert(mgr.GetRoom(room_id) != nullptr);
+    assert(mgr.GetRoom(room_id)->state() == game::ROOM_STATE_PLAYING);
+}
+
+// ============================================================
 // 入口
 // ============================================================
 
@@ -324,6 +412,12 @@ int main() {
     RunTest("多人逐个离开，最后一个才销毁",         TestAutoDestroyLastPlayer);
     RunTest("CleanupDestroyed 清理已销毁房间",     TestCleanupDestroyed);
     RunTest("RemoveRoom 手动移除",                TestRemoveRoom);
+
+    printf("\n[任务6] 房间超时定时器\n");
+    RunTest("超时后 CheckRoomTimeout 销毁房间",    TestRoomTimeoutDestroyed);
+    RunTest("超时后状态 DESTROYED 但仍在 map",     TestRoomTimeoutStateBeforeCleanup);
+    RunTest("timeout=0 不注册超时",               TestRoomTimeoutZeroDisables);
+    RunTest("PLAYING 状态不被超时销毁",            TestPlayingRoomNotDestroyedByTimeout);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

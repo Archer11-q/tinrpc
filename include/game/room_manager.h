@@ -21,11 +21,15 @@ class Broadcast;  // 前向声明，避免循环依赖
 // - 房间 ID 生成
 // - JoinRoomAndNotify / LeaveRoomAndNotify / StartGameAndNotify
 //   操作成功后自动广播房间事件通知
+// - 超时管理：CreateRoom 自动注册超时定时器，CheckRoomTimeout 轮询到期
 //
 // 不感知网络，只操作数据。
 // ============================================================
 class RoomManager {
 public:
+    // 默认房间超时 5 分钟（毫秒）
+    static constexpr int64_t kDefaultRoomTimeoutMs = 5 * 60 * 1000;
+
     RoomManager() = default;
 
     // 禁止拷贝
@@ -33,8 +37,11 @@ public:
     RoomManager& operator=(const RoomManager&) = delete;
 
     // 创建房间，房主自动加入，返回 room_id
+    // timeout_ms: 房间超时时间（毫秒），到期后若状态非 PLAYING 则自动标记 DESTROYED
+    //             设为 0 表示不注册超时
     std::string CreateRoom(const std::string& player_id,
-                           const GameRoom::Config& config);
+                           const GameRoom::Config& config,
+                           int64_t timeout_ms = kDefaultRoomTimeoutMs);
 
     // ---- 基础操作（不触发广播） ----
 
@@ -76,6 +83,10 @@ public:
 
     // 清理已销毁的房间（遍历 map 移除 state == DESTROYED 的）
     size_t CleanupDestroyed();
+
+    // 轮询所有房间的定时器，触发到期回调，清理已销毁房间
+    // 返回本次销毁的房间数
+    size_t CheckRoomTimeout();
 
 private:
     std::string GenerateRoomId();
