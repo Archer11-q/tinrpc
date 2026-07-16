@@ -25,6 +25,8 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 | v0.8 | TimerManager 定时器 | ✅ |
 | v0.8 | GameRoom / RoomManager | ✅ |
 | v0.8 | Broadcast + 房间事件通知 | ✅ |
+| v0.8 | RoomService RPC 注册 + ErrorCode 整合 | ✅ |
+| v0.8 | EPOLLRDHUP 断连检测 + 自动清理 | ✅ |
 
 ## 演化方向
 
@@ -37,7 +39,9 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 ├── 游戏房间服务器
 │   ├── GameRoom          ← 房间状态机（空闲→等待→游戏中→结算→销毁）✅
 │   ├── RoomManager       ← 房间 CRUD + 超时淘汰 ✅
-│   └── Broadcast         ← 房间内广播 ✅
+│   ├── Broadcast         ← 房间内广播 ✅
+│   └── RoomService       ← RPC Service 注册 + Stub 代理 ✅
+│   └── 断连检测            ← EPOLLRDHUP + 自动房间清理 ✅
 ├── 帧同步系统
 │   ├── FrameSyncManager  ← 输入收集 + 帧广播 + 步进驱动
 │   ├── InputBuffer       ← Jitter Buffer
@@ -85,6 +89,7 @@ D:\CLion\rpc\
 │       ├── game_room.h        ✅ v0.8
 │       ├── room_manager.h     ✅ v0.8
 │       ├── broadcast.h        ✅ v0.8
+│       ├── room_service.h     ✅ v0.8
 │       ├── frame_sync.h
 │       └── match_queue.h
 ├── src/                      # 实现文件
@@ -103,6 +108,7 @@ D:\CLion\rpc\
 │       ├── game_room.cpp     ✅ v0.8
 │       ├── room_manager.cpp  ✅ v0.8
 │       ├── broadcast.cpp     ✅ v0.8
+│       ├── room_service.cpp  ✅ v0.8
 │       ├── frame_sync.cpp
 │       ├── match_queue.cpp
 │       └── game_service.cpp
@@ -116,8 +122,9 @@ D:\CLion\rpc\
 │   ├── test_protocol.cpp      # 16 项
 │   ├── test_network.cpp       # 7 项
 │   ├── test_thread_pool.cpp   # 6 项
-│   └── test_rpc.cpp           # 4 项
-│   （共 44 项测试，全部通过）
+│   ├── test_rpc.cpp           # 4 项
+│   ├── test_room_service.cpp  # 14 项（RoomService RPC + ErrorCode + 断连检测）
+│   （共 51 项测试，全部通过）
 ├── docs/
 │   ├── 01-serialization-layer.md
 │   ├── 02-protocol-frame-layer.md
@@ -126,7 +133,8 @@ D:\CLion\rpc\
 │   ├── 05-stub-dispatch.md
 │   ├── 06-benchmark.md
 │   ├── CHANGELOG.md
-│   └── devlog.md
+│   ├── devlog.md
+│   └── pitfalls/          # 踩坑记录
 ├── main.cpp              # 空壳，尚未使用
 ├── CMakeLists.txt
 ├── README.md

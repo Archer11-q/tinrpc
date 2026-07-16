@@ -10,9 +10,9 @@
 
 ```
 ┌──────────────────────────────────────────────┐
-│  游戏业务层          房间 / 帧同步 / 匹配      │  🔲
+│  游戏业务层          房间 / 帧同步 / 匹配      │  🚧
 ├──────────────────────────────────────────────┤
-│  RPC 通信层（六层）                           │
+│  RPC 通信层（六层）                           │  ✅
 ├──────────────────────────────────────────────┤
 │  5. Stub / Dispatch     远程调用透明化        │  ✅ v0.5
 ├──────────────────────────────────────────────┤
@@ -71,6 +71,16 @@ make -j$(nproc)
 - 反序列化可能失败（数据损坏、长度不匹配），`optional` 在类型层面表达"可能失败"，成功路径零开销
 - 调用方直接检查返回值，无需 try-catch
 
+### 游戏房间服务器（v0.8）
+
+- **GameRoom** — 六状态房间状态机（IDLE → WAITING → PLAYING → FINISHED → DESTROYED）
+- **RoomManager** — 房间 CRUD + 玩家-房间映射 + 超时自动淘汰
+- **Broadcast** — 房间内广播（PlayerJoinNtf / PlayerLeaveNtf / GameStartNtf）
+- **RoomService** — RPC Service 接口（纯虚基类）→ Dispatch 注册 → Stub 客户端代理
+- 5 个 RPC 方法：CreateRoom / JoinRoom / LeaveRoom / SendMessage / GetRoomList
+- **ErrorCode 统一整合**：全部 Response 消息含 `error_code` 字段，服务端透传 RoomManager 错误码至客户端
+- 37 项 GameRoom 单元测试 + 13 项 RoomService RPC 测试（7 功能 + 6 错误码链路）
+
 ### 分层解耦
 
 - 序列化层与协议帧层、网络层完全解耦
@@ -90,7 +100,7 @@ make -j$(nproc)
 | v0.5 | Stub / Dispatch | ✅ 已完成 | RpcClient + Dispatch 分发，发送路径，4 项集成测试 |
 | v0.6 | Benchmark | ✅ 已完成 | RPC vs HTTP+JSON 三层性能对比 |
 | v0.7 | 游戏协议 | ✅ 已完成 | Protobuf proto3 协议定义，TLV vs Proto 对比测试 |
-| v0.8 | 游戏房间服务器 | 🚧 进行中 | TimerManager、GameRoom 状态机、RoomManager、Broadcast |
+| v0.8 | 游戏房间服务器 | ✅ 已完成 | TimerManager、GameRoom、RoomManager、Broadcast、RoomService RPC |
 
 ---
 
