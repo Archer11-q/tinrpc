@@ -9,8 +9,10 @@
 
 namespace rpc {
 
-Connection::Connection(int fd, EventLoop* loop, FrameCallback cb)
+Connection::Connection(int fd, EventLoop* loop, FrameCallback cb,
+                       DisconnectCallback on_disconnect)
     : loop_(loop), frame_callback_(std::move(cb))
+    , on_disconnect_(std::move(on_disconnect))
 {
     fd_ = fd;
 }
@@ -64,6 +66,10 @@ void Connection::OnRead() {
 }
 
 void Connection::OnClose() {
+    // 先通知外部（服务端可借此清理 player_conns 映射 + 移除房间）
+    if (on_disconnect_) {
+        on_disconnect_(fd_);
+    }
     loop_->Unregister(fd_);
     // 显式 close，析构函数检测 fd_ >= 0 不会再 close
     close(fd_);
@@ -78,18 +84,21 @@ void Connection::Send(const std::vector<uint8_t>& data) {
             return;  // 全部发送完毕
         }
         if (n > 0) {
-            write_offset_ = static_cast<size_t>(n);  // 部分发送，记录偏移
+            // 部分发送：追加未发送部分
+            write_buffer_.insert(write_buffer_.end(),
+                                 data.begin() + n, data.end());
+        } else {
+            // n == -1 且 EAGAIN：内核缓冲区满，追加全部数据
+            write_buffer_.insert(write_buffer_.end(),
+                                 data.begin(), data.end());
         }
-        // n == -1 且 EAGAIN：内核缓冲区满，走缓冲路径
+    } else {
+        // 缓冲区已有待发送数据：追加新数据到末尾，保序
+        write_buffer_.insert(write_buffer_.end(), data.begin(), data.end());
     }
 
-    // 剩余数据追加到发送缓冲区
-    write_buffer_.insert(write_buffer_.end(),
-                         data.begin() + static_cast<long>(write_offset_),
-                         data.end());
-
-    // 缓冲区满，数据未发完，注册 EPOLLOUT，等待可写时 OnWrite 继续发送
-    loop_->UpdateEvents(fd_, EPOLLIN | EPOLLOUT | EPOLLET);
+    // 注册 EPOLLOUT，等待可写时 OnWrite 继续发送
+    loop_->UpdateEvents(fd_, EPOLLIN | EPOLLRDHUP | EPOLLOUT | EPOLLET);
 }
 
 void Connection::OnWrite() {
@@ -103,7 +112,7 @@ void Connection::OnWrite() {
                 // 全部发送完毕，清空缓冲区，取消 EPOLLOUT
                 write_buffer_.clear();
                 write_offset_ = 0;
-                loop_->UpdateEvents(fd_, EPOLLIN | EPOLLET);
+                loop_->UpdateEvents(fd_, EPOLLIN | EPOLLRDHUP | EPOLLET);
                 return;
             }
         } else if (n == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {

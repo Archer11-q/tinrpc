@@ -474,4 +474,52 @@ enum ErrorCode {
 
 **向后兼容**：`Result` 提供 `operator bool()`，现有测试中 `assert(mgr.JoinRoom(...))` 的写法无需修改。
 
+---
+
+## v0.8 — 玩家断连检测与自动清理（2026-07-16）
+
+### 决策：EPOLLRDHUP vs 心跳超时
+
+**背景**：客户端异常断开时（崩溃、kill -9、网络断开），服务端需要感知并自动将该玩家从所有房间移除，否则房间状态会永久残留。
+
+**选项对比**：
+
+| 维度 | EPOLLRDHUP | 心跳超时（Heartbeat） |
+|------|-----------|---------------------|
+| 检测原理 | epoll 内核事件，对端 shutdown/close 时触发 | 服务端定时发送 Ping，超时未收到 Pong 则判定断连 |
+| 覆盖场景 | 客户端进程退出、close()、崩溃（OS 回收 socket） | 全部场景，包括网络断开、防火墙丢包、客户端卡死 |
+| 未覆盖场景 | 网络物理断开（拔网线）、客户端无响应但不关闭 socket | 无（全覆盖） |
+| 实现成本 | 2 行代码：epoll 注册加 `EPOLLRDHUP` | 协议扩展 + 每连接定时器 + 超时配置 |
+| 误判风险 | 无（内核事件，确定性） | 有（网络抖动可能导致误判，需要合理超时阈值） |
+| 性能开销 | 零 | 每连接一个 Timer 条目 + 定期 Tick |
+| 架构复杂度 | 无新增 | 需要心跳协议（Ping/Pong）、超时计时器集成 |
+
+**覆盖场景分析**：
+
+```
+客户端行为                            EPOLLRDHUP     心跳
+─────────────────────────────────────────────────────────
+正常 close() / shutdown(SHUT_WR)       ✅ 立即         ✅
+进程 exit() / SIGTERM                  ✅ 立即         ✅ 超时后
+进程崩溃 (SIGSEGV)                     ✅ OS 回收      ✅ 超时后
+kill -9                                ✅ OS 回收      ✅ 超时后
+拔网线 / WiFi 断开                     ❌ 长时间等待    ✅ 超时后
+防火墙丢包                             ❌ 等待 TCP 超时 ✅ 超时后
+客户端死循环（不读写 socket）          ❌ 无法检测     ✅ 超时后
+```
+
+**结论**：EPOLLRDHUP 覆盖 **80%+ 的断连场景**（进程退出、崩溃、正常关闭），仅在网络层故障时失效。对于当前项目阶段（单机开发、localhost 测试），网络故障不可能出现。
+
+**最终决策**：**先上 EPOLLRDHUP，心跳留给帧同步阶段**。理由：
+1. 符合"不提前优化"原则——当前阶段没有网络中断风险
+2. 心跳系统天然与帧同步的 tick 机制耦合（帧同步每帧发输入，本身就是心跳），届时统一实现更合理
+3. EPOLLRDHUP 零成本、零误判、零复杂度
+4. 工业实践中 RDHUP 是标配，心跳是增强——先标配后增强
+
+**涉及改动**：
+- `connection.cpp`：epoll 注册加 `EPOLLRDHUP`，`OnClose` 中新增 disconnect 回调
+- `acceptor.cpp`：透传 disconnect 回调
+- `rpc_client.cpp`：同步加 `EPOLLRDHUP`
+- `room_manager.cpp`：断连时调用 `LeaveRoomAndNotify` 自动清理 + 通知
+
 **新增 `player_room_` 映射**：RoomManager 维护 `unordered_map<player_id, room_id>`，JoinRoom 时检查玩家是否已在其他房间，LeaveRoom/RemoveRoom 时清除映射。

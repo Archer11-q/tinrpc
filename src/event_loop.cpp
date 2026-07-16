@@ -63,7 +63,7 @@ void EventLoop::Run() {
             EventHandler* handler = it->second.get();
             uint32_t ev = events[i].events;
 
-            if (ev & (EPOLLERR | EPOLLHUP)) {
+            if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
                 handler->OnClose();
             } else {
                 if (ev & EPOLLIN)  handler->OnRead();

@@ -18,6 +18,14 @@ class Connection;
 using FrameCallback = std::function<void(const Frame&, Connection* conn)>;
 
 // ============================================================
+// DisconnectCallback — 连接断开时的回调（v0.8 新增）
+//
+// 用于服务端感知客户端断连，参数为断连的 fd。
+// 典型用途：根据 fd 反查 player_id，自动从房间移除该玩家。
+// ============================================================
+using DisconnectCallback = std::function<void(int fd)>;
+
+// ============================================================
 // Connection — 客户端连接处理器
 //
 // 继承 EventHandler，管理一个客户端 socket。
@@ -30,7 +38,9 @@ public:
     // fd: 客户端 socket fd（已设为非阻塞）
     // loop: 所属的 EventLoop（OnClose 时需要从 loop 移除自己）
     // cb: 收到完整 Frame 后的回调
-    Connection(int fd, EventLoop* loop, FrameCallback cb = nullptr);
+    // on_disconnect: 连接断开时的回调（可选）
+    Connection(int fd, EventLoop* loop, FrameCallback cb = nullptr,
+               DisconnectCallback on_disconnect = nullptr);
     ~Connection() override;
 
     void OnRead() override;
@@ -45,6 +55,7 @@ private:
     EventLoop* loop_;               // 所属事件循环，OnClose 时需要调用 loop_->Unregister(fd_)
     Buffer read_buffer_;            // 读缓冲区，处理粘包/拆包
     FrameCallback frame_callback_;  // 收到完整帧后的回调
+    DisconnectCallback on_disconnect_; // 连接断开回调（v0.8 新增）
 
     // 发送路径
     std::vector<uint8_t> write_buffer_;  // 发送缓冲区
