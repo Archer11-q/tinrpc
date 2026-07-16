@@ -2,7 +2,6 @@
 #include "game/broadcast.h"
 #include "game.pb.h"
 
-#include <cstdio>
 #include <sstream>
 #include <iomanip>
 #include <chrono>
@@ -33,6 +32,15 @@ void RoomManager::ClearRoomPlayers(GameRoom* room) {
 std::string RoomManager::GetPlayerRoom(const std::string& player_id) const {
     auto it = player_room_.find(player_id);
     return it != player_room_.end() ? it->second : "";
+}
+
+std::vector<std::string> RoomManager::GetAllRoomIds() const {
+    std::vector<std::string> ids;
+    ids.reserve(rooms_.size());
+    for (const auto& [id, room] : rooms_) {
+        ids.push_back(id);
+    }
+    return ids;
 }
 
 // ============================================================

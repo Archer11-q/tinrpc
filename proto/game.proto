@@ -91,9 +91,10 @@ message CreateRoomReq {
 }
 
 message CreateRoomRes {
-    bool success      = 1;
-    RoomInfo room_info = 2;  // 房间完整信息（成功时返回）
-    string error_msg  = 3;
+    bool success        = 1;
+    RoomInfo room_info   = 2;  // 房间完整信息（成功时返回）
+    string error_msg    = 3;
+    ErrorCode error_code = 4;  // 错误码（ERR_NONE = 成功）
 }
 
 // 加入房间
@@ -103,9 +104,10 @@ message JoinRoomReq {
 }
 
 message JoinRoomRes {
-    bool success      = 1;
-    RoomInfo room_info = 2;  // 房间完整信息（成功时返回，含所有玩家）
-    string error_msg  = 3;
+    bool success        = 1;
+    RoomInfo room_info   = 2;  // 房间完整信息（成功时返回，含所有玩家）
+    string error_msg    = 3;
+    ErrorCode error_code = 4;  // 错误码（ERR_NONE = 成功）
 }
 
 // 离开房间
@@ -115,8 +117,9 @@ message LeaveRoomReq {
 }
 
 message LeaveRoomRes {
-    bool success     = 1;
-    string error_msg = 2;
+    bool success        = 1;
+    string error_msg    = 2;
+    ErrorCode error_code = 3;  // 错误码（ERR_NONE = 成功）
 }
 
 // ---- 游戏流程 ----
@@ -128,8 +131,9 @@ message StartGameReq {
 }
 
 message StartGameRes {
-    bool success     = 1;
-    string error_msg = 2;
+    bool success        = 1;
+    string error_msg    = 2;
+    ErrorCode error_code = 3;  // 错误码（ERR_NONE = 成功）
 }
 
 // 游戏结束通知（服务端主动推送，非请求-响应）
@@ -170,6 +174,32 @@ message PlayerLeaveNtf {
 message GameStartNtf {
     string room_id   = 1;  // 房间 ID
     int64  timestamp = 2;  // 开始时间戳（毫秒）
+}
+
+// ---- 房间消息发送 ----
+
+// 客户端发送房间消息（聊天等）
+message SendMessageReq {
+    string room_id   = 1;  // 目标房间 ID
+    string sender_id = 2;  // 发送者 player_id
+    string content   = 3;  // 消息内容
+}
+
+message SendMessageRes {
+    bool success        = 1;
+    string error_msg    = 2;
+    ErrorCode error_code = 3;  // 错误码（ERR_NONE = 成功）
+}
+
+// ---- 房间列表查询 ----
+
+// 获取可加入的房间列表
+message GetRoomListReq {
+    // 暂无过滤条件，后续可扩展
+}
+
+message GetRoomListRes {
+    repeated RoomInfo rooms = 1;  // 所有房间信息
 }
 
 // ---- 以下为序列化对比测试保留 ----

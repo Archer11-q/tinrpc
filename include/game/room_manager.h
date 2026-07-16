@@ -101,6 +101,9 @@ public:
     // 查询玩家当前所在的房间 ID（不在任何房间返回空串）
     std::string GetPlayerRoom(const std::string& player_id) const;
 
+    // 获取所有房间 ID 列表（供 GetRoomList 等查询使用）
+    std::vector<std::string> GetAllRoomIds() const;
+
 private:
     std::string GenerateRoomId();
 

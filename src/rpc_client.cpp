@@ -77,7 +77,7 @@ bool RpcClient::Connect(const std::string& ip, uint16_t port) {
     };
 
     auto conn = std::make_unique<Connection>(server_fd_, &loop_, std::move(response_cb));
-    loop_.Register(std::move(conn), EPOLLIN | EPOLLET);
+    loop_.Register(std::move(conn), EPOLLIN | EPOLLRDHUP | EPOLLET);
 
     printf("[RpcClient] Connected to %s:%u\n", ip.c_str(), port);
     return true;
@@ -111,7 +111,7 @@ std::future<std::vector<uint8_t>> RpcClient::Call(const std::string& method_name
     // 实际发送：直接通过 socket send
     ssize_t sent = send(server_fd_, frame_bytes.data(), frame_bytes.size(), MSG_NOSIGNAL);
     if (sent < 0) {
-        printf("[RpcClient] send() failed for request_id=%u\n", id);
+        printf("[RpcClient] send() failed for request_id=%u, errno=%d\n", id, errno);
         std::lock_guard<std::mutex> lock(pending_mutex_);
         auto it = pending_requests_.find(id);
         if (it != pending_requests_.end()) {

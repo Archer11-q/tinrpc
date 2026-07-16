@@ -42,6 +42,7 @@ add_library(rpc_lib STATIC
     src/game/game_room.cpp
     src/game/room_manager.cpp
     src/game/broadcast.cpp
+    src/game/room_service.cpp
     ${PROTO_SRCS}
 )
 
@@ -151,3 +152,19 @@ add_executable(test_room_events
     tests/test_room_events.cpp
 )
 target_link_libraries(test_room_events rpc_lib pthread)
+
+# ============================================================
+# 游戏房间端到端流程测试
+# ============================================================
+add_executable(test_game_e2e
+    tests/test_game_e2e.cpp
+)
+target_link_libraries(test_game_e2e rpc_lib pthread)
+
+# ============================================================
+# RoomService RPC 端到端测试（Stub → Dispatch → RoomManager）
+# ============================================================
+add_executable(test_room_service
+    tests/test_room_service.cpp
+)
+target_link_libraries(test_room_service rpc_lib pthread)
