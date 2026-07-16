@@ -1,7 +1,6 @@
 #include "game/game_room.h"
 
 #include <algorithm>
-#include <cstdio>
 
 namespace game {
 

@@ -1,7 +1,5 @@
 #include "game/broadcast.h"
 
-#include <cstdio>
-
 namespace game {
 
 Broadcast::Broadcast(RoomManager* room_mgr, SendToPlayer send_fn)

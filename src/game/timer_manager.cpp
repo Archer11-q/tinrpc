@@ -1,7 +1,6 @@
 #include "game/timer_manager.h"
 
 #include <algorithm>
-#include <cstdio>
 
 namespace game {
 
