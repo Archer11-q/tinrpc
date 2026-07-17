@@ -46,6 +46,7 @@ add_library(rpc_lib STATIC
     src/game/input_buffer.cpp
     src/game/frame_sync.cpp
     src/game/game_state.cpp
+    src/game/snapshot_manager.cpp
     ${PROTO_SRCS}
 )
 
@@ -195,3 +196,11 @@ add_executable(test_game_state
     tests/test_game_state.cpp
 )
 target_link_libraries(test_game_state rpc_lib pthread)
+
+# ============================================================
+# SnapshotManager 快照管理测试
+# ============================================================
+add_executable(test_snapshot_manager
+    tests/test_snapshot_manager.cpp
+)
+target_link_libraries(test_snapshot_manager rpc_lib pthread)
