@@ -45,6 +45,7 @@ add_library(rpc_lib STATIC
     src/game/room_service.cpp
     src/game/input_buffer.cpp
     src/game/frame_sync.cpp
+    src/game/game_state.cpp
     ${PROTO_SRCS}
 )
 
@@ -186,3 +187,11 @@ add_executable(test_frame_sync
     tests/test_frame_sync.cpp
 )
 target_link_libraries(test_frame_sync rpc_lib pthread)
+
+# ============================================================
+# GameState / tickLogic 游戏状态测试
+# ============================================================
+add_executable(test_game_state
+    tests/test_game_state.cpp
+)
+target_link_libraries(test_game_state rpc_lib pthread)
