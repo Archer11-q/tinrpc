@@ -43,6 +43,8 @@ add_library(rpc_lib STATIC
     src/game/room_manager.cpp
     src/game/broadcast.cpp
     src/game/room_service.cpp
+    src/game/input_buffer.cpp
+    src/game/frame_sync.cpp
     ${PROTO_SRCS}
 )
 
@@ -168,3 +170,19 @@ add_executable(test_room_service
     tests/test_room_service.cpp
 )
 target_link_libraries(test_room_service rpc_lib pthread)
+
+# ============================================================
+# InputBuffer 帧同步输入缓冲测试
+# ============================================================
+add_executable(test_input_buffer
+    tests/test_input_buffer.cpp
+)
+target_link_libraries(test_input_buffer rpc_lib pthread)
+
+# ============================================================
+# FrameSyncManager 帧同步测试
+# ============================================================
+add_executable(test_frame_sync
+    tests/test_frame_sync.cpp
+)
+target_link_libraries(test_frame_sync rpc_lib pthread)
