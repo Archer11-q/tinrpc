@@ -27,13 +27,18 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 | v0.8 | Broadcast + 房间事件通知 | ✅ |
 | v0.8 | RoomService RPC 注册 + ErrorCode 整合 | ✅ |
 | v0.8 | EPOLLRDHUP 断连检测 + 自动清理 | ✅ |
+| v0.9 | InputBuffer — Jitter Buffer | ✅ |
+| v0.9 | FrameSyncManager — 帧号/输入收集/广播/Timer驱动 | ✅ |
+| v0.9 | GameState + tickLogic — 确定性状态更新 | ✅ |
+| v0.9 | CatchUp 追帧 — 每次2帧加速策略 | ✅ |
+| v0.9 | SnapshotManager — 环形缓冲区快照/回滚占位 | ✅ |
 
 ## 演化方向
 
 项目从纯 RPC 框架向**游戏服务端**演进。底层 RPC 六层保持不变，之上逐步叠加游戏业务模块：
 
 ```
-游戏业务层（待建）
+游戏业务层（🚧 进行中）
 ├── 游戏协议层           ← Protobuf proto3，定义 LoginReq、Room、Frame、Match 等消息
 ├── TimerManager         ← 跨模块基础设施，小顶堆定时器
 ├── 游戏房间服务器
@@ -43,9 +48,10 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 │   └── RoomService       ← RPC Service 注册 + Stub 代理 ✅
 │   └── 断连检测            ← EPOLLRDHUP + 自动房间清理 ✅
 ├── 帧同步系统
-│   ├── FrameSyncManager  ← 输入收集 + 帧广播 + 步进驱动
-│   ├── InputBuffer       ← Jitter Buffer
-│   └── SnapshotManager   ← 快照保存/恢复（断线重连）
+│   ├── FrameSyncManager  ← 输入收集 + 帧广播 + 追帧 + Timer驱动 ✅
+│   ├── InputBuffer       ← Jitter Buffer（deque, 乱序支持）✅
+│   ├── GameState         ← 确定性状态更新（tickLogic）✅
+│   └── SnapshotManager   ← 环形缓冲区快照/回滚（断线重连）✅
 ├── 匹配系统
 │   ├── EloCalculator     ← ELO 分计算
 │   └── MatchQueue        ← 匹配队列 + 超时放宽
@@ -90,7 +96,10 @@ D:\CLion\rpc\
 │       ├── room_manager.h     ✅ v0.8
 │       ├── broadcast.h        ✅ v0.8
 │       ├── room_service.h     ✅ v0.8
-│       ├── frame_sync.h
+│       ├── input_buffer.h     ✅ v0.9
+│       ├── frame_sync.h       ✅ v0.9
+│       ├── game_state.h       ✅ v0.9
+│       ├── snapshot_manager.h ✅ v0.9
 │       └── match_queue.h
 ├── src/                      # 实现文件
 │   ├── serializer.cpp        # RPC 框架（已有，位置不动）
@@ -109,11 +118,14 @@ D:\CLion\rpc\
 │       ├── room_manager.cpp  ✅ v0.8
 │       ├── broadcast.cpp     ✅ v0.8
 │       ├── room_service.cpp  ✅ v0.8
-│       ├── frame_sync.cpp
+│       ├── input_buffer.cpp  ✅ v0.9
+│       ├── frame_sync.cpp    ✅ v0.9
+│       ├── game_state.cpp    ✅ v0.9
+│       ├── snapshot_manager.cpp ✅ v0.9
 │       ├── match_queue.cpp
 │       └── game_service.cpp
-├── proto/                    # [待建] Protobuf 协议定义（.proto，非 C++ 源码）
-│   └── game.proto            # LoginReq/Res, Room, Frame, Match 等消息
+├── proto/                    # Protobuf 协议定义（.proto，非 C++ 源码）
+│   └── game.proto            # Login/Room/Frame/Match 等消息（v0.7~v0.9 持续扩展）
 ├── stress/                   # [待建] 游戏业务压测工具
 │   └── stress_client.cpp
 ├── bench/                    # Benchmark 工具（RPC 框架层，已完成）
@@ -123,8 +135,12 @@ D:\CLion\rpc\
 │   ├── test_network.cpp       # 7 项
 │   ├── test_thread_pool.cpp   # 6 项
 │   ├── test_rpc.cpp           # 4 项
-│   ├── test_room_service.cpp  # 14 项（RoomService RPC + ErrorCode + 断连检测）
-│   （共 51 项测试，全部通过）
+│   ├── test_room_service.cpp  # 14 项
+│   ├── test_input_buffer.cpp   # 20 项（InputBuffer 单元）
+│   ├── test_frame_sync.cpp     # 27 项（FrameSyncManager + 追帧）
+│   ├── test_game_state.cpp     # 11 项（tickLogic 确定性）
+│   ├── test_snapshot_manager.cpp # 17 项（SnapshotManager）
+│   （共 129 项测试，全部通过）
 ├── docs/
 │   ├── 01-serialization-layer.md
 │   ├── 02-protocol-frame-layer.md

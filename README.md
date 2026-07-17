@@ -10,7 +10,7 @@
 
 ```
 ┌──────────────────────────────────────────────┐
-│  游戏业务层          房间 / 帧同步 / 匹配      │  🚧
+│  游戏业务层          房间 ✅ / 帧同步 🚧 / 匹配 🔲 │  🚧
 ├──────────────────────────────────────────────┤
 │  RPC 通信层（六层）                           │  ✅
 ├──────────────────────────────────────────────┤
@@ -81,6 +81,14 @@ make -j$(nproc)
 - **ErrorCode 统一整合**：全部 Response 消息含 `error_code` 字段，服务端透传 RoomManager 错误码至客户端
 - 37 项 GameRoom 单元测试 + 13 项 RoomService RPC 测试（7 功能 + 6 错误码链路）
 
+### 帧同步系统（v0.9）
+
+- **InputBuffer** — Jitter Buffer，deque 存储 + 二分查找，支持乱序插入/覆盖/容量淘汰（20 项测试）
+- **FrameSyncManager** — 帧号计数器 + 输入收集 + 帧广播 + TimerManager 驱动 20fps tick（27 项测试）
+- **GameState + tickLogic** — 确定性状态更新（按 player_id 字典序、无随机数），3 玩家 10 帧一致性验证（11 项测试）
+- **CatchUp 追帧** — 帧历史缓冲区 + GetCatchUpFrames，每次 2 帧加速策略，慢客户端分步追上（集成测试）
+- **SnapshotManager** — 环形缓冲区存 60 帧 GameState，restoreFromSnapshot 占位（17 项测试）
+
 ### 分层解耦
 
 - 序列化层与协议帧层、网络层完全解耦
@@ -101,6 +109,7 @@ make -j$(nproc)
 | v0.6 | Benchmark | ✅ 已完成 | RPC vs HTTP+JSON 三层性能对比 |
 | v0.7 | 游戏协议 | ✅ 已完成 | Protobuf proto3 协议定义，TLV vs Proto 对比测试 |
 | v0.8 | 游戏房间服务器 | ✅ 已完成 | TimerManager、GameRoom、RoomManager、Broadcast、RoomService RPC |
+| v0.9 | 帧同步系统 | 🚧 进行中 | FrameSyncManager、InputBuffer、GameState/tickLogic、SnapshotManager、追帧 |
 
 ---
 
