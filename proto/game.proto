@@ -204,6 +204,16 @@ message GetRoomListRes {
 
 // ---- 帧同步 ----
 
+// 客户端发送帧输入
+// 注：复用 PlayerInputReq 作为请求体，服务端收到后存入 InputBuffer
+message SendInputRes {
+    bool success        = 1;
+    string error_msg    = 2;
+    ErrorCode error_code = 3;  // 错误码（ERR_NONE = 成功）
+}
+
+// ---- 帧同步（底层消息） ----
+
 // 客户端上传输入
 message PlayerInputReq {
     uint32 frame_no = 1;  // 目标帧号（客户端预测的帧）

@@ -1,6 +1,9 @@
 #pragma once
 
 #include "game/timer_manager.h"
+#include "game/input_buffer.h"
+#include "game/frame_sync.h"
+#include "game/snapshot_manager.h"
 #include "game.pb.h"
 
 #include <string>
@@ -103,6 +106,26 @@ public:
     // 导出为 protobuf RoomInfo（供查询/广播使用）
     RoomInfo ToProto() const;
 
+    // ---- 帧同步（v0.9） ----
+
+    // 初始化帧同步系统（游戏开始前调用一次）
+    void InitFrameSync(int fps = 20, size_t history_size = 120,
+                        size_t snapshot_max = 60);
+
+    // 启动/停止帧同步
+    void StartFrameSync();
+    void StopFrameSync();
+
+    // 接收玩家输入
+    void OnPlayerFrameInput(uint32_t frame_no, const std::string& player_id,
+                             const std::vector<uint8_t>& input);
+
+    // 查询帧同步组件
+    FrameSyncManager*  GetFrameSync()      { return frame_sync_.get(); }
+    InputBuffer*       GetInputBuffer()    { return input_buffer_.get(); }
+    SnapshotManager*   GetSnapshotManager() { return snapshot_mgr_.get(); }
+    bool               HasFrameSync() const { return frame_sync_ != nullptr; }
+
 private:
     std::string room_id_;
     std::string owner_id_;          // 房主 player_id
@@ -110,6 +133,11 @@ private:
     std::vector<std::string> players_;  // 玩家 ID 列表
     int         max_players_;
     TimerManager timer_;            // 房间专属定时器（管理超时等）
+
+    // 帧同步组件（v0.9，optional — 仅 PLAYING 状态使用）
+    std::unique_ptr<InputBuffer>      input_buffer_;
+    std::unique_ptr<FrameSyncManager> frame_sync_;
+    std::unique_ptr<SnapshotManager>  snapshot_mgr_;
 };
 
 } // namespace game

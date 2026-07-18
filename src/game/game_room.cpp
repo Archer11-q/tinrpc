@@ -67,4 +67,35 @@ RoomInfo GameRoom::ToProto() const {
     return info;
 }
 
+// ---- 帧同步 ----
+
+void GameRoom::InitFrameSync(int fps, size_t history_size,
+                               size_t snapshot_max) {
+    int interval_ms = 1000 / fps;
+    input_buffer_ = std::make_unique<InputBuffer>(history_size);
+    snapshot_mgr_ = std::make_unique<SnapshotManager>(snapshot_max);
+    frame_sync_   = std::make_unique<FrameSyncManager>(
+        &timer_, input_buffer_.get(), interval_ms, history_size);
+}
+
+void GameRoom::StartFrameSync() {
+    if (frame_sync_) {
+        frame_sync_->Start();
+    }
+}
+
+void GameRoom::StopFrameSync() {
+    if (frame_sync_) {
+        frame_sync_->Stop();
+    }
+}
+
+void GameRoom::OnPlayerFrameInput(uint32_t frame_no,
+                                    const std::string& player_id,
+                                    const std::vector<uint8_t>& input) {
+    if (frame_sync_) {
+        frame_sync_->OnPlayerInput(frame_no, player_id, input);
+    }
+}
+
 } // namespace game

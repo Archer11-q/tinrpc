@@ -246,9 +246,66 @@ std::optional<std::vector<uint8_t>> RoomServiceImpl::StartGame(const std::vector
             case ERR_WRONG_ROOM_STATE: res.set_error_msg("房间状态不允许开始游戏"); break;
             default:                    res.set_error_msg("开始游戏失败"); break;
         }
+    } else {
+        // 游戏开始成功 → 初始化并启动帧同步
+        auto* room = room_mgr_->GetRoom(req.room_id());
+        if (room) {
+            if (!room->HasFrameSync()) {
+                room->InitFrameSync(20);
+                printf("[RoomService] 帧同步已初始化: room=%s, fps=20\n",
+                       req.room_id().c_str());
+            }
+            room->StartFrameSync();
+            printf("[RoomService] 帧同步已启动: room=%s\n", req.room_id().c_str());
+        }
     }
 
     // 4. 序列化响应
+    std::string buf;
+    res.SerializeToString(&buf);
+    return std::vector<uint8_t>(buf.begin(), buf.end());
+}
+
+// ---- SendInput ----
+
+std::optional<std::vector<uint8_t>> RoomServiceImpl::SendInput(const std::vector<uint8_t>& body) {
+    // 1. 解析请求
+    PlayerInputReq req;
+    if (!req.ParseFromArray(body.data(), static_cast<int>(body.size()))) {
+        return std::nullopt;
+    }
+
+    // 2. 查找玩家所在房间
+    std::string room_id = room_mgr_->GetPlayerRoom(req.player_id());
+    if (room_id.empty()) {
+        SendInputRes res;
+        res.set_success(false);
+        res.set_error_code(ERR_PLAYER_NOT_IN_ROOM);
+        res.set_error_msg("玩家不在任何房间中");
+        std::string buf;
+        res.SerializeToString(&buf);
+        return std::vector<uint8_t>(buf.begin(), buf.end());
+    }
+
+    auto* room = room_mgr_->GetRoom(room_id);
+    if (!room) {
+        SendInputRes res;
+        res.set_success(false);
+        res.set_error_code(ERR_ROOM_NOT_FOUND);
+        res.set_error_msg("房间不存在");
+        std::string buf;
+        res.SerializeToString(&buf);
+        return std::vector<uint8_t>(buf.begin(), buf.end());
+    }
+
+    // 3. 将输入存入帧同步 InputBuffer
+    std::vector<uint8_t> input(req.input_data().begin(), req.input_data().end());
+    room->OnPlayerFrameInput(req.frame_no(), req.player_id(), input);
+
+    // 4. 构造响应
+    SendInputRes res;
+    res.set_success(true);
+
     std::string buf;
     res.SerializeToString(&buf);
     return std::vector<uint8_t>(buf.begin(), buf.end());

@@ -209,6 +209,22 @@ struct SimpleStub {
         if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
         return res;
     }
+
+    game::StartGameRes StartGame(const game::StartGameReq& req) {
+        std::string buf; req.SerializeToString(&buf);
+        auto rsp = client->Call("StartGame", std::vector<uint8_t>(buf.begin(), buf.end()));
+        game::StartGameRes res;
+        if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
+        return res;
+    }
+
+    game::SendInputRes SendInput(const game::PlayerInputReq& req) {
+        std::string buf; req.SerializeToString(&buf);
+        auto rsp = client->Call("SendInput", std::vector<uint8_t>(buf.begin(), buf.end()));
+        game::SendInputRes res;
+        if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
+        return res;
+    }
 };
 
 // ============================================================
@@ -1354,6 +1370,62 @@ void TestStubRoomCleanupAfterEmpty() {
 }
 
 // ============================================================
+// Test 15: StartGame → 自动启动帧同步 + SendInput
+// ============================================================
+
+void TestStartGameInitiatesFrameSync() {
+    // 不走网络，直接操作 RoomManager 和 RoomService 验证帧同步集成
+    game::RoomManager room_mgr;
+    // 直接操作底层 RoomManager，验证帧同步组件与房间的衔接
+
+    // 1. 直接通过 RoomManager 创建房间
+    game::GameRoom::Config cfg;
+    cfg.max_players = 4;
+    auto result = room_mgr.CreateRoom("owner", cfg);
+    if (!result.ok) { printf("[FAIL] CreateRoom\n"); abort(); }
+    std::string room_id = result.room_id;
+    auto* room = room_mgr.GetRoom(room_id);
+    if (!room) { printf("[FAIL] no room\n"); abort(); }
+    room->SetState(game::ROOM_STATE_WAITING);
+
+    // 游戏开始前无帧同步
+    if (room->HasFrameSync()) { printf("[FAIL] frame sync exists before start\n"); abort(); }
+
+    // 2. 模拟 StartGame：改变状态 + 初始化帧同步
+    auto start_result = room_mgr.StartGame(room_id, "owner");
+    if (!start_result.ok) { printf("[FAIL] StartGame\n"); abort(); }
+
+    room->InitFrameSync(20, 120, 60);
+    room->StartFrameSync();
+
+    // 验证帧同步组件已就绪
+    if (!room->HasFrameSync())       { printf("[FAIL] no frame sync\n"); abort(); }
+    if (!room->GetInputBuffer())     { printf("[FAIL] no input buffer\n"); abort(); }
+    if (!room->GetSnapshotManager()) { printf("[FAIL] no snapshot mgr\n"); abort(); }
+    if (!room->GetFrameSync()->IsRunning())
+        { printf("[FAIL] frame sync not running, frame=%u\n",
+                  room->GetFrameSync()->CurrentFrame()); abort(); }
+
+    printf("\n    帧同步已初始化: fps=%d, frame=%u\n",
+           room->GetFrameSync()->Fps(), room->GetFrameSync()->CurrentFrame());
+
+    // 3. 通过 OnPlayerFrameInput 添加输入
+    room->OnPlayerFrameInput(1, "owner", {0x04});  // RIGHT
+    if (room->GetInputBuffer()->FrameCount() != 1)
+        { printf("[FAIL] InputBuffer count=%zu\n", room->GetInputBuffer()->FrameCount()); abort(); }
+
+    // 4. 手动 Tick → 验证帧输入被收集并消费
+    room->StopFrameSync();  // 停止自动定时器
+    size_t n = room->GetFrameSync()->Tick();
+    if (n != 1) { printf("[FAIL] Tick players=%zu\n", n); abort(); }
+    if (room->GetFrameSync()->CurrentFrame() != 1)
+        { printf("[FAIL] frame=%u\n", room->GetFrameSync()->CurrentFrame()); abort(); }
+
+    printf("    Tick frame=%u, players=%zu\n",
+           room->GetFrameSync()->CurrentFrame(), n);
+}
+
+// ============================================================
 // 入口
 // ============================================================
 
@@ -1391,6 +1463,9 @@ int main() {
 
     printf("\n[Disconnect] 断连检测与自动清理\n");
     RunTest("客户端断开后自动移除房间",           TestDisconnectAutoCleanup);
+
+    printf("\n[FrameSync集成] 房间状态机与帧同步衔接\n");
+    RunTest("StartGame启动帧同步+SendInput",     TestStartGameInitiatesFrameSync);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;
