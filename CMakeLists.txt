@@ -204,3 +204,11 @@ add_executable(test_snapshot_manager
     tests/test_snapshot_manager.cpp
 )
 target_link_libraries(test_snapshot_manager rpc_lib pthread)
+
+# ============================================================
+# 帧同步全流程模拟测试（含耗时统计）
+# ============================================================
+add_executable(test_frame_sync_flow
+    tests/test_frame_sync_flow.cpp
+)
+target_link_libraries(test_frame_sync_flow rpc_lib pthread)
