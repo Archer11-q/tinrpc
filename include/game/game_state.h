@@ -61,4 +61,28 @@ void ApplyMove(PlayerPos& pos, MoveDir dir, int32_t step = 1);
 // 辅助：确保玩家存在于状态中（新玩家加入时初始化为 (0,0)）
 void EnsurePlayerExists(GameState& state, const std::string& player_id);
 
+// ============================================================
+// 位置纠错数据（用于服务端权威 → 客户端和解）
+// ============================================================
+
+// 单玩家位置偏差
+struct PlayerCorrection {
+    std::string player_id;
+    int32_t server_x = 0, server_y = 0;  // 服务端权威坐标
+    int32_t client_x = 0, client_y = 0;  // 客户端预测坐标
+    int32_t delta_x = 0,  delta_y = 0;   // 偏差量（server - client）
+};
+
+// 计算服务端权威状态与客户端预测状态之间的偏差
+// 返回有偏差的玩家列表（位置完全一致的玩家不返回）
+std::vector<PlayerCorrection> CompareStates(
+    const GameState& authoritative,
+    const GameState& predicted);
+
+// 将客户端状态向服务端权威状态插值一步（用于平滑和解）
+// alpha: 插值系数（0=保持预测, 1=跳到权威, 建议 0.2~0.5）
+void ReconcileState(GameState& client_state,
+                    const GameState& authoritative,
+                    float alpha = 0.3f);
+
 } // namespace game

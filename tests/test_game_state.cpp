@@ -289,6 +289,190 @@ void TestThreePlayersDifferentMoves() {
 }
 
 // ============================================================
+// 任务4：CompareStates — 服务端权威 vs 客户端预测偏差
+// ============================================================
+
+void TestCompareStatesIdentical() {
+    // 完全相同 → 无偏差
+    game::GameState srv, cli;
+    srv.frame_no = 5; cli.frame_no = 5;
+    srv.players.push_back({"p1", 0, 0});
+    cli.players.push_back({"p1", 0, 0});
+
+    auto corrs = game::CompareStates(srv, cli);
+    assert(corrs.empty());
+}
+
+void TestCompareStatesDetectsDeviation() {
+    // 客户端预测错误
+    game::GameState srv, cli;
+    srv.players.push_back({"p1", 5, 3});   // 服务端权威：p1 在 (5,3)
+    cli.players.push_back({"p1", 4, 3});   // 客户端预测：p1 在 (4,3)
+    srv.frame_no = 10; cli.frame_no = 10;
+
+    auto corrs = game::CompareStates(srv, cli);
+    assert(corrs.size() == 1);
+    assert(corrs[0].player_id == "p1");
+    assert(corrs[0].server_x == 5 && corrs[0].server_y == 3);
+    assert(corrs[0].client_x == 4 && corrs[0].client_y == 3);
+    assert(corrs[0].delta_x == 1 && corrs[0].delta_y == 0);
+}
+
+void TestCompareStatesMultiPlayer() {
+    game::GameState srv, cli;
+    srv.players.push_back({"p1", 10, 0});
+    srv.players.push_back({"p2", 0, 10});
+    srv.players.push_back({"p3", 5, 5});
+    cli.players.push_back({"p1", 10, 0});   // p1 正确
+    cli.players.push_back({"p2", 0, 8});    // p2 偏移
+    cli.players.push_back({"p3", 6, 4});    // p3 偏移
+
+    auto corrs = game::CompareStates(srv, cli);
+    assert(corrs.size() == 2);  // 只有 p2 和 p3
+    // p1 不在修正列表
+    bool has_p1 = false;
+    for (auto& c : corrs) if (c.player_id == "p1") has_p1 = true;
+    assert(!has_p1);
+}
+
+void TestCompareStatesMissingPlayer() {
+    // 客户端还没收到新玩家的状态
+    game::GameState srv, cli;
+    srv.players.push_back({"p1", 0, 0});
+    srv.players.push_back({"p2", 5, 5});  // 新玩家
+    cli.players.push_back({"p1", 0, 0});
+    // cli 没有 p2
+
+    auto corrs = game::CompareStates(srv, cli);
+    assert(corrs.size() == 1);
+    assert(corrs[0].player_id == "p2");
+    assert(corrs[0].client_x == 0 && corrs[0].client_y == 0);  // 未找到 → (0,0)
+    assert(corrs[0].delta_x == 5 && corrs[0].delta_y == 5);
+}
+
+// ============================================================
+// 任务5：ReconcileState — 客户端插值平滑到权威位置
+// ============================================================
+
+void TestReconcileFullJump() {
+    // alpha=1.0 → 直接跳到权威位置
+    game::GameState srv, cli;
+    srv.players.push_back({"p1", 10, 10});
+    cli.players.push_back({"p1", 0, 0});
+    srv.frame_no = 1; cli.frame_no = 0;
+
+    game::ReconcileState(cli, srv, 1.0f);
+    assert(cli.players[0].x == 10);
+    assert(cli.players[0].y == 10);
+    assert(cli.frame_no == 1);
+}
+
+void TestReconcileInterpolate() {
+    // alpha=0.5 → 走到中间
+    game::GameState srv, cli;
+    srv.players.push_back({"p1", 10, 0});
+    cli.players.push_back({"p1", 0, 0});
+
+    game::ReconcileState(cli, srv, 0.5f);
+    assert(cli.players[0].x == 5);   // (0 + (10-0)*0.5)
+    assert(cli.players[0].y == 0);
+}
+
+void TestReconcileSmallStep() {
+    // alpha=0.3 → 小步逼近
+    game::GameState srv, cli;
+    srv.players.push_back({"p1", 100, 100});
+    cli.players.push_back({"p1", 40, -20});
+
+    game::ReconcileState(cli, srv, 0.3f);
+    // x: 40 + (100-40)*0.3 = 40 + 18 = 58
+    // y:-20 + (100-(-20))*0.3 = -20 + 36 = 16
+    assert(cli.players[0].x == 58);
+    assert(cli.players[0].y == 16);
+}
+
+void TestReconcileNewPlayer() {
+    // 客户端状态中没有该玩家 → 直接加入
+    game::GameState srv, cli;
+    srv.players.push_back({"p_new", 7, 3});
+
+    game::ReconcileState(cli, srv);
+    assert(cli.players.size() == 1);
+    assert(cli.players[0].player_id == "p_new");
+    assert(cli.players[0].x == 7 && cli.players[0].y == 3);
+}
+
+// ============================================================
+// 任务6：完整预测→和解流程模拟
+// ============================================================
+
+void TestPredictionReconciliationLoop() {
+    // 模拟：客户端预测位置与服务器权威位置不一致时的和解流程
+    //
+    // 场景：p1 发出 RIGHT 指令
+    // - 服务端：收到 input → tickLogic → p1 在 (1, 0)
+    // - 客户端：立即预测移动 → p1 也在 (1, 0) ← 正常情况下一致
+    // - 第 2 帧：服务端输入丢失（网络丢包），客户端继续预测
+    //   - 服务端：p1 留在 (1, 0)（没收到输入）
+    //   - 客户端：p1 预测到 (2, 0)（本地已执行 RIGHT）
+    //   - 偏差产生！服务端 CompareStates 检测到 delta_x=1
+    //   - 和解：客户端 ReconcileState alpha=0.5 → p1 到 (2+(-1)*0.5) ≈ (1, 0)
+    //   - 逐步逼近权威位置
+
+    // Step 1: 初始状态一致
+    game::GameState srv, cli;
+    cli.players.push_back({"p1", 0, 0});
+    srv.players.push_back({"p1", 0, 0});
+    assert(game::CompareStates(srv, cli).empty());
+
+    // Step 2: 第一帧 — 服务端和客户端都收到 RIGHT
+    cli = game::tickLogic({{"p1", {0x04}}}, cli);
+    srv = game::tickLogic({{"p1", {0x04}}}, srv);
+    assert(game::CompareStates(srv, cli).empty());  // 一致
+    assert(cli.players[0].x == 1);
+
+    // Step 3: 第二帧 — 服务端丢包，客户端继续预测
+    cli = game::tickLogic({{"p1", {0x04}}}, cli);   // 客户端预测 RIGHT
+    // 服务端没收到输入 → 不更新
+    srv = game::tickLogic({}, srv);
+
+    // 偏差检测
+    auto corrs = game::CompareStates(srv, cli);
+    assert(corrs.size() == 1);
+    assert(corrs[0].delta_x == -1);  // 客户端超前 1 格
+
+    // Step 4: 和解 — 客户端向权威位置插值
+    game::ReconcileState(cli, srv, 0.5f);
+    // 客户端: x=2, 服务端: x=1, alpha=0.5 → x = 2 + (1-2)*0.5 = 1.5 → int32=1
+    assert(cli.players[0].x == 1);     // 已纠正
+    assert(game::CompareStates(srv, cli).empty());  // 一致
+
+    printf("\n    丢包偏差2→1→和解恢复: 完成\n");
+}
+
+void TestReconciliationSmoothConvergence() {
+    // 多步和解：偏差较大时逐步平滑逼近
+    game::GameState srv, cli;
+    srv.players.push_back({"p1", 0, 0});
+    cli.players.push_back({"p1", 20, 0});  // 客户端严重偏离
+
+    // 3 步和解后应接近权威位置
+    game::ReconcileState(cli, srv, 0.3f);   // 20→14
+    assert(cli.players[0].x == 14);
+    game::ReconcileState(cli, srv, 0.3f);   // 14→9
+    assert(cli.players[0].x == 9);
+    game::ReconcileState(cli, srv, 0.3f);   // 9→6
+    assert(cli.players[0].x == 6);
+    // 继续趋近...
+    game::ReconcileState(cli, srv, 0.3f);   // 6→4
+    game::ReconcileState(cli, srv, 0.3f);   // 4→2
+    game::ReconcileState(cli, srv, 0.3f);   // 2→1
+    assert(cli.players[0].x == 1);
+
+    printf("\n    20→14→9→6→4→2→1: 6步平滑收敛\n");
+}
+
+// ============================================================
 // 入口
 // ============================================================
 
@@ -313,6 +497,22 @@ int main() {
     RunTest("3 玩家 10 帧位置验证",       TestThreePlayersMultiFrame);
     RunTest("确定性回放验证",             TestDeterministicReplay);
     RunTest("3 玩家不同方向 3 帧",        TestThreePlayersDifferentMoves);
+
+    printf("\n[CompareStates 服务端vs客户端偏差]\n");
+    RunTest("相同状态无偏差",               TestCompareStatesIdentical);
+    RunTest("检测单玩家偏差",               TestCompareStatesDetectsDeviation);
+    RunTest("多玩家部分偏差",               TestCompareStatesMultiPlayer);
+    RunTest("客户端缺失玩家",               TestCompareStatesMissingPlayer);
+
+    printf("\n[ReconcileState 和解插值]\n");
+    RunTest("alpha=1.0 直接跳到权威",       TestReconcileFullJump);
+    RunTest("alpha=0.5 插值到中间",         TestReconcileInterpolate);
+    RunTest("alpha=0.3 小步逼近",           TestReconcileSmallStep);
+    RunTest("新玩家直接加入客户端状态",     TestReconcileNewPlayer);
+
+    printf("\n[完整预测→和解流程]\n");
+    RunTest("丢包偏差→和解恢复",            TestPredictionReconciliationLoop);
+    RunTest("严重偏离6步平滑收敛",           TestReconciliationSmoothConvergence);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;
