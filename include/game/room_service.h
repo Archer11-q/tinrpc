@@ -49,6 +49,9 @@ public:
 
     // 发送帧输入（客户端每帧调用，输入存入 InputBuffer）
     virtual std::optional<std::vector<uint8_t>> SendInput(const std::vector<uint8_t>& body) = 0;
+
+    // 停止游戏（结束对局，停止帧同步）
+    virtual std::optional<std::vector<uint8_t>> StopGame(const std::vector<uint8_t>& body) = 0;
 };
 
 // ============================================================
@@ -70,6 +73,7 @@ public:
     std::optional<std::vector<uint8_t>> GetRoomList(const std::vector<uint8_t>& body) override;
     std::optional<std::vector<uint8_t>> StartGame(const std::vector<uint8_t>& body) override;
     std::optional<std::vector<uint8_t>> SendInput(const std::vector<uint8_t>& body) override;
+    std::optional<std::vector<uint8_t>> StopGame(const std::vector<uint8_t>& body) override;
 
 private:
     RoomManager* room_mgr_;    // 不持有所有权
@@ -109,6 +113,9 @@ public:
     // 发送帧输入 → 返回 SendInputRes
     SendInputRes SendInput(const PlayerInputReq& req);
 
+    // 停止游戏 → 返回 StopGameRes
+    StopGameRes StopGame(const StopGameReq& req);
+
 private:
     // 发起 RPC 调用并等待响应，解析为指定 Protobuf 类型
     template<typename ResProto>
@@ -133,6 +140,7 @@ inline void RegisterRoomService(rpc::Dispatch* dispatch, RoomService* service) {
     dispatch->RegisterMethod("GetRoomList", [service](const std::vector<uint8_t>& body) { return service->GetRoomList(body); });
     dispatch->RegisterMethod("StartGame",   [service](const std::vector<uint8_t>& body) { return service->StartGame(body); });
     dispatch->RegisterMethod("SendInput",   [service](const std::vector<uint8_t>& body) { return service->SendInput(body); });
+    dispatch->RegisterMethod("StopGame",    [service](const std::vector<uint8_t>& body) { return service->StopGame(body); });
 }
 
 // ============================================================
@@ -195,6 +203,12 @@ inline SendInputRes RoomServiceStub::SendInput(const PlayerInputReq& req) {
     std::string buf;
     req.SerializeToString(&buf);
     return DoCall<SendInputRes>("SendInput", std::vector<uint8_t>(buf.begin(), buf.end()));
+}
+
+inline StopGameRes RoomServiceStub::StopGame(const StopGameReq& req) {
+    std::string buf;
+    req.SerializeToString(&buf);
+    return DoCall<StopGameRes>("StopGame", std::vector<uint8_t>(buf.begin(), buf.end()));
 }
 
 } // namespace game

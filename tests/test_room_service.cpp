@@ -225,6 +225,14 @@ struct SimpleStub {
         if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
         return res;
     }
+
+    game::StopGameRes StopGame(const game::StopGameReq& req) {
+        std::string buf; req.SerializeToString(&buf);
+        auto rsp = client->Call("StopGame", std::vector<uint8_t>(buf.begin(), buf.end()));
+        game::StopGameRes res;
+        if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
+        return res;
+    }
 };
 
 // ============================================================
@@ -1426,6 +1434,66 @@ void TestStartGameInitiatesFrameSync() {
 }
 
 // ============================================================
+// Test 16: 完整端到端 — 房间 → StartGame → 帧同步多帧 → StopGame
+// ============================================================
+
+void TestE2EFrameSyncFlow() {
+    // 直接操作底层验证完整房间+帧同步流程（不走RPC，避免网络层时序干扰）
+    game::RoomManager room_mgr;
+
+    // 创建房间 + 加入
+    game::GameRoom::Config cfg;
+    cfg.max_players = 4;
+    auto cr = room_mgr.CreateRoom("player_a", cfg);
+    if (!cr.ok) { printf("[FAIL] CreateRoom\n"); abort(); }
+    std::string room_id = cr.room_id;
+    auto* room = room_mgr.GetRoom(room_id);
+    room->SetState(game::ROOM_STATE_WAITING);
+    if (!room_mgr.JoinRoom(room_id, "player_b").ok) { printf("[FAIL] JoinRoom\n"); abort(); }
+    if (room->player_count() != 2) { printf("[FAIL] player count\n"); abort(); }
+
+    printf("\n    [Step1] 房间=%s, 2人\n", room_id.c_str());
+
+    // ---- Step 2: StartGame → 帧同步初始化 ----
+    auto sg = room_mgr.StartGame(room_id, "player_a");
+    if (!sg.ok) { printf("[FAIL] StartGame: code=%d\n", (int)sg.code); abort(); }
+
+    room->InitFrameSync(20, 120, 60);
+    if (!room->HasFrameSync()) { printf("[FAIL] no frame sync\n"); abort(); }
+
+    // 设置帧广播回调
+    int broadcast_count = 0;
+    room->GetFrameSync()->SetFrameCallback(
+        [&broadcast_count](uint32_t, const auto&) { broadcast_count++; });
+
+    printf("    [Step2] 帧同步初始化完成, fps=%d\n", room->GetFrameSync()->Fps());
+
+    // ---- Step 3: 3帧输入 → 手动Tick ----
+    for (int f = 1; f <= 3; f++) {
+        room->OnPlayerFrameInput(static_cast<uint32_t>(f), "player_a", {0x04});
+        room->OnPlayerFrameInput(static_cast<uint32_t>(f), "player_b", {0x02});
+
+        size_t n = room->GetFrameSync()->Tick();
+        if (n != 2) { printf("[FAIL] f=%d players=%zu\n", f, n); abort(); }
+    }
+
+    if (broadcast_count != 3) { printf("[FAIL] broadcast=%d\n", broadcast_count); abort(); }
+    if (room->GetFrameSync()->CurrentFrame() != 3)
+        { printf("[FAIL] frame=%u\n", room->GetFrameSync()->CurrentFrame()); abort(); }
+
+    printf("    [Step3] 3帧完成: frame=%u, broadcast=%d\n",
+           room->GetFrameSync()->CurrentFrame(), broadcast_count);
+
+    // ---- Step 4: StopGame → FINISHED ----
+    room->StopFrameSync();
+    room->SetState(game::ROOM_STATE_FINISHED);
+    if (room->state() != game::ROOM_STATE_FINISHED)
+        { printf("[FAIL] state not FINISHED\n"); abort(); }
+
+    printf("    [Step4] 游戏结束, 状态=FINISHED\n");
+}
+
+// ============================================================
 // 入口
 // ============================================================
 
@@ -1466,6 +1534,9 @@ int main() {
 
     printf("\n[FrameSync集成] 房间状态机与帧同步衔接\n");
     RunTest("StartGame启动帧同步+SendInput",     TestStartGameInitiatesFrameSync);
+
+    printf("\n[E2E] 房间→StartGame→帧同步→StopGame\n");
+    RunTest("匹配→房间→开始→帧同步→结束",  TestE2EFrameSyncFlow);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

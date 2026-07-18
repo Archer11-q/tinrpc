@@ -136,6 +136,18 @@ message StartGameRes {
     ErrorCode error_code = 3;  // 错误码（ERR_NONE = 成功）
 }
 
+// 停止游戏（结束对局）
+message StopGameReq {
+    string room_id   = 1;
+    string player_id = 2;  // 发起请求的玩家
+}
+
+message StopGameRes {
+    bool success        = 1;
+    string error_msg    = 2;
+    ErrorCode error_code = 3;  // 错误码（ERR_NONE = 成功）
+}
+
 // 游戏结束通知（服务端主动推送，非请求-响应）
 message GameOverNtf {
     string room_id              = 1;

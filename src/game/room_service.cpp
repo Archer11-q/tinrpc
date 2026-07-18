@@ -247,16 +247,38 @@ std::optional<std::vector<uint8_t>> RoomServiceImpl::StartGame(const std::vector
             default:                    res.set_error_msg("开始游戏失败"); break;
         }
     } else {
-        // 游戏开始成功 → 初始化并启动帧同步
+        // 游戏开始成功 → 初始化 + 启动帧同步 + 设置广播回调
         auto* room = room_mgr_->GetRoom(req.room_id());
         if (room) {
             if (!room->HasFrameSync()) {
                 room->InitFrameSync(20);
-                printf("[RoomService] 帧同步已初始化: room=%s, fps=20\n",
-                       req.room_id().c_str());
             }
+
+            // 设置帧广播回调：每帧将输入打包为 FrameData 广播给房间所有人
+            std::string rid = req.room_id();
+            RoomManager* mgr = room_mgr_;
+            Broadcast* bcast = broadcast_;
+            room->GetFrameSync()->SetFrameCallback(
+                [rid, mgr, bcast](uint32_t frame_no,
+                                   const FrameSyncManager::FrameInputs& inputs) {
+                    FrameData frame_data;
+                    frame_data.set_frame_no(frame_no);
+                    for (auto& [pid, data] : inputs) {
+                        auto* entry = frame_data.add_inputs();
+                        entry->set_player_id(pid);
+                        entry->set_input_data(data.data(), data.size());
+                    }
+
+                    std::string buf;
+                    frame_data.SerializeToString(&buf);
+                    std::vector<uint8_t> bytes(buf.begin(), buf.end());
+
+                    if (bcast) {
+                        bcast->BroadcastToRoom(rid, bytes);
+                    }
+                });
+
             room->StartFrameSync();
-            printf("[RoomService] 帧同步已启动: room=%s\n", req.room_id().c_str());
         }
     }
 
@@ -304,6 +326,43 @@ std::optional<std::vector<uint8_t>> RoomServiceImpl::SendInput(const std::vector
 
     // 4. 构造响应
     SendInputRes res;
+    res.set_success(true);
+
+    std::string buf;
+    res.SerializeToString(&buf);
+    return std::vector<uint8_t>(buf.begin(), buf.end());
+}
+
+// ---- StopGame ----
+
+std::optional<std::vector<uint8_t>> RoomServiceImpl::StopGame(const std::vector<uint8_t>& body) {
+    // 1. 解析请求
+    StopGameReq req;
+    if (!req.ParseFromArray(body.data(), static_cast<int>(body.size()))) {
+        return std::nullopt;
+    }
+
+    // 2. 检查房间
+    auto* room = room_mgr_->GetRoom(req.room_id());
+    if (!room) {
+        StopGameRes res;
+        res.set_success(false);
+        res.set_error_code(ERR_ROOM_NOT_FOUND);
+        res.set_error_msg("房间不存在");
+        std::string buf; res.SerializeToString(&buf);
+        return std::vector<uint8_t>(buf.begin(), buf.end());
+    }
+
+    // 3. 停止帧同步
+    if (room->HasFrameSync()) {
+        room->StopFrameSync();
+    }
+
+    // 4. 改变房间状态为 FINISHED
+    room->SetState(ROOM_STATE_FINISHED);
+
+    // 5. 构造响应
+    StopGameRes res;
     res.set_success(true);
 
     std::string buf;
