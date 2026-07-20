@@ -47,6 +47,8 @@ add_library(rpc_lib STATIC
     src/game/frame_sync.cpp
     src/game/game_state.cpp
     src/game/snapshot_manager.cpp
+    src/game/elo_calculator.cpp
+    src/game/match_queue.cpp
     ${PROTO_SRCS}
 )
 
@@ -212,3 +214,11 @@ add_executable(test_frame_sync_flow
     tests/test_frame_sync_flow.cpp
 )
 target_link_libraries(test_frame_sync_flow rpc_lib pthread)
+
+# ============================================================
+# EloCalculator + MatchQueue 匹配系统测试
+# ============================================================
+add_executable(test_match_queue
+    tests/test_match_queue.cpp
+)
+target_link_libraries(test_match_queue rpc_lib pthread)
