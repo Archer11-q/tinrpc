@@ -40,6 +40,10 @@ public:
     // 匹配成功后双方自动离队
     std::string FindMatch(const std::string& player_id);
 
+    // 批量匹配：扫描有序队列，相邻分差在范围内的配对出队
+    // 返回本次匹配成功的 (player_id, opponent_id) 列表
+    std::vector<std::pair<std::string, std::string>> TryMatch();
+
     // 查询
     size_t QueueSize()                  const { return queue_.size(); }
     bool   IsEmpty()                    const { return queue_.empty(); }

@@ -126,4 +126,43 @@ double MatchQueue::GetScore(const std::string& player_id) const {
     return idx >= 0 ? queue_[static_cast<size_t>(idx)].elo_score : 0.0;
 }
 
+// ---- 批量匹配 ----
+
+std::vector<std::pair<std::string, std::string>> MatchQueue::TryMatch() {
+    std::vector<std::pair<std::string, std::string>> matched;
+
+    if (queue_.size() < 2) return matched;
+
+    // 标记已配对的索引（避免重复消费）
+    std::vector<bool> paired(queue_.size(), false);
+
+    for (size_t i = 0; i + 1 < queue_.size(); i++) {
+        if (paired[i]) continue;
+
+        const auto& a = queue_[i];
+        const auto& b = queue_[i + 1];
+
+        double diff = std::abs(a.elo_score - b.elo_score);
+        double range_a = CurrentEloRange(a.enqueue_time_ms);
+        double range_b = CurrentEloRange(b.enqueue_time_ms);
+
+        // 双方分差都在可接受范围内
+        if (diff <= range_a && diff <= range_b) {
+            matched.emplace_back(a.player_id, b.player_id);
+            paired[i]     = true;
+            paired[i + 1] = true;
+            i++;  // 跳过下一个
+        }
+    }
+
+    // 从后往前删除已配对玩家（保证索引有效）
+    for (int i = static_cast<int>(queue_.size()) - 1; i >= 0; i--) {
+        if (paired[static_cast<size_t>(i)]) {
+            queue_.erase(queue_.begin() + i);
+        }
+    }
+
+    return matched;
+}
+
 } // namespace game

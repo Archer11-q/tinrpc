@@ -182,32 +182,24 @@ void TestFindMatchNotInQueue() {
 
 void TestEloRangeExpands() {
     // 初始分差 50，每秒放宽 100
+    // p1(1500) vs p2(1600)：分差 100 > 初始 50，刚入队时无匹配
+    // 等待 600ms 后，范围 = 50 + 100*0.6 = 110 > 100 → 匹配成功
     game::MatchQueue mq(30, 50, 100);
 
     mq.EnterQueue("p1", 1500);
-    mq.EnterQueue("p2", 1600);  // 分差 100 > 初始 50
-
-    // 刚入队时找不到匹配
-    assert(mq.FindMatch("p1").empty());
-
-    // 等待 1 秒后，分差放宽到 150 → 应能找到
-    // 注：CurrentEloRange 基于真实时间，这里依赖系统时钟
-    // 通过 EnterQueue 重新进入来更新入队时间
-    mq.EnterQueue("p1", 1500);
     mq.EnterQueue("p2", 1600);
+
+    // 刚入队：分差 100 > 范围 50 → 无匹配，双方留在队列
+    assert(mq.FindMatch("p1").empty());
+    assert(mq.IsInQueue("p1"));
+    assert(mq.IsInQueue("p2"));
+
+    // 等待 600ms：p1 的放宽范围 = 50 + 100*0.6 = 110 > 分差 100
     std::this_thread::sleep_for(std::chrono::milliseconds(600));
-    mq.EnterQueue("p1", 1500);  // 刷新入队时间（但分数不变）
-    // 600ms → waited=0.6s → range = 50 + 100*0.6 = 110 > 100 → 匹配成功
-    // 但 p2 的入队时间还是旧的？不，EnterQueue("p1") 只更新 p1 的入队时间
-    // p2 的入队时间没变，所以 p2 的 range 可能不同
-    // 简化：直接验证 600ms 后的匹配逻辑
-    // 由于时间测试不稳定，改为验证：刚入队找不到，等一会儿能找到
-    std::string opp = mq.FindMatch("p1");
-    // p2 还在队列中（入队时间也较旧），分差 100
-    // p1 的 range: 50 + 100*0.6 = 110 > 100 → 应该找到
-    // 但 p2 的 range 还没计算... 不对，FindMatch 用的是 p1 的 range
-    assert(!opp.empty());  // 时间放宽后应能匹配
-    assert(opp == "p2");
+
+    // 范围放宽后匹配成功，双方自动离队
+    assert(mq.FindMatch("p1") == "p2");
+    assert(mq.IsEmpty());
 }
 
 void TestMatchRemovesBothPlayers() {
@@ -250,6 +242,91 @@ void TestEmptyQueue() {
 }
 
 // ============================================================
+// 任务5: TryMatch 批量匹配
+// ============================================================
+
+void TestTryMatchExactPair() {
+    game::MatchQueue mq(30, 200, 0);
+    mq.EnterQueue("p1", 1500);
+    mq.EnterQueue("p2", 1510);  // 分差 10 ≤ 200 → 匹配
+    mq.EnterQueue("p3", 1800);
+    mq.EnterQueue("p4", 1810);  // 分差 10 ≤ 200 → 匹配
+
+    auto pairs = mq.TryMatch();
+    assert(pairs.size() == 2);
+    // 验证配对是相邻的
+    bool has_12 = (pairs[0].first == "p1" && pairs[0].second == "p2") ||
+                  (pairs[1].first == "p1" && pairs[1].second == "p2");
+    bool has_34 = (pairs[0].first == "p3" && pairs[0].second == "p4") ||
+                  (pairs[1].first == "p3" && pairs[1].second == "p4");
+    assert(has_12 && has_34);
+
+    assert(mq.IsEmpty());  // 全部配对出队
+}
+
+void TestTryMatchNoPair() {
+    game::MatchQueue mq(30, 50, 0);
+    mq.EnterQueue("p1", 1500);
+    mq.EnterQueue("p2", 1600);  // 分差 100 > 50
+    mq.EnterQueue("p3", 1700);  // 分差 100 > 50
+
+    auto pairs = mq.TryMatch();
+    assert(pairs.empty());
+    assert(mq.QueueSize() == 3);  // 无人离队
+}
+
+void TestTryMatchPartial() {
+    game::MatchQueue mq(30, 100, 0);
+    mq.EnterQueue("p1", 1500);
+    mq.EnterQueue("p2", 1550);  // 分差 50 ≤ 100 → 匹配
+    mq.EnterQueue("p3", 1700);  // 分差 150 > 100 → 不匹配
+
+    auto pairs = mq.TryMatch();
+    assert(pairs.size() == 1);
+    assert(mq.QueueSize() == 1);    // p3 留在队列
+    assert(mq.IsInQueue("p3"));
+}
+
+void TestTryMatchEmptyOrSingle() {
+    game::MatchQueue mq;
+    assert(mq.TryMatch().empty());
+
+    mq.EnterQueue("p1", 1500);
+    assert(mq.TryMatch().empty());
+    assert(mq.QueueSize() == 1);
+}
+
+void TestTryMatchWithExpandedRange() {
+    // 分差 100，初始范围 50，等 700ms 后范围 50+100*0.7=120 > 100
+    game::MatchQueue mq(30, 50, 100);
+    mq.EnterQueue("p1", 1500);
+    mq.EnterQueue("p2", 1600);
+
+    // 刚入队：范围 50 < 分差 100 → 不匹配
+    assert(mq.TryMatch().empty());
+
+    // 等待后重新入队刷新时间，模拟定时扫描
+    std::this_thread::sleep_for(std::chrono::milliseconds(700));
+    mq.EnterQueue("p1", 1500);  // 刷新入队时间让范围生效
+    mq.EnterQueue("p2", 1600);
+
+    auto pairs = mq.TryMatch();
+    assert(pairs.size() == 1);  // 范围放宽后匹配成功
+}
+
+void TestTryMatchThreePlayers() {
+    // p1(1500), p2(1520), p3(1540): p1-p2 配对, p3 剩余
+    game::MatchQueue mq(30, 50, 0);
+    mq.EnterQueue("p1", 1500);
+    mq.EnterQueue("p2", 1520);
+    mq.EnterQueue("p3", 1540);
+
+    auto pairs = mq.TryMatch();
+    assert(pairs.size() == 1);   // p1 配 p2（不是 p2 配 p3，因 p2 已被消费）
+    assert(mq.QueueSize() == 1); // p3 剩余
+}
+
+// ============================================================
 // 入口
 // ============================================================
 
@@ -287,6 +364,14 @@ int main() {
     RunTest("单人无匹配",                  TestSinglePlayerNoMatch);
     RunTest("乱序插入后有序匹配",          TestManyPlayersSorted);
     RunTest("空队列操作",                  TestEmptyQueue);
+
+    printf("\n[TryMatch 批量匹配]\n");
+    RunTest("两对精准匹配全部出队",        TestTryMatchExactPair);
+    RunTest("分差过大无配对",              TestTryMatchNoPair);
+    RunTest("部分配对剩余留队",            TestTryMatchPartial);
+    RunTest("空队列/单人返回空",           TestTryMatchEmptyOrSingle);
+    RunTest("范围放宽后批量配对",          TestTryMatchWithExpandedRange);
+    RunTest("三人只配最近一对",            TestTryMatchThreePlayers);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;
