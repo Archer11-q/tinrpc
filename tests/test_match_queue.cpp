@@ -443,6 +443,35 @@ void TestMatchCreatesRoom() {
 }
 
 // ============================================================
+// 任务9: 断连清理 — CancelMatch 确保断连玩家不占队列
+// ============================================================
+
+// 模拟：3 人入队 → 中间一个断连（CancelMatch）→ TryMatch 只匹配剩余 2 人
+// 实际场景中 CancelMatch 由 EPOLLRDHUP 断连回调调用，此处验证核心逻辑。
+void TestDisconnectCleanup() {
+    game::MatchQueue mq(30, 200, 0);
+    mq.EnterQueue("p1", 1500);
+    mq.EnterQueue("p2", 1520);
+    mq.EnterQueue("p3", 1540);
+
+    assert(mq.QueueSize() == 3);
+
+    // p2 断连 → 服务端回调 mq.CancelMatch("p2")
+    mq.CancelMatch("p2");
+    assert(mq.QueueSize() == 2);
+    assert(!mq.IsInQueue("p2"));
+
+    // TryMatch 应只配对 p1 和 p3（跳过了 p2）
+    auto pairs = mq.TryMatch();
+    assert(pairs.size() == 1);
+    assert((pairs[0].first == "p1" && pairs[0].second == "p3") ||
+           (pairs[0].first == "p3" && pairs[0].second == "p1"));
+    assert(mq.IsEmpty());
+
+    printf("\n    p2断连→清理→p1+p3配对成功\n");
+}
+
+// ============================================================
 // 入口
 // ============================================================
 
@@ -499,6 +528,9 @@ int main() {
 
     printf("\n[匹配→创建房间 集成]\n");
     RunTest("匹配成功回调中创建房间",       TestMatchCreatesRoom);
+
+    printf("\n[断连清理] 匹配队列自动移除断连玩家\n");
+    RunTest("中间断连→TryMatch匹配剩余2人",   TestDisconnectCleanup);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

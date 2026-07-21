@@ -570,3 +570,22 @@ R_A' = R_A + K * (S_A - E_A)
 
 - 400 分差 → 高分的期望胜率约 0.91（"强 10 倍"）
 - K 因子（默认 32）：控制单局分数变化幅度，K 越大波动越大
+
+---
+
+### 匹配队列断连清理设计
+
+**背景**：v0.8 已实现 EPOLLRDHUP 断连检测（自动从房间移除），但玩家也可能在"匹配等待中"断连。匹配池没有自动清理意味着死玩家永远占着队列，影响 TryMatch 配对。
+
+**设计**：不修改 MatchQueue 内部——`CancelMatch` 已存在。在断连回调中补充一行调用：
+
+```
+DisconnectCallback(fd):
+  player_id = fd_to_player[fd]
+  room_mgr.LeaveRoomAndNotify(room_id, player_id, broadcast)   // 已有
+  match_queue.CancelMatch(player_id)                            // 新增
+  player_conns.erase(player_id)
+  fd_to_player.erase(fd)
+```
+
+**为什么不在 MatchQueue 内部感知断连**：MatchQueue 是纯数据容器，不持有 Connection / fd。让它感知网络事件需要引入反向映射（fd → player_id），职责越界。把 `CancelMatch` 作为公开 API，由断连回调调用——职责清晰，且已在 v0.8 的断连清理链路中验证。
