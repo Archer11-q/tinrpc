@@ -181,25 +181,29 @@ void TestFindMatchNotInQueue() {
 // ============================================================
 
 void TestEloRangeExpands() {
-    // 初始分差 50，每秒放宽 100
-    // p1(1500) vs p2(1600)：分差 100 > 初始 50，刚入队时无匹配
-    // 等待 600ms 后，范围 = 50 + 100*0.6 = 110 > 100 → 匹配成功
+    // 验证超时分差放宽链路的隐式调用链：
+    //   FindMatch → CurrentEloRange(enqueue_time)
+    //            → waited = Now() - enqueue_time (自然增长，不刷新)
+    //            → range = init + expand * waited
+    //
+    // 本测试中：p1(1500) vs p2(1600), 分差 100, 初始范围 50, 每秒放宽 100
+    //   T0:    入队, waited=0   → range=50  < 分差100 → 无匹配
+    //   T0+0.6: sleep 600ms     → range=110 > 分差100 → 匹配成功
+    // (入队时间不刷新——waited 靠 Now()-enqueue_time 自然增长)
     game::MatchQueue mq(30, 50, 100);
 
-    mq.EnterQueue("p1", 1500);
-    mq.EnterQueue("p2", 1600);
+    mq.EnterQueue("p1", 1500);  // enqueue_time = T0
+    mq.EnterQueue("p2", 1600);  // enqueue_time = T0
 
-    // 刚入队：分差 100 > 范围 50 → 无匹配，双方留在队列
-    assert(mq.FindMatch("p1").empty());
-    assert(mq.IsInQueue("p1"));
-    assert(mq.IsInQueue("p2"));
+    assert(mq.FindMatch("p1").empty());  // range=50 < diff=100
+    assert(mq.IsInQueue("p1"));          // 匹配失败，留在队列
 
-    // 等待 600ms：p1 的放宽范围 = 50 + 100*0.6 = 110 > 分差 100
     std::this_thread::sleep_for(std::chrono::milliseconds(600));
 
-    // 范围放宽后匹配成功，双方自动离队
+    // p1 的 enqueue_time 仍是 T0, waited = Now()-T0 ≈ 600ms
+    // CurrentEloRange 返回 50 + 100*0.6 = 110 > 分差100
     assert(mq.FindMatch("p1") == "p2");
-    assert(mq.IsEmpty());
+    assert(mq.IsEmpty());  // 匹配成功，双方出队
 }
 
 void TestMatchRemovesBothPlayers() {
@@ -327,6 +331,118 @@ void TestTryMatchThreePlayers() {
 }
 
 // ============================================================
+// 任务6: MatchCallback 匹配成功回调
+// ============================================================
+
+void TestCallbackOnFindMatch() {
+    game::MatchQueue mq(30, 200, 0);
+    mq.EnterQueue("p1", 1500);
+    mq.EnterQueue("p2", 1510);
+
+    std::string cb_p1, cb_p2;
+    mq.SetMatchCallback([&](const std::string& a, const std::string& b) {
+        cb_p1 = a; cb_p2 = b;
+    });
+
+    mq.FindMatch("p1");
+    assert(cb_p1 == "p1" && cb_p2 == "p2");
+}
+
+void TestCallbackOnTryMatch() {
+    game::MatchQueue mq(30, 200, 0);
+    mq.EnterQueue("p1", 1500);
+    mq.EnterQueue("p2", 1510);
+    mq.EnterQueue("p3", 1700);
+    mq.EnterQueue("p4", 1710);
+
+    int cb_count = 0;
+    mq.SetMatchCallback([&](const std::string&, const std::string&) {
+        cb_count++;
+    });
+
+    auto pairs = mq.TryMatch();
+    assert(pairs.size() == 2);
+    assert(cb_count == 2);  // 每对触发一次
+}
+
+void TestCallbackNotCalledOnFail() {
+    game::MatchQueue mq(30, 50, 0);
+    mq.EnterQueue("p1", 1500);
+    mq.EnterQueue("p2", 1600);  // 分差太大
+
+    bool called = false;
+    mq.SetMatchCallback([&](const std::string&, const std::string&) {
+        called = true;
+    });
+
+    assert(mq.FindMatch("p1").empty());
+    assert(!called);  // 匹配失败不触发回调
+}
+
+// ============================================================
+// 任务7: CancelMatch
+// ============================================================
+
+void TestCancelMatch() {
+    game::MatchQueue mq;
+    mq.EnterQueue("p1", 1500);
+    mq.EnterQueue("p2", 1600);
+    mq.EnterQueue("p3", 1700);
+    assert(mq.QueueSize() == 3);
+
+    mq.CancelMatch("p2");  // 新名
+    assert(!mq.IsInQueue("p2"));
+    assert(mq.QueueSize() == 2);
+
+    mq.LeaveQueue("p3");   // 旧名仍可使用
+    assert(!mq.IsInQueue("p3"));
+    assert(mq.QueueSize() == 1);
+
+    mq.CancelMatch("p999");  // 不存在不崩溃
+    assert(mq.QueueSize() == 1);
+}
+
+// ============================================================
+// 任务8: 匹配成功 → 创建房间（集成验证）
+// ============================================================
+
+#include "game/room_manager.h"
+
+void TestMatchCreatesRoom() {
+    game::MatchQueue mq(30, 200, 0);
+    game::RoomManager room_mgr;
+
+    mq.EnterQueue("player_a", 1500);
+    mq.EnterQueue("player_b", 1520);
+
+    // 匹配成功时自动创建房间
+    std::string created_room_id;
+    mq.SetMatchCallback([&](const std::string& p1, const std::string& p2) {
+        game::GameRoom::Config cfg;
+        cfg.max_players = 2;
+        auto result = room_mgr.CreateRoom(p1, cfg);
+        if (result.ok) {
+            room_mgr.GetRoom(result.room_id)->SetState(game::ROOM_STATE_WAITING);
+            room_mgr.JoinRoom(result.room_id, p2);
+            created_room_id = result.room_id;
+        }
+    });
+
+    mq.FindMatch("player_a");
+
+    // 验证房间已创建，双方已加入
+    assert(!created_room_id.empty());
+    auto* room = room_mgr.GetRoom(created_room_id);
+    assert(room != nullptr);
+    assert(room->player_count() == 2);
+    assert(room->HasPlayer("player_a"));
+    assert(room->HasPlayer("player_b"));
+    assert(room->state() == game::ROOM_STATE_WAITING);
+
+    printf("\n    房间=%s, 人数=%d\n", created_room_id.c_str(), room->player_count());
+}
+
+// ============================================================
 // 入口
 // ============================================================
 
@@ -372,6 +488,17 @@ int main() {
     RunTest("空队列/单人返回空",           TestTryMatchEmptyOrSingle);
     RunTest("范围放宽后批量配对",          TestTryMatchWithExpandedRange);
     RunTest("三人只配最近一对",            TestTryMatchThreePlayers);
+
+    printf("\n[MatchCallback 匹配成功回调]\n");
+    RunTest("FindMatch成功后回调触发",      TestCallbackOnFindMatch);
+    RunTest("TryMatch成功后回调触发",       TestCallbackOnTryMatch);
+    RunTest("匹配失败回调不触发",           TestCallbackNotCalledOnFail);
+
+    printf("\n[CancelMatch 取消匹配]\n");
+    RunTest("CancelMatch从队列移除",        TestCancelMatch);
+
+    printf("\n[匹配→创建房间 集成]\n");
+    RunTest("匹配成功回调中创建房间",       TestMatchCreatesRoom);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

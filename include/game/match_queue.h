@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdint>
 #include <cstddef>
+#include <functional>
 
 namespace game {
 
@@ -29,11 +30,18 @@ public:
                double elo_range_init = 100.0,
                double elo_range_expand_per_sec = 20.0);
 
+    // 匹配成功回调（典型用途：创建房间 + 通知双方）
+    using MatchCallback = std::function<void(const std::string& p1, const std::string& p2)>;
+
     // 入队
     void EnterQueue(const std::string& player_id, double elo_score);
 
-    // 离队
-    void LeaveQueue(const std::string& player_id);
+    // 取消匹配（离队）
+    void CancelMatch(const std::string& player_id);
+    void LeaveQueue(const std::string& player_id) { CancelMatch(player_id); }
+
+    // 设置匹配成功回调
+    void SetMatchCallback(MatchCallback cb) { on_match_ = std::move(cb); }
 
     // 为指定玩家查找对手
     // 返回匹配到的 player_id（空串表示暂无合适对手）
@@ -63,6 +71,7 @@ private:
     int    max_wait_sec_;
     double elo_range_init_;
     double elo_range_expand_per_sec_;
+    MatchCallback on_match_;
 
     // 获取当前时间（毫秒）
     static int64_t NowMs();

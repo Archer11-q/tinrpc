@@ -71,7 +71,7 @@ void MatchQueue::EnterQueue(const std::string& player_id, double elo_score) {
     queue_.insert(it, std::move(e));
 }
 
-void MatchQueue::LeaveQueue(const std::string& player_id) {
+void MatchQueue::CancelMatch(const std::string& player_id) {
     int idx = FindIndex(player_id);
     if (idx >= 0) {
         queue_.erase(queue_.begin() + idx);
@@ -112,6 +112,11 @@ std::string MatchQueue::FindMatch(const std::string& player_id) {
     } else {
         queue_.erase(queue_.begin() + best_idx);
         queue_.erase(queue_.begin() + idx);
+    }
+
+    // 触发匹配成功回调（创建房间 + 通知双方）
+    if (on_match_) {
+        on_match_(player_id, opponent);
     }
 
     return opponent;
@@ -159,6 +164,13 @@ std::vector<std::pair<std::string, std::string>> MatchQueue::TryMatch() {
     for (int i = static_cast<int>(queue_.size()) - 1; i >= 0; i--) {
         if (paired[static_cast<size_t>(i)]) {
             queue_.erase(queue_.begin() + i);
+        }
+    }
+
+    // 触发每对匹配成功的回调
+    if (on_match_) {
+        for (auto& [p1, p2] : matched) {
+            on_match_(p1, p2);
         }
     }
 
