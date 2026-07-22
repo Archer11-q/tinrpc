@@ -32,6 +32,15 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 | v0.9 | GameState + tickLogic — 确定性状态更新 | ✅ |
 | v0.9 | CatchUp 追帧 — 每次2帧加速策略 | ✅ |
 | v0.9 | SnapshotManager — 环形缓冲区快照/回滚占位 | ✅ |
+| v0.9 | 预测/和解(Reconciliation) — CompareStates + ReconcileState | ✅ |
+| v0.9 | 帧同步与房间衔接 — StartGame自动启动帧同步 + SendInput/StopGame RPC | ✅ |
+| v0.9 | 全流程模拟测试 + 耗时报告 | ✅ |
+| v0.10 | EloCalculator — ELO 分计算 | ✅ |
+| v0.10 | MatchQueue — 匹配队列 + 超时放宽 | ✅ |
+| v0.10 | MatchService — 匹配→房间→通知→超时 | ✅ |
+| v0.10 | 匹配队列断连清理 — CancelMatch在断连回调中调用 | ✅ |
+| v0.10 | GameService — 集中入口 + main() | ✅ |
+| v0.10 | SessionManager 接口 + 断线重连方案文档 | ✅ |
 
 ## 演化方向
 
@@ -51,10 +60,15 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 │   ├── FrameSyncManager  ← 输入收集 + 帧广播 + 追帧 + Timer驱动 ✅
 │   ├── InputBuffer       ← Jitter Buffer（deque, 乱序支持）✅
 │   ├── GameState         ← 确定性状态更新（tickLogic）✅
-│   └── SnapshotManager   ← 环形缓冲区快照/回滚（断线重连）✅
+│   ├── SnapshotManager   ← 环形缓冲区快照/回滚（断线重连）✅
+│   ├── Reconciliation    ← 预测/和解（CompareStates + ReconcileState）✅
+│   └── 房间衔接           ← StartGame自动启动帧同步 + SendInput/StopGame RPC ✅
 ├── 匹配系统
-│   ├── EloCalculator     ← ELO 分计算
-│   └── MatchQueue        ← 匹配队列 + 超时放宽
+│   ├── EloCalculator     ← ELO 分计算 ✅
+│   ├── MatchQueue        ← 匹配队列 + 超时放宽 ✅
+│   └── MatchService      ← 匹配→房间→通知→超时 ✅
+├── GameService           ← 集中入口: 组装全部模块 ✅
+├── SessionManager        ← 会话管理 + 断线重连（接口定义）✅
 └── 压测工具              ← 游戏业务全流程压测
 
 RPC 通信层（已完成）
@@ -100,7 +114,10 @@ D:\CLion\rpc\
 │       ├── frame_sync.h       ✅ v0.9
 │       ├── game_state.h       ✅ v0.9
 │       ├── snapshot_manager.h ✅ v0.9
-│       └── match_queue.h
+│       ├── match_queue.h
+│       ├── match_service.h
+│       ├── game_service.h
+│       └── session_manager.h
 ├── src/                      # 实现文件
 │   ├── serializer.cpp        # RPC 框架（已有，位置不动）
 │   ├── protocol.cpp
@@ -123,7 +140,9 @@ D:\CLion\rpc\
 │       ├── game_state.cpp    ✅ v0.9
 │       ├── snapshot_manager.cpp ✅ v0.9
 │       ├── match_queue.cpp
-│       └── game_service.cpp
+│       ├── match_service.cpp
+│       ├── game_service.cpp
+│       └── session_manager.cpp
 ├── proto/                    # Protobuf 协议定义（.proto，非 C++ 源码）
 │   └── game.proto            # Login/Room/Frame/Match 等消息（v0.7~v0.9 持续扩展）
 ├── stress/                   # [待建] 游戏业务压测工具
@@ -138,9 +157,11 @@ D:\CLion\rpc\
 │   ├── test_room_service.cpp  # 14 项
 │   ├── test_input_buffer.cpp   # 20 项（InputBuffer 单元）
 │   ├── test_frame_sync.cpp     # 27 项（FrameSyncManager + 追帧）
-│   ├── test_game_state.cpp     # 11 项（tickLogic 确定性）
+│   ├── test_game_state.cpp     # 21 项（tickLogic 确定性 + 预测/和解）
 │   ├── test_snapshot_manager.cpp # 17 项（SnapshotManager）
-│   （共 129 项测试，全部通过）
+│   ├── test_frame_sync_flow.cpp  # 全流程模拟 + 耗时报告
+│   ├── test_match_queue.cpp      # 33 项（匹配系统单元+集成）
+│   （共 165 项测试，全部通过）
 ├── docs/
 │   ├── 01-serialization-layer.md
 │   ├── 02-protocol-frame-layer.md

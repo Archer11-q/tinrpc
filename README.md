@@ -10,7 +10,7 @@
 
 ```
 ┌──────────────────────────────────────────────┐
-│  游戏业务层          房间 ✅ / 帧同步 🚧 / 匹配 🔲 │  🚧
+│  游戏业务层          房间 ✅ / 帧同步 ✅ / 匹配 🚧 │  🚧
 ├──────────────────────────────────────────────┤
 │  RPC 通信层（六层）                           │  ✅
 ├──────────────────────────────────────────────┤
@@ -86,8 +86,28 @@ make -j$(nproc)
 - **InputBuffer** — Jitter Buffer，deque 存储 + 二分查找，支持乱序插入/覆盖/容量淘汰（20 项测试）
 - **FrameSyncManager** — 帧号计数器 + 输入收集 + 帧广播 + TimerManager 驱动 20fps tick（27 项测试）
 - **GameState + tickLogic** — 确定性状态更新（按 player_id 字典序、无随机数），3 玩家 10 帧一致性验证（11 项测试）
+- **CatchUp 追帧** — 帧历史缓冲区 + GetCatchUpFrames，每次 2 帧加速策略，慢客户端分步追上（27 项测试含追帧）
+- **SnapshotManager** — 环形缓冲区存 60 帧 GameState，restoreFromSnapshot 占位（17 项测试）
+
+### 匹配系统（v0.10）
+
+- **EloCalculator** — ELO 评分，CalcExpected/UpdateRating，标准公式 K=32（33 项匹配测试）
+- **MatchQueue** — 有序 vector 按 ELO 升序，二分插入 + 超时分差线性放宽 + TryMatch 批量配对
+- **MatchService** — 匹配成功回调：自动创建房间 + MatchFoundNtf 通知双方 + 30s 超时重新入队
+- **GameService** — 集中入口：组装全部模块（RoomManager+MatchQueue+Broadcast+Dispatch），main() 一键启动
+- **断连清理** — CancelMatch 在 EPOLLRDHUP 回调中调用，3 人入队中间断连→剩余自动配对
+- **SessionManager** — 接口定义（待第 10 周实现）：createSession/validateSession/heartbeat/Tick
+
+### 帧同步系统（v0.9）
+
+- **InputBuffer** — Jitter Buffer，deque 存储 + 二分查找，支持乱序插入/覆盖/容量淘汰（20 项测试）
+- **FrameSyncManager** — 帧号计数器 + 输入收集 + 帧广播 + TimerManager 驱动 20fps tick（27 项测试）
+- **GameState + tickLogic** — 确定性状态更新（按 player_id 字典序、无随机数），3 玩家 10 帧一致性验证（11 项测试）
 - **CatchUp 追帧** — 帧历史缓冲区 + GetCatchUpFrames，每次 2 帧加速策略，慢客户端分步追上（集成测试）
 - **SnapshotManager** — 环形缓冲区存 60 帧 GameState，restoreFromSnapshot 占位（17 项测试）
+- **预测/和解(Reconciliation)** — CompareStates 检测服务端权威与客户端预测偏差，ReconcileState alpha 插值平滑纠正（21 项测试含和解）
+- **房间衔接** — StartGame 自动 InitFrameSync + 注册 FrameData 广播回调，SendInput / StopGame RPC
+- **全流程模拟** — 3 玩家 60 帧耗时报告：Tick 0.4μs/帧，输入 0.3μs/帧，CPU 开销可忽略
 
 ### 分层解耦
 
@@ -109,7 +129,8 @@ make -j$(nproc)
 | v0.6 | Benchmark | ✅ 已完成 | RPC vs HTTP+JSON 三层性能对比 |
 | v0.7 | 游戏协议 | ✅ 已完成 | Protobuf proto3 协议定义，TLV vs Proto 对比测试 |
 | v0.8 | 游戏房间服务器 | ✅ 已完成 | TimerManager、GameRoom、RoomManager、Broadcast、RoomService RPC |
-| v0.9 | 帧同步系统 | 🚧 进行中 | FrameSyncManager、InputBuffer、GameState/tickLogic、SnapshotManager、追帧 |
+| v0.9 | 帧同步系统 | ✅ 已完成 | FrameSyncManager、InputBuffer、GameState/tickLogic、SnapshotManager、追帧、预测/和解 |
+| v0.10 | 匹配系统 | 🚧 进行中 | EloCalculator、MatchQueue、MatchService、GameService、SessionManager |
 
 ---
 
