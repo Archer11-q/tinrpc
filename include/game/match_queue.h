@@ -30,8 +30,9 @@ public:
                double elo_range_init = 100.0,
                double elo_range_expand_per_sec = 20.0);
 
-    // 匹配成功回调（典型用途：创建房间 + 通知双方）
-    using MatchCallback = std::function<void(const std::string& p1, const std::string& p2)>;
+    // 匹配成功回调（p1, score1, p2, score2）
+    using MatchCallback = std::function<void(const std::string& p1, double s1,
+                                              const std::string& p2, double s2)>;
 
     // 入队
     void EnterQueue(const std::string& player_id, double elo_score);

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <tuple>
 
 namespace game {
 
@@ -103,9 +104,10 @@ std::string MatchQueue::FindMatch(const std::string& player_id) {
     if (best_idx < 0) return "";  // 无合适对手
 
     std::string opponent = queue_[static_cast<size_t>(best_idx)].player_id;
+    double my_score_saved       = queue_[static_cast<size_t>(idx)].elo_score;
+    double opponent_score_saved = queue_[static_cast<size_t>(best_idx)].elo_score;
 
-    // 双方离队
-    // 注意：erase 顺序要从大到小，否则索引失效
+    // 双方离队（先移较大索引）
     if (idx > best_idx) {
         queue_.erase(queue_.begin() + idx);
         queue_.erase(queue_.begin() + best_idx);
@@ -114,9 +116,9 @@ std::string MatchQueue::FindMatch(const std::string& player_id) {
         queue_.erase(queue_.begin() + idx);
     }
 
-    // 触发匹配成功回调（创建房间 + 通知双方）
+    // 触发匹配成功回调
     if (on_match_) {
-        on_match_(player_id, opponent);
+        on_match_(player_id, my_score_saved, opponent, opponent_score_saved);
     }
 
     return opponent;
@@ -160,17 +162,27 @@ std::vector<std::pair<std::string, std::string>> MatchQueue::TryMatch() {
         }
     }
 
-    // 从后往前删除已配对玩家（保证索引有效）
+    // 保存分数（删除前），然后从后往前删除
+    std::vector<std::tuple<std::string, double, std::string, double>> match_scores;
+    for (auto& [p1, p2] : matched) {
+        double s1 = 0, s2 = 0;
+        for (auto& e : queue_) {
+            if (e.player_id == p1) s1 = e.elo_score;
+            if (e.player_id == p2) s2 = e.elo_score;
+        }
+        match_scores.emplace_back(p1, s1, p2, s2);
+    }
+
     for (int i = static_cast<int>(queue_.size()) - 1; i >= 0; i--) {
         if (paired[static_cast<size_t>(i)]) {
             queue_.erase(queue_.begin() + i);
         }
     }
 
-    // 触发每对匹配成功的回调
+    // 触发每对匹配成功的回调（含分数）
     if (on_match_) {
-        for (auto& [p1, p2] : matched) {
-            on_match_(p1, p2);
+        for (auto& [p1, s1, p2, s2] : match_scores) {
+            on_match_(p1, s1, p2, s2);
         }
     }
 

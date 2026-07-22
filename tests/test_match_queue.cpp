@@ -340,7 +340,7 @@ void TestCallbackOnFindMatch() {
     mq.EnterQueue("p2", 1510);
 
     std::string cb_p1, cb_p2;
-    mq.SetMatchCallback([&](const std::string& a, const std::string& b) {
+    mq.SetMatchCallback([&](const std::string& a, double, const std::string& b, double) {
         cb_p1 = a; cb_p2 = b;
     });
 
@@ -356,7 +356,7 @@ void TestCallbackOnTryMatch() {
     mq.EnterQueue("p4", 1710);
 
     int cb_count = 0;
-    mq.SetMatchCallback([&](const std::string&, const std::string&) {
+    mq.SetMatchCallback([&](const std::string&, double, const std::string&, double) {
         cb_count++;
     });
 
@@ -371,7 +371,7 @@ void TestCallbackNotCalledOnFail() {
     mq.EnterQueue("p2", 1600);  // 分差太大
 
     bool called = false;
-    mq.SetMatchCallback([&](const std::string&, const std::string&) {
+    mq.SetMatchCallback([&](const std::string&, double, const std::string&, double) {
         called = true;
     });
 
@@ -419,7 +419,7 @@ void TestMatchCreatesRoom() {
 
     // 匹配成功时自动创建房间
     std::string created_room_id;
-    mq.SetMatchCallback([&](const std::string& p1, const std::string& p2) {
+    mq.SetMatchCallback([&](const std::string& p1, double, const std::string& p2, double) {
         game::GameRoom::Config cfg;
         cfg.max_players = 2;
         auto result = room_mgr.CreateRoom(p1, cfg);
@@ -491,7 +491,7 @@ void TestE2EMatchToRoomFlow() {
     std::vector<Notification> notifications;
 
     // 匹配成功回调：创建房间 + 通知双方
-    mq.SetMatchCallback([&](const std::string& p1, const std::string& p2) {
+    mq.SetMatchCallback([&](const std::string& p1, double s1, const std::string& p2, double s2) {
         // 1. 创建房间
         game::GameRoom::Config cfg;
         cfg.max_players = 2;
@@ -508,14 +508,13 @@ void TestE2EMatchToRoomFlow() {
         notifications.push_back({rid, p2, p1});
 
         // 3. 设置超时定时器：30s 后未确认则释放房间 + 重新入队
-        timer.Schedule(30000, [&mq, &room_mgr, rid, p1, p2]() {
-            // 检查房间是否已被确认（已确认则状态为 PLAYING 或有人为 0）
+        timer.Schedule(30000, [&mq, &room_mgr, rid, p1, p2, s1, s2]() {
             auto* r = room_mgr.GetRoom(rid);
             if (r && r->state() != game::ROOM_STATE_PLAYING) {
-                // 超时释放：销毁房间 + 重新入队
+                // 超时释放：销毁房间 + 按原分数重新入队
                 room_mgr.RemoveRoom(rid);
-                mq.EnterQueue(p1, 1500);
-                mq.EnterQueue(p2, 1520);
+                mq.EnterQueue(p1, s1);
+                mq.EnterQueue(p2, s2);
             }
         });
     });
@@ -552,8 +551,10 @@ void TestE2EMatchToRoomFlow() {
         if (!r) { printf("[FAIL] room gone\n"); abort(); }
         // 模拟超时：房间非 PLAYING → 释放
         room_mgr.RemoveRoom(rid);
-        mq.EnterQueue("player_a", 1500);
-        mq.EnterQueue("player_b", 1520);
+        // 重新入队（使用超时场景，分数保留）
+        double saved_a = 1500, saved_b = 1520;
+        mq.EnterQueue("player_a", saved_a);
+        mq.EnterQueue("player_b", saved_b);
     }
 
     // 验证：房间已销毁

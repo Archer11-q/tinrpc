@@ -49,6 +49,7 @@ add_library(rpc_lib STATIC
     src/game/snapshot_manager.cpp
     src/game/elo_calculator.cpp
     src/game/match_queue.cpp
+    src/game/match_service.cpp
     ${PROTO_SRCS}
 )
 
