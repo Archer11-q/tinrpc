@@ -245,6 +245,17 @@ message FrameData {
     repeated PlayerInputEntry inputs = 2;  // 该帧所有玩家的输入
 }
 
+// ---- 匹配通知 ----
+
+// 匹配成功通知（服务端 → 客户端）
+message MatchFoundNtf {
+    string room_id    = 1;  // 创建的房间 ID
+    string player_id  = 2;  // 通知目标玩家
+    string opponent_id = 3; // 对手 player_id
+    int64  timestamp  = 4;  // 匹配时间戳
+    int32  timeout_sec = 5; // 确认超时秒数（默认 30）
+}
+
 // ---- 以下为序列化对比测试保留 ----
 
 // 简单测试消息 — 字段类型与 TLV Serializer 对齐
