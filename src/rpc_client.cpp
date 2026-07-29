@@ -20,11 +20,13 @@ RpcClient::RpcClient() {
 }
 
 RpcClient::~RpcClient() {
-    Disconnect();
+    // 先停 EventLoop 线程，避免后面 Unregister 与 Run() 中的 handlers_ 遍历产生竞态
     loop_.Stop();
     if (loop_thread_.joinable()) {
         loop_thread_.join();
     }
+    // EventLoop 已停止，安全清理
+    Disconnect();
 }
 
 bool RpcClient::Connect(const std::string& ip, uint16_t port) {
@@ -72,7 +74,10 @@ bool RpcClient::Connect(const std::string& ip, uint16_t port) {
             }
             pending_ptr->erase(it);
         } else {
-            printf("[RpcClient] No pending request for id=%u\n", frame.request_id);
+            // request_id=0 是服务端推送帧（RoomEvent 等），静默忽略
+            if (frame.request_id != 0) {
+                printf("[RpcClient] No pending request for id=%u\n", frame.request_id);
+            }
         }
     };
 
@@ -108,7 +113,8 @@ std::future<std::vector<uint8_t>> RpcClient::Call(const std::string& method_name
     // 但 Connection::Send 内部用 send()，可以在任意线程调用
     // 然而 send() 在非阻塞 socket 上是线程安全的
 
-    // 实际发送：直接通过 socket send
+    // 实际发送：加锁保护，防止多线程并发 send 导致 TCP 字节流交织
+    std::lock_guard<std::mutex> send_lock(send_mutex_);
     ssize_t sent = send(server_fd_, frame_bytes.data(), frame_bytes.size(), MSG_NOSIGNAL);
     if (sent < 0) {
         printf("[RpcClient] send() failed for request_id=%u, errno=%d\n", id, errno);
@@ -123,9 +129,15 @@ std::future<std::vector<uint8_t>> RpcClient::Call(const std::string& method_name
     return future;
 }
 
+void RpcClient::CloseFd() {
+    if (server_fd_ >= 0) {
+        close(server_fd_);
+        server_fd_ = -1;
+    }
+}
+
 void RpcClient::Disconnect() {
     if (server_fd_ >= 0) {
-        // Unregister 销毁 Connection → ~Connection 自动 close(fd)
         loop_.Unregister(server_fd_);
         server_fd_ = -1;
     }

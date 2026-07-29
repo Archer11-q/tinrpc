@@ -1,0 +1,459 @@
+=== TinyRPC 游戏层压测客户端 ===
+模式: steady | 服务端: 127.0.0.1:8080
+
+=== MODE: steady — 稳态压测 ===
+并发连接数: 300 | 持续时间: 300 s | 预热: 10 s
+think time 均值: 200 ms
+----------------------------------------
+[steady] 正在建立 300 个连接...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[stats] conn=146 | QPS≈0 | lat(us): avg=270 p50=259 p95=373 p99=496 | errors=0
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[stats] conn=290 | QPS≈0 | lat(us): avg=270 p50=261 p95=363 p99=536 | errors=0
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[steady] 成功建立 300/300 连接
+[RpcClient] Connected to 127.0.0.1:8080
+[steady] metrics 查询连接已建立 (独立连接)
+[steady] 预热 10 秒...
+[stats] conn=301 | QPS≈0 | lat(us): avg=286 p50=267 p95=433 p99=536 | errors=0
+[metrics] 服务端: 运行532s | 连接=301 | 房间=460 | QPS≈24 | 延迟(us): avg=71 p50=67 p99=137 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=297 p50=278 p95=437 p99=537 | errors=0
+[metrics] 服务端: 运行537s | 连接=301 | 房间=460 | QPS≈20 | 延迟(us): avg=72 p50=67 p99=137 | 匹配队列=0 | 错误=0
+[steady] 预热完成，开始正式采集...
+[stats] conn=301 | QPS≈0 | lat(us): avg=209 p50=203 p95=285 p99=398 | errors=0
+[metrics] 服务端: 运行542s | 连接=301 | 房间=460 | QPS≈1454 | 延迟(us): avg=71 p50=67 p99=137 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=218 p50=203 p95=279 p99=388 | errors=0
+[metrics] 服务端: 运行547s | 连接=301 | 房间=460 | QPS≈1501 | 延迟(us): avg=71 p50=67 p99=137 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=222 p50=203 p95=280 p99=396 | errors=0
+[metrics] 服务端: 运行552s | 连接=301 | 房间=460 | QPS≈1482 | 延迟(us): avg=71 p50=67 p99=137 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=219 p50=203 p95=278 p99=383 | errors=0
+[metrics] 服务端: 运行557s | 连接=301 | 房间=460 | QPS≈1543 | 延迟(us): avg=70 p50=66 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=222 p50=203 p95=278 p99=384 | errors=0
+[metrics] 服务端: 运行562s | 连接=301 | 房间=460 | QPS≈1499 | 延迟(us): avg=70 p50=66 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=220 p50=203 p95=277 p99=382 | errors=0
+[metrics] 服务端: 运行567s | 连接=301 | 房间=460 | QPS≈1527 | 延迟(us): avg=70 p50=66 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=219 p50=203 p95=277 p99=378 | errors=0
+[metrics] 服务端: 运行572s | 连接=301 | 房间=460 | QPS≈1497 | 延迟(us): avg=70 p50=66 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=217 p50=203 p95=277 p99=376 | errors=0
+[metrics] 服务端: 运行577s | 连接=301 | 房间=460 | QPS≈1504 | 延迟(us): avg=69 p50=66 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=216 p50=203 p95=276 p99=374 | errors=0
+[metrics] 服务端: 运行582s | 连接=301 | 房间=460 | QPS≈1514 | 延迟(us): avg=69 p50=66 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=216 p50=203 p95=276 p99=372 | errors=0
+[metrics] 服务端: 运行587s | 连接=301 | 房间=460 | QPS≈1529 | 延迟(us): avg=69 p50=66 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=219 p50=203 p95=276 p99=374 | errors=0
+[metrics] 服务端: 运行592s | 连接=301 | 房间=460 | QPS≈1501 | 延迟(us): avg=69 p50=66 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=218 p50=203 p95=275 p99=371 | errors=0
+[metrics] 服务端: 运行597s | 连接=301 | 房间=460 | QPS≈1509 | 延迟(us): avg=69 p50=66 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=218 p50=203 p95=275 p99=370 | errors=0
+[metrics] 服务端: 运行602s | 连接=301 | 房间=460 | QPS≈1521 | 延迟(us): avg=69 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=222 p50=203 p95=276 p99=372 | errors=0
+[metrics] 服务端: 运行607s | 连接=301 | 房间=460 | QPS≈1519 | 延迟(us): avg=69 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=223 p50=203 p95=276 p99=375 | errors=0
+[metrics] 服务端: 运行612s | 连接=301 | 房间=460 | QPS≈1518 | 延迟(us): avg=68 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=222 p50=203 p95=276 p99=374 | errors=0
+[metrics] 服务端: 运行617s | 连接=301 | 房间=460 | QPS≈1540 | 延迟(us): avg=68 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=226 p50=203 p95=276 p99=376 | errors=0
+[metrics] 服务端: 运行622s | 连接=301 | 房间=460 | QPS≈1491 | 延迟(us): avg=68 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=226 p50=203 p95=276 p99=375 | errors=0
+[metrics] 服务端: 运行627s | 连接=301 | 房间=460 | QPS≈1512 | 延迟(us): avg=68 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=225 p50=203 p95=276 p99=374 | errors=0
+[metrics] 服务端: 运行632s | 连接=301 | 房间=460 | QPS≈1526 | 延迟(us): avg=68 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=227 p50=203 p95=276 p99=375 | errors=0
+[metrics] 服务端: 运行637s | 连接=301 | 房间=460 | QPS≈1562 | 延迟(us): avg=68 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=226 p50=203 p95=276 p99=375 | errors=0
+[metrics] 服务端: 运行642s | 连接=301 | 房间=460 | QPS≈1509 | 延迟(us): avg=68 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=226 p50=203 p95=276 p99=374 | errors=0
+[metrics] 服务端: 运行647s | 连接=301 | 房间=460 | QPS≈1511 | 延迟(us): avg=68 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=225 p50=203 p95=276 p99=375 | errors=0
+[metrics] 服务端: 运行652s | 连接=301 | 房间=460 | QPS≈1517 | 延迟(us): avg=68 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=225 p50=203 p95=276 p99=374 | errors=0
+[metrics] 服务端: 运行657s | 连接=301 | 房间=460 | QPS≈1536 | 延迟(us): avg=68 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=229 p50=203 p95=276 p99=375 | errors=0
+[metrics] 服务端: 运行662s | 连接=301 | 房间=460 | QPS≈1510 | 延迟(us): avg=68 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=228 p50=203 p95=277 p99=376 | errors=0
+[metrics] 服务端: 运行667s | 连接=301 | 房间=460 | QPS≈1536 | 延迟(us): avg=67 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=228 p50=203 p95=276 p99=376 | errors=0
+[metrics] 服务端: 运行672s | 连接=301 | 房间=460 | QPS≈1533 | 延迟(us): avg=67 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=227 p50=203 p95=276 p99=376 | errors=0
+[metrics] 服务端: 运行677s | 连接=301 | 房间=460 | QPS≈1506 | 延迟(us): avg=67 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=227 p50=203 p95=276 p99=377 | errors=0
+[metrics] 服务端: 运行682s | 连接=301 | 房间=460 | QPS≈1527 | 延迟(us): avg=67 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=227 p50=203 p95=276 p99=376 | errors=0
+[metrics] 服务端: 运行687s | 连接=301 | 房间=460 | QPS≈1487 | 延迟(us): avg=67 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=231 p50=203 p95=276 p99=378 | errors=0
+[metrics] 服务端: 运行692s | 连接=301 | 房间=460 | QPS≈1531 | 延迟(us): avg=67 p50=65 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=230 p50=203 p95=277 p99=378 | errors=0
+[metrics] 服务端: 运行697s | 连接=301 | 房间=460 | QPS≈1520 | 延迟(us): avg=67 p50=65 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=231 p50=203 p95=277 p99=379 | errors=0
+[metrics] 服务端: 运行702s | 连接=301 | 房间=460 | QPS≈1519 | 延迟(us): avg=67 p50=64 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=231 p50=203 p95=277 p99=379 | errors=0
+[metrics] 服务端: 运行708s | 连接=301 | 房间=460 | QPS≈1507 | 延迟(us): avg=67 p50=64 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=230 p50=203 p95=277 p99=379 | errors=0
+[metrics] 服务端: 运行713s | 连接=301 | 房间=460 | QPS≈1503 | 延迟(us): avg=67 p50=64 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=235 p50=202 p95=277 p99=380 | errors=0
+[metrics] 服务端: 运行718s | 连接=301 | 房间=460 | QPS≈1532 | 延迟(us): avg=67 p50=64 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=234 p50=202 p95=277 p99=380 | errors=0
+[metrics] 服务端: 运行723s | 连接=301 | 房间=460 | QPS≈1492 | 延迟(us): avg=67 p50=64 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=234 p50=202 p95=277 p99=379 | errors=0
+[metrics] 服务端: 运行728s | 连接=301 | 房间=460 | QPS≈1529 | 延迟(us): avg=67 p50=64 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=234 p50=202 p95=277 p99=379 | errors=0
+[metrics] 服务端: 运行733s | 连接=301 | 房间=460 | QPS≈1528 | 延迟(us): avg=67 p50=64 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=233 p50=202 p95=277 p99=379 | errors=0
+[metrics] 服务端: 运行738s | 连接=301 | 房间=460 | QPS≈1506 | 延迟(us): avg=67 p50=64 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=233 p50=202 p95=276 p99=379 | errors=0
+[metrics] 服务端: 运行743s | 连接=301 | 房间=460 | QPS≈1523 | 延迟(us): avg=67 p50=64 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=238 p50=202 p95=276 p99=381 | errors=0
+[metrics] 服务端: 运行748s | 连接=301 | 房间=460 | QPS≈1527 | 延迟(us): avg=67 p50=64 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=238 p50=202 p95=276 p99=381 | errors=0
+[metrics] 服务端: 运行753s | 连接=301 | 房间=460 | QPS≈1510 | 延迟(us): avg=67 p50=64 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=237 p50=202 p95=276 p99=380 | errors=0
+[metrics] 服务端: 运行758s | 连接=301 | 房间=460 | QPS≈1495 | 延迟(us): avg=67 p50=64 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=238 p50=202 p95=276 p99=380 | errors=0
+[metrics] 服务端: 运行763s | 连接=301 | 房间=460 | QPS≈1512 | 延迟(us): avg=67 p50=64 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=237 p50=202 p95=276 p99=379 | errors=0
+[metrics] 服务端: 运行768s | 连接=301 | 房间=460 | QPS≈1509 | 延迟(us): avg=66 p50=64 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=237 p50=202 p95=275 p99=379 | errors=0
+[metrics] 服务端: 运行773s | 连接=301 | 房间=460 | QPS≈1526 | 延迟(us): avg=66 p50=64 p99=134 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=240 p50=202 p95=275 p99=381 | errors=0
+[metrics] 服务端: 运行778s | 连接=301 | 房间=460 | QPS≈1519 | 延迟(us): avg=66 p50=64 p99=134 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=240 p50=202 p95=275 p99=381 | errors=0
+[metrics] 服务端: 运行783s | 连接=301 | 房间=460 | QPS≈1526 | 延迟(us): avg=66 p50=64 p99=134 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=242 p50=202 p95=275 p99=381 | errors=0
+[metrics] 服务端: 运行788s | 连接=301 | 房间=460 | QPS≈1532 | 延迟(us): avg=66 p50=64 p99=134 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=243 p50=202 p95=275 p99=381 | errors=0
+[metrics] 服务端: 运行793s | 连接=301 | 房间=460 | QPS≈1497 | 延迟(us): avg=66 p50=64 p99=134 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=243 p50=202 p95=275 p99=381 | errors=0
+[metrics] 服务端: 运行798s | 连接=301 | 房间=460 | QPS≈1538 | 延迟(us): avg=66 p50=64 p99=133 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=243 p50=202 p95=274 p99=381 | errors=0
+[metrics] 服务端: 运行803s | 连接=301 | 房间=460 | QPS≈1561 | 延迟(us): avg=66 p50=64 p99=133 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=247 p50=202 p95=274 p99=382 | errors=0
+[metrics] 服务端: 运行808s | 连接=301 | 房间=460 | QPS≈1531 | 延迟(us): avg=66 p50=64 p99=133 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=249 p50=202 p95=274 p99=383 | errors=0
+[metrics] 服务端: 运行813s | 连接=301 | 房间=460 | QPS≈1509 | 延迟(us): avg=66 p50=64 p99=133 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=248 p50=202 p95=274 p99=383 | errors=0
+[metrics] 服务端: 运行818s | 连接=301 | 房间=460 | QPS≈1535 | 延迟(us): avg=66 p50=64 p99=133 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=248 p50=202 p95=274 p99=382 | errors=0
+[metrics] 服务端: 运行823s | 连接=301 | 房间=460 | QPS≈1518 | 延迟(us): avg=66 p50=64 p99=132 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=248 p50=202 p95=274 p99=382 | errors=0
+[metrics] 服务端: 运行829s | 连接=301 | 房间=460 | QPS≈1495 | 延迟(us): avg=66 p50=64 p99=132 | 匹配队列=0 | 错误=0
+[stats] conn=301 | QPS≈0 | lat(us): avg=248 p50=202 p95=274 p99=382 | errors=0
+[metrics] 服务端: 运行834s | 连接=301 | 房间=460 | QPS≈1509 | 延迟(us): avg=66 p50=64 p99=132 | 匹配队列=0 | 错误=0
+[steady] 正在清理 300 个客户端...
+
+========================================
+  稳态压测报告
+========================================
+  目标连接数:   300
+  成功连接数:   300
+  成功建立率:   100.0%
+  采集时长:     300.9 秒
+  总请求数:     0
+  QPS:          0.0
+  错误总数:     0
+----------------------------------------
+  延迟 (us): avg=247.4  min=85.0  max=48048.0  p50=202.0  p95=274.0  p99=381.0
+
+--- Markdown ---
+| 场景 | 连接数 | 时长 | QPS | avg(us) | p50(us) | p95(us) | p99(us) | 成功率 |
+|------|--------|------|-----|---------|---------|---------|----------|--------|
+| steady-300 | 300 | 301s | 0 | 247.4 | 202.0 | 274.0 | 381.0 | 100.0% |
+========================================
+
+=== 完成 ===

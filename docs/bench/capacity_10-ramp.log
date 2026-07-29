@@ -1,0 +1,75 @@
+=== TinyRPC 游戏层压测客户端 ===
+模式: ramp | 服务端: 127.0.0.1:8080
+
+=== MODE: ramp — 渐进加压 ===
+目标连接数: 10 | ramp 速率: 5 conn/s | 每连接持续: 60 s
+think time 均值: 200 ms
+----------------------------------------
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 0] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 1] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 2] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 3] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 4] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 5] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 6] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 7] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 8] 开始发消息循环 (60 秒，think time 200 ms)...
+[ramp] 全部 10 连接已创建，等待完成...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 9] 开始发消息循环 (60 秒，think time 200 ms)...
+[stats] conn=10 | QPS≈0 | lat(us): avg=2266 p50=354 p95=1691 p99=44047 | errors=0
+[stats] conn=10 | QPS≈0 | lat(us): avg=1295 p50=342 p95=570 p99=43451 | errors=0
+[stats] conn=10 | QPS≈0 | lat(us): avg=945 p50=332 p95=526 p99=41469 | errors=0
+[stats] conn=10 | QPS≈0 | lat(us): avg=780 p50=332 p95=523 p99=40699 | errors=0
+[stats] conn=10 | QPS≈0 | lat(us): avg=685 p50=326 p95=506 p99=1077 | errors=0
+[stats] conn=10 | QPS≈0 | lat(us): avg=618 p50=320 p95=496 p99=1001 | errors=0
+[stats] conn=10 | QPS≈0 | lat(us): avg=574 p50=315 p95=483 p99=937 | errors=0
+[stats] conn=10 | QPS≈0 | lat(us): avg=542 p50=312 p95=475 p99=795 | errors=0
+[stats] conn=10 | QPS≈0 | lat(us): avg=516 p50=311 p95=467 p99=781 | errors=0
+[stats] conn=10 | QPS≈0 | lat(us): avg=499 p50=312 p95=467 p99=781 | errors=0
+[stats] conn=10 | QPS≈0 | lat(us): avg=483 p50=313 p95=467 p99=775 | errors=0
+[stats] conn=10 | QPS≈0 | lat(us): avg=471 p50=313 p95=472 p99=737 | errors=0
+
+========================================
+  压测报告: ramp-up
+========================================
+  并发连接数:   10
+  总耗时:       60.000 秒
+  总请求数:     0
+  QPS:          0.0
+  错误总数:     0
+----------------------------------------
+  延迟 (us): avg=469.4  min=140.0  max=47604.0  p50=314.0  p95=475.0  p99=781.0
+
+┌──────────────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ 阶段                     │   成功率  │  avg(us) │  min(us) │  max(us) │  p50(us) │   样本数  │
+├──────────────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+│ leave_room               │ 100.0% │    349.0 │    349.0 │    349.0 │    349.0 │        1 │
+│ message_loop             │ 100.0% │ 60440539.0 │ 60440539.0 │ 60440539.0 │ 60440539.0 │        1 │
+│ start_game               │ 100.0% │  42383.0 │  42383.0 │  42383.0 │  42383.0 │        1 │
+│ create_room              │ 100.0% │   1694.0 │   1694.0 │   1694.0 │   1694.0 │        1 │
+│ login                    │ 100.0% │   2537.0 │   2537.0 │   2537.0 │   2537.0 │        1 │
+│ connect                  │ 100.0% │    126.0 │    126.0 │    126.0 │    126.0 │        1 │
+└──────────────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+========================================
+
+=== 完成 ===

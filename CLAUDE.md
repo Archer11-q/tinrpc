@@ -41,6 +41,8 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 | v0.10 | 匹配队列断连清理 — CancelMatch在断连回调中调用 | ✅ |
 | v0.10 | GameService — 集中入口 + main() | ✅ |
 | v0.10 | SessionManager 接口 + 断线重连方案文档 | ✅ |
+| v0.11 | 压测工具 + 服务端 Metrics + 全档位容量测试 | ✅ |
+| v0.11 | Bug 修复：RoomServiceImpl 悬空指针、Connection::OnClose UAF、RpcClient 并发 send、GetMetricsRes 字段缺失 | ✅ |
 
 ## 演化方向
 
@@ -103,7 +105,8 @@ D:\CLion\rpc\
 │   │   ├── connection.h      # Connection — 客户端连接处理
 │   │   ├── thread_pool.h     # ThreadPool — 生产者-消费者
 │   │   ├── dispatch.h        # Dispatch — 方法注册表
-│   │   └── rpc_client.h      # RpcClient — 客户端代理 + pending 表
+│   │   ├── rpc_client.h      # RpcClient — 客户端代理 + pending 表
+│   │   └── bench_stats.h     # ✅ v0.11 — 压测统计工具（直方图/分位数/QPS计数器）
 │   └── game/                 # 游戏模块头文件
 │       ├── timer_manager.h    ✅ v0.8
 │       ├── game_room.h        ✅ v0.8
@@ -117,6 +120,7 @@ D:\CLion\rpc\
 │       ├── match_queue.h
 │       ├── match_service.h
 │       ├── game_service.h
+│       ├── server_metrics.h    ✅ v0.11
 │       └── session_manager.h
 ├── src/                      # 实现文件
 │   ├── serializer.cpp        # RPC 框架（已有，位置不动）
@@ -145,9 +149,18 @@ D:\CLion\rpc\
 │       └── session_manager.cpp
 ├── proto/                    # Protobuf 协议定义（.proto，非 C++ 源码）
 │   └── game.proto            # Login/Room/Frame/Match 等消息（v0.7~v0.9 持续扩展）
-├── stress/                   # [待建] 游戏业务压测工具
-│   └── stress_client.cpp
-├── bench/                    # Benchmark 工具（RPC 框架层，已完成）
+├── scripts/                  # ✅ v0.11 — 压测脚本（一键执行基线/容量/序列化/异常/Lv3全流程）
+│   ├── run_baseline.sh
+│   ├── run_capacity_test.sh
+│   ├── run_serialize_bench.sh
+│   ├── run_exception_test.sh
+│   └── run_lv3_e2e.sh
+├── bench/                    # Benchmark 工具
+│   ├── bench_client.cpp      # RPC 层压测（TLV vs HTTP+JSON）
+│   ├── bench_server.cpp
+│   ├── bench_serialize.cpp   # 序列化性能对比
+│   ├── bench_game_client.cpp # ✅ v0.11 — 游戏层全流程压测（single/ramp/steady/chaos 模式）
+│   └── packet_frag_test.cpp
 ├── tests/
 │   ├── test_serializer.cpp    # 11 项
 │   ├── test_protocol.cpp      # 16 项
@@ -169,6 +182,7 @@ D:\CLion\rpc\
 │   ├── 04-thread-pool.md
 │   ├── 05-stub-dispatch.md
 │   ├── 06-benchmark.md
+│   ├── bench/                # ✅ v0.11 — 压测报告（01-基线 02-容量 03-序列化 05-异常 06-Lv3全流程）
 │   ├── CHANGELOG.md
 │   ├── devlog.md
 │   └── pitfalls/          # 踩坑记录

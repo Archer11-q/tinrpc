@@ -1,0 +1,35 @@
+=== TinyRPC 游戏层压测客户端 ===
+模式: chaos | 服务端: 127.0.0.1:8080
+
+=== MODE: chaos — 异常测试 ===
+连接数: 10 | 断连%: 0 | 恶意消息数: 50 | 超大包: 1048576 B
+----------------------------------------
+[chaos] 阶段1: 建立 10 个连接...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[chaos] 成功建立 10/10 连接
+[chaos] 稳态运行 5 秒...
+[chaos] 阶段2: 瞬间断开 0 个连接...
+[chaos] 断开完成: 0 个连接 / 0.0 ms
+[chaos] 剩余活跃: 10
+[chaos] 阶段3: 发送恶意消息...
+[chaos]   发送 50 个超大包 (1048576 B)...
+[chaos]   发送 50 个非法 Protobuf...
+[chaos]   发送 50 个不存在房间的消息...
+[chaos] 恶意消息发送完成
+[chaos] 阶段4: 验证 server 仍然可用...
+[chaos] 清理剩余连接...
+
+[chaos] 异常测试完成
+  总错误数: 0
+  断连时间: 0.0 ms
+
+=== 完成 ===

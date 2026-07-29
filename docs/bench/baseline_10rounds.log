@@ -1,0 +1,85 @@
+=== TinyRPC 游戏层压测客户端 ===
+模式: single | 服务端: 127.0.0.1:8080
+
+=== MODE: single — 单连接基线 ===
+重复次数: 10 | think time 均值: 200 ms | 超时: 5000 ms
+----------------------------------------
+
+--- 第 1/10 轮 ---
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 0] 开始发消息循环 (15 秒，think time 200 ms)...
+  结果: 成功 | 活跃连接: 0
+
+--- 第 2/10 轮 ---
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 1] 开始发消息循环 (15 秒，think time 200 ms)...
+  结果: 成功 | 活跃连接: 0
+
+--- 第 3/10 轮 ---
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 2] 开始发消息循环 (15 秒，think time 200 ms)...
+  结果: 成功 | 活跃连接: 0
+
+--- 第 4/10 轮 ---
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 3] 开始发消息循环 (15 秒，think time 200 ms)...
+  结果: 成功 | 活跃连接: 0
+
+--- 第 5/10 轮 ---
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 4] 开始发消息循环 (15 秒，think time 200 ms)...
+  结果: 成功 | 活跃连接: 0
+
+--- 第 6/10 轮 ---
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 5] 开始发消息循环 (15 秒，think time 200 ms)...
+  结果: 成功 | 活跃连接: 0
+
+--- 第 7/10 轮 ---
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 6] 开始发消息循环 (15 秒，think time 200 ms)...
+  结果: 成功 | 活跃连接: 0
+
+--- 第 8/10 轮 ---
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 7] 开始发消息循环 (15 秒，think time 200 ms)...
+  结果: 成功 | 活跃连接: 0
+
+--- 第 9/10 轮 ---
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 8] 开始发消息循环 (15 秒，think time 200 ms)...
+  结果: 成功 | 活跃连接: 0
+
+--- 第 10/10 轮 ---
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 9] 开始发消息循环 (15 秒，think time 200 ms)...
+  结果: 成功 | 活跃连接: 0
+
+┌──────────────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ 阶段                     │   成功率  │  avg(us) │  min(us) │  max(us) │  p50(us) │   样本数  │
+├──────────────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+│ leave_room               │ 100.0% │    311.1 │    263.0 │    452.0 │    284.0 │       10 │
+│ message_loop             │ 100.0% │ 15274493.4 │ 15032582.0 │ 15825172.0 │ 15222026.0 │       10 │
+│ start_game               │ 100.0% │  43089.9 │  40535.0 │  45417.0 │  43288.0 │       10 │
+│ create_room              │ 100.0% │    206.4 │    147.0 │    239.0 │    214.0 │       10 │
+│ login                    │ 100.0% │    207.7 │    134.0 │    432.0 │    168.0 │       10 │
+│ connect                  │ 100.0% │    442.2 │    279.0 │    629.0 │    425.0 │       10 │
+└──────────────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+  延迟 (us): avg=855.9  min=132.0  max=45415.0  p50=309.0  p95=451.0  p99=41596.0
+
+--- Markdown ---
+| 场景 | 连接数 | 时长 | QPS | avg(us) | p50(us) | p95(us) | p99(us) |
+|------|--------|------|-----|---------|---------|---------|----------|
+| single-baseline | 1 | 15s | 0 | 855.9 | 309.0 | 451.0 | 41596.0 |
+
+=== 完成 ===

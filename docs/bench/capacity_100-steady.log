@@ -1,0 +1,260 @@
+=== TinyRPC 游戏层压测客户端 ===
+模式: steady | 服务端: 127.0.0.1:8080
+
+=== MODE: steady — 稳态压测 ===
+并发连接数: 100 | 持续时间: 300 s | 预热: 10 s
+think time 均值: 200 ms
+----------------------------------------
+[steady] 正在建立 100 个连接...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[stats] conn=98 | QPS≈0 | lat(us): avg=299 p50=294 p95=378 p99=482 | errors=0
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[steady] 成功建立 100/100 连接
+[RpcClient] Connected to 127.0.0.1:8080
+[steady] metrics 查询连接已建立 (独立连接)
+[steady] 预热 10 秒...
+[stats] conn=101 | QPS≈0 | lat(us): avg=333 p50=317 p95=446 p99=641 | errors=0
+[metrics] 服务端: 运行186s | 连接=101 | 房间=160 | QPS≈21 | 延迟(us): avg=75 p50=71 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=345 p50=336 p95=465 p99=630 | errors=0
+[metrics] 服务端: 运行191s | 连接=101 | 房间=160 | QPS≈20 | 延迟(us): avg=75 p50=71 p99=135 | 匹配队列=0 | 错误=0
+[steady] 预热完成，开始正式采集...
+[stats] conn=101 | QPS≈0 | lat(us): avg=233 p50=222 p95=322 p99=417 | errors=0
+[metrics] 服务端: 运行196s | 连接=101 | 房间=160 | QPS≈492 | 延迟(us): avg=74 p50=70 p99=134 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=233 p50=224 p95=318 p99=387 | errors=0
+[metrics] 服务端: 运行201s | 连接=101 | 房间=160 | QPS≈507 | 延迟(us): avg=73 p50=69 p99=133 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=232 p50=223 p95=316 p99=386 | errors=0
+[metrics] 服务端: 运行206s | 连接=101 | 房间=160 | QPS≈522 | 延迟(us): avg=73 p50=69 p99=133 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=232 p50=222 p95=318 p99=390 | errors=0
+[metrics] 服务端: 运行211s | 连接=101 | 房间=160 | QPS≈522 | 延迟(us): avg=72 p50=69 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=231 p50=221 p95=318 p99=397 | errors=0
+[metrics] 服务端: 运行216s | 连接=101 | 房间=160 | QPS≈516 | 延迟(us): avg=72 p50=68 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=231 p50=221 p95=316 p99=394 | errors=0
+[metrics] 服务端: 运行221s | 连接=101 | 房间=160 | QPS≈499 | 延迟(us): avg=72 p50=68 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=231 p50=221 p95=316 p99=392 | errors=0
+[metrics] 服务端: 运行226s | 连接=101 | 房间=160 | QPS≈496 | 延迟(us): avg=71 p50=68 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=233 p50=222 p95=319 p99=399 | errors=0
+[metrics] 服务端: 运行231s | 连接=101 | 房间=160 | QPS≈506 | 延迟(us): avg=72 p50=68 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=232 p50=222 p95=318 p99=399 | errors=0
+[metrics] 服务端: 运行236s | 连接=101 | 房间=160 | QPS≈513 | 延迟(us): avg=71 p50=68 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=233 p50=223 p95=319 p99=399 | errors=0
+[metrics] 服务端: 运行241s | 连接=101 | 房间=160 | QPS≈499 | 延迟(us): avg=71 p50=68 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=233 p50=223 p95=319 p99=401 | errors=0
+[metrics] 服务端: 运行246s | 连接=101 | 房间=160 | QPS≈526 | 延迟(us): avg=71 p50=68 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=233 p50=223 p95=318 p99=401 | errors=0
+[metrics] 服务端: 运行251s | 连接=101 | 房间=160 | QPS≈503 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=234 p50=224 p95=320 p99=406 | errors=0
+[metrics] 服务端: 运行256s | 连接=101 | 房间=160 | QPS≈501 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=234 p50=224 p95=319 p99=407 | errors=0
+[metrics] 服务端: 运行261s | 连接=101 | 房间=160 | QPS≈515 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=234 p50=224 p95=319 p99=406 | errors=0
+[metrics] 服务端: 运行266s | 连接=101 | 房间=160 | QPS≈517 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=234 p50=224 p95=319 p99=406 | errors=0
+[metrics] 服务端: 运行271s | 连接=101 | 房间=160 | QPS≈505 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=234 p50=224 p95=319 p99=405 | errors=0
+[metrics] 服务端: 运行276s | 连接=101 | 房间=160 | QPS≈517 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=234 p50=224 p95=319 p99=406 | errors=0
+[metrics] 服务端: 运行281s | 连接=101 | 房间=160 | QPS≈501 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=234 p50=224 p95=318 p99=405 | errors=0
+[metrics] 服务端: 运行286s | 连接=101 | 房间=160 | QPS≈513 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=234 p50=224 p95=319 p99=405 | errors=0
+[metrics] 服务端: 运行291s | 连接=101 | 房间=160 | QPS≈504 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=234 p50=224 p95=318 p99=405 | errors=0
+[metrics] 服务端: 运行296s | 连接=101 | 房间=160 | QPS≈505 | 延迟(us): avg=71 p50=67 p99=134 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=225 p95=320 p99=408 | errors=0
+[metrics] 服务端: 运行301s | 连接=101 | 房间=160 | QPS≈517 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=225 p95=320 p99=408 | errors=0
+[metrics] 服务端: 运行306s | 连接=101 | 房间=160 | QPS≈517 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=225 p95=320 p99=407 | errors=0
+[metrics] 服务端: 运行311s | 连接=101 | 房间=160 | QPS≈502 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=320 p99=406 | errors=0
+[metrics] 服务端: 运行316s | 连接=101 | 房间=160 | QPS≈526 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=319 p99=405 | errors=0
+[metrics] 服务端: 运行321s | 连接=101 | 房间=160 | QPS≈498 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=225 p95=321 p99=407 | errors=0
+[metrics] 服务端: 运行326s | 连接=101 | 房间=160 | QPS≈504 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=225 p95=321 p99=407 | errors=0
+[metrics] 服务端: 运行331s | 连接=101 | 房间=160 | QPS≈511 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=225 p95=321 p99=407 | errors=0
+[metrics] 服务端: 运行336s | 连接=101 | 房间=160 | QPS≈511 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=236 p50=225 p95=322 p99=409 | errors=0
+[metrics] 服务端: 运行341s | 连接=101 | 房间=160 | QPS≈505 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=236 p50=225 p95=322 p99=409 | errors=0
+[metrics] 服务端: 运行346s | 连接=101 | 房间=160 | QPS≈520 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=236 p50=225 p95=322 p99=409 | errors=0
+[metrics] 服务端: 运行351s | 连接=101 | 房间=160 | QPS≈514 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=236 p50=225 p95=322 p99=408 | errors=0
+[metrics] 服务端: 运行357s | 连接=101 | 房间=160 | QPS≈509 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=236 p50=225 p95=322 p99=408 | errors=0
+[metrics] 服务端: 运行362s | 连接=101 | 房间=160 | QPS≈520 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=236 p50=225 p95=321 p99=408 | errors=0
+[metrics] 服务端: 运行367s | 连接=101 | 房间=160 | QPS≈529 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=225 p95=321 p99=407 | errors=0
+[metrics] 服务端: 运行372s | 连接=101 | 房间=160 | QPS≈509 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=225 p95=321 p99=406 | errors=0
+[metrics] 服务端: 运行377s | 连接=101 | 房间=160 | QPS≈504 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=225 p95=321 p99=406 | errors=0
+[metrics] 服务端: 运行382s | 连接=101 | 房间=160 | QPS≈522 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=225 p95=321 p99=406 | errors=0
+[metrics] 服务端: 运行387s | 连接=101 | 房间=160 | QPS≈548 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=225 p95=321 p99=406 | errors=0
+[metrics] 服务端: 运行392s | 连接=101 | 房间=160 | QPS≈507 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=320 p99=406 | errors=0
+[metrics] 服务端: 运行397s | 连接=101 | 房间=160 | QPS≈497 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=320 p99=405 | errors=0
+[metrics] 服务端: 运行402s | 连接=101 | 房间=160 | QPS≈507 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=320 p99=405 | errors=0
+[metrics] 服务端: 运行407s | 连接=101 | 房间=160 | QPS≈507 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=320 p99=405 | errors=0
+[metrics] 服务端: 运行412s | 连接=101 | 房间=160 | QPS≈521 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=320 p99=406 | errors=0
+[metrics] 服务端: 运行417s | 连接=101 | 房间=160 | QPS≈516 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=320 p99=406 | errors=0
+[metrics] 服务端: 运行422s | 连接=101 | 房间=160 | QPS≈509 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=320 p99=405 | errors=0
+[metrics] 服务端: 运行427s | 连接=101 | 房间=160 | QPS≈525 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=320 p99=405 | errors=0
+[metrics] 服务端: 运行432s | 连接=101 | 房间=160 | QPS≈523 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=320 p99=405 | errors=0
+[metrics] 服务端: 运行437s | 连接=101 | 房间=160 | QPS≈493 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=319 p99=405 | errors=0
+[metrics] 服务端: 运行442s | 连接=101 | 房间=160 | QPS≈499 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=319 p99=405 | errors=0
+[metrics] 服务端: 运行447s | 连接=101 | 房间=160 | QPS≈526 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=319 p99=404 | errors=0
+[metrics] 服务端: 运行452s | 连接=101 | 房间=160 | QPS≈520 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=319 p99=404 | errors=0
+[metrics] 服务端: 运行457s | 连接=101 | 房间=160 | QPS≈525 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=319 p99=404 | errors=0
+[metrics] 服务端: 运行462s | 连接=101 | 房间=160 | QPS≈497 | 延迟(us): avg=71 p50=67 p99=135 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=319 p99=404 | errors=0
+[metrics] 服务端: 运行467s | 连接=101 | 房间=160 | QPS≈525 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=235 p50=224 p95=319 p99=404 | errors=0
+[metrics] 服务端: 运行472s | 连接=101 | 房间=160 | QPS≈521 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=236 p50=224 p95=319 p99=404 | errors=0
+[metrics] 服务端: 运行477s | 连接=101 | 房间=160 | QPS≈513 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=236 p50=224 p95=319 p99=405 | errors=0
+[metrics] 服务端: 运行482s | 连接=101 | 房间=160 | QPS≈535 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=236 p50=224 p95=320 p99=407 | errors=0
+[metrics] 服务端: 运行487s | 连接=101 | 房间=160 | QPS≈524 | 延迟(us): avg=71 p50=67 p99=136 | 匹配队列=0 | 错误=0
+[stats] conn=101 | QPS≈0 | lat(us): avg=236 p50=224 p95=320 p99=408 | errors=0
+[metrics] 服务端: 运行492s | 连接=101 | 房间=160 | QPS≈470 | 延迟(us): avg=71 p50=67 p99=137 | 匹配队列=0 | 错误=0
+[steady] 正在清理 100 个客户端...
+
+========================================
+  稳态压测报告
+========================================
+  目标连接数:   100
+  成功连接数:   100
+  成功建立率:   100.0%
+  采集时长:     300.9 秒
+  总请求数:     0
+  QPS:          0.0
+  错误总数:     0
+----------------------------------------
+  延迟 (us): avg=236.0  min=106.0  max=10871.0  p50=224.0  p95=320.0  p99=408.0
+
+--- Markdown ---
+| 场景 | 连接数 | 时长 | QPS | avg(us) | p50(us) | p95(us) | p99(us) | 成功率 |
+|------|--------|------|-----|---------|---------|---------|----------|--------|
+| steady-100 | 100 | 301s | 0 | 236.0 | 224.0 | 320.0 | 408.0 | 100.0% |
+========================================
+
+=== 完成 ===

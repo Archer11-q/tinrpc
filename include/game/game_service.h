@@ -1,6 +1,8 @@
 #pragma once
 
 #include "game/room_manager.h"
+#include "game/room_service.h"
+#include "game/server_metrics.h"
 #include "game/match_service.h"
 #include "game/broadcast.h"
 #include "game/timer_manager.h"
@@ -83,6 +85,8 @@ private:
     MatchQueue    match_queue_;
     TimerManager  timer_;
     std::unique_ptr<Broadcast> broadcast_;
+    std::unique_ptr<RoomServiceImpl> room_svc_;
+    ServerMetrics metrics_;
 
     rpc::EventLoop loop_;
     rpc::Dispatch  dispatch_;

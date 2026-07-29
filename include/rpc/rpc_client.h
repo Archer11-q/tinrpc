@@ -47,6 +47,9 @@ public:
     // 断开连接
     void Disconnect();
 
+    // 仅关闭 fd，不操作 EventLoop（析构时才安全清理）
+    void CloseFd();
+
 private:
     EventLoop loop_;
     std::thread loop_thread_;
@@ -55,6 +58,7 @@ private:
     std::atomic<uint32_t> next_request_id_{1};
 
     std::mutex pending_mutex_;
+    std::mutex send_mutex_;   // 保护 send() 调用，防止多线程并发写同一个 fd
     std::unordered_map<uint32_t, std::promise<std::vector<uint8_t>>> pending_requests_;
 };
 

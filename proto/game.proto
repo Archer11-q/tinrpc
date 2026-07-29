@@ -256,6 +256,52 @@ message MatchFoundNtf {
     int32  timeout_sec = 5; // 确认超时秒数（默认 30）
 }
 
+// ---- 匹配请求 ----
+
+// 进入匹配队列
+message MatchPlayerReq {
+    string player_id = 1;
+    double elo_score = 2;
+}
+
+message MatchPlayerRes {
+    bool success        = 1;
+    string error_msg    = 2;
+    ErrorCode error_code = 3;
+}
+
+// 取消匹配
+message CancelMatchReq {
+    string player_id = 1;
+}
+
+message CancelMatchRes {
+    bool success        = 1;
+    string error_msg    = 2;
+    ErrorCode error_code = 3;
+}
+
+// ---- 服务端 Metrics ----
+
+// 查询服务端运行指标
+message GetMetricsReq {
+    // 暂无参数，后续可扩展（如过滤条件）
+}
+
+message GetMetricsRes {
+    bool   success            = 1;  // 是否成功
+    int64  uptime_sec         = 2;  // 服务运行时长（秒）
+    int32  active_connections = 3;  // 当前活跃连接数
+    int32  total_rooms        = 4;  // 当前房间总数
+    int64  total_requests     = 5;  // 历史总请求数
+    double current_qps        = 6;  // 当前 QPS（滑动窗口）
+    double avg_latency_us     = 7;  // 平均延迟（微秒）
+    double p50_latency_us     = 8;  // P50 延迟（微秒）
+    double p99_latency_us     = 9;  // P99 延迟（微秒）
+    int32  match_queue_size   = 10; // 匹配队列中等待的玩家数
+    int64  error_count        = 11; // 历史错误总数
+}
+
 // ---- 以下为序列化对比测试保留 ----
 
 // 简单测试消息 — 字段类型与 TLV Serializer 对齐

@@ -1,0 +1,197 @@
+=== TinyRPC 游戏层压测客户端 ===
+模式: ramp | 服务端: 127.0.0.1:8080
+
+=== MODE: ramp — 渐进加压 ===
+目标连接数: 50 | ramp 速率: 10 conn/s | 每连接持续: 60 s
+think time 均值: 200 ms
+----------------------------------------
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 0] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 1] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 2] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 3] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 4] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 5] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 6] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 7] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 8] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 9] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 10] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 11] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 12] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 13] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 14] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 15] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 16] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 17] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 18] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 19] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 20] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 21] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 22] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 23] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 24] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 25] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 26] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 27] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 28] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 29] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 30] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 31] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 32] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 33] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 34] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 35] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 36] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 37] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 38] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 39] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 40] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 41] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 42] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 43] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 44] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 45] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 46] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 47] 开始发消息循环 (60 秒，think time 200 ms)...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 48] 开始发消息循环 (60 秒，think time 200 ms)...
+[ramp] 50/50 连接已创建 (4s) | 活跃: 49
+[ramp] 全部 50 连接已创建，等待完成...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] No pending request for id=0
+[client 49] 开始发消息循环 (60 秒，think time 200 ms)...
+[stats] conn=50 | QPS≈0 | lat(us): avg=2920 p50=268 p95=41071 p99=44121 | errors=0
+[stats] conn=50 | QPS≈0 | lat(us): avg=1283 p50=248 p95=392 p99=42884 | errors=0
+[stats] conn=50 | QPS≈0 | lat(us): avg=890 p50=245 p95=371 p99=41632 | errors=0
+[stats] conn=50 | QPS≈0 | lat(us): avg=718 p50=248 p95=363 p99=40668 | errors=0
+[stats] conn=50 | QPS≈0 | lat(us): avg=615 p50=249 p95=361 p99=571 | errors=0
+[stats] conn=50 | QPS≈0 | lat(us): avg=555 p50=250 p95=361 p99=515 | errors=0
+[stats] conn=50 | QPS≈0 | lat(us): avg=512 p50=251 p95=362 p99=506 | errors=0
+[stats] conn=50 | QPS≈0 | lat(us): avg=481 p50=252 p95=363 p99=503 | errors=0
+[stats] conn=50 | QPS≈0 | lat(us): avg=457 p50=253 p95=362 p99=491 | errors=0
+[stats] conn=50 | QPS≈0 | lat(us): avg=437 p50=253 p95=360 p99=478 | errors=0
+[stats] conn=50 | QPS≈0 | lat(us): avg=421 p50=253 p95=360 p99=482 | errors=0
+[stats] conn=50 | QPS≈0 | lat(us): avg=407 p50=253 p95=360 p99=475 | errors=0
+[stats] conn=3 | QPS≈0 | lat(us): avg=400 p50=253 p95=361 p99=476 | errors=0
+
+========================================
+  压测报告: ramp-up
+========================================
+  并发连接数:   50
+  总耗时:       60.000 秒
+  总请求数:     0
+  QPS:          0.0
+  错误总数:     0
+----------------------------------------
+  延迟 (us): avg=400.4  min=115.0  max=48190.0  p50=253.0  p95=361.0  p99=476.0
+
+┌──────────────────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
+│ 阶段                     │   成功率  │  avg(us) │  min(us) │  max(us) │  p50(us) │   样本数  │
+├──────────────────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
+│ leave_room               │ 100.0% │    307.0 │    307.0 │    307.0 │    307.0 │        1 │
+│ message_loop             │ 100.0% │ 60125986.0 │ 60125986.0 │ 60125986.0 │ 60125986.0 │        1 │
+│ start_game               │ 100.0% │  40767.0 │  40767.0 │  40767.0 │  40767.0 │        1 │
+│ create_room              │ 100.0% │    160.0 │    160.0 │    160.0 │    160.0 │        1 │
+│ login                    │ 100.0% │    933.0 │    933.0 │    933.0 │    933.0 │        1 │
+│ connect                  │ 100.0% │    207.0 │    207.0 │    207.0 │    207.0 │        1 │
+└──────────────────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+========================================
+
+=== 完成 ===

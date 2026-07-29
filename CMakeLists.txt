@@ -3,6 +3,13 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Build type")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fno-omit-frame-pointer -g")
 
+# AddressSanitizer（调试堆内存损坏；压测时启用，发布时注释掉）
+option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+if(ENABLE_ASAN)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -O1")
+    set(CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=address")
+endif()
+
 project(rpc LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -113,6 +120,11 @@ add_executable(packet_frag_test
     bench/packet_frag_test.cpp
 )
 target_link_libraries(packet_frag_test rpc_lib pthread)
+
+add_executable(bench_game_client
+    bench/bench_game_client.cpp
+)
+target_link_libraries(bench_game_client rpc_lib pthread ${Protobuf_LIBRARIES})
 
 # ============================================================
 # TLV vs Protobuf 序列化对比测试

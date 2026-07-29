@@ -1,0 +1,124 @@
+=== TinyRPC 游戏层压测客户端 ===
+模式: chaos | 服务端: 127.0.0.1:8080
+
+=== MODE: chaos — 异常测试 ===
+连接数: 100 | 断连%: 50 | 恶意消息数: 100 | 超大包: 65536 B
+----------------------------------------
+[chaos] 阶段1: 建立 100 个连接...
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected to 127.0.0.1:8080
+[RpcClient] Connected tAddressSanitizer:DEADLYSIGNAL
+=================================================================
+==29963==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000 (pc 0x590ec9bf6710 bp 0x7ffe68c47030 sp 0x7ffe68c42a10 T0)
+==29963==The signal is caused by a READ memory access.
+==29963==Hint: address points to the zero page.
+    #0 0x590ec9bf6710 in printf /usr/include/x86_64-linux-gnu/bits/stdio2.h:118
+    #1 0x590ec9bf6710 in RunChaosMode /mnt/d/CLion/rpc/bench/bench_game_client.cpp:968
+    #2 0x590ec9be7859 in main /mnt/d/CLion/rpc/bench/bench_game_client.cpp:1380
+    #3 0x75facf42a600 in __libc_start_call_main ../sysdeps/nptl/libc_start_call_main.h:59
+    #4 0x75facf42a717 in __libc_start_main_impl ../csu/libc-start.c:360
+    #5 0x590ec9be7f94 in _start (/mnt/d/CLion/rpc/build/bench_game_client+0x1cf94) (BuildId: 4e219dfa07fd21098cdb02fe2d8be88ad43cb3a4)
+
+==29963==Register values:
+rax = 0x0000000000000000  rbx = 0x000071facdbf4560  rcx = 0x00000e3f59b7e042  rdx = 0x0000738ace7e03a0  
+rdi = 0x0000000000000000  rsi = 0x00000e3f59b7e046  rbp = 0x00007ffe68c47030  rsp = 0x00007ffe68c42a10  
+ r8 = 0x0000000000000000   r9 = 0x00000000000c33cd  r10 = 0x0000000000000006  r11 = 0x000000000000002f  
+r12 = 0x000071facdbf0210  r13 = 0x000071facdbf0230  r14 = 0x0000738ace7e0080  r15 = 0x000073dace7e0c80  
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV /usr/include/x86_64-linux-gnu/bits/stdio2.h:118 in printf
+==29963==ABORTING

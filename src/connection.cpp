@@ -70,10 +70,13 @@ void Connection::OnClose() {
     if (on_disconnect_) {
         on_disconnect_(fd_);
     }
-    loop_->Unregister(fd_);
-    // 显式 close，析构函数检测 fd_ >= 0 不会再 close
-    close(fd_);
+    // ★ Unregister 会销毁 this（handlers_.erase → ~unique_ptr → delete this）。
+    //    必须在 Unregister 之前：① 保存 fd 到局部变量 ② 设 fd_ = -1 阻止析构函数再 close
+    int fd = fd_;
     fd_ = -1;
+    loop_->Unregister(fd);
+    close(fd);
+    // 注意：此处不能再访问 this 或任何成员变量（已被 delete）
 }
 
 void Connection::Send(const std::vector<uint8_t>& data) {

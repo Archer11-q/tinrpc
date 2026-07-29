@@ -36,6 +36,9 @@ Thumbs.db
 # Claude Code local config
 .claude/
 
+# CodeGraph index (auto-generated, each developer runs locally)
+.codegraph/
+
 # My notes (keep docs/)
 claude聊天记录/
 实现原理/

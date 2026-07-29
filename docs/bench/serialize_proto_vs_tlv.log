@@ -1,0 +1,24 @@
+=== TLV vs Protobuf 序列化对比测试 ===
+
+  Echo Protobuf 往返                               ... [PASS]
+  Echo TLV 往返                                    ... [PASS]
+  RoomInfo Protobuf 往返                           ... [PASS]
+  RoomInfo TLV 往返                                ... [PASS]
+
+--- 性能对比（50 万次循环）---
+
+  ========== 简单类型对比（int32 + string + double + bool）==========
+  方案                体积(B)     编码(ns/次)      解码(ns/次)
+  TLV                44         2362.7          468.5
+  Protobuf           26         448.7           314.2
+  Proto/TLV          59.1%      19.0%           67.1%
+
+
+  ========== RoomInfo 对比（string×5 + int×5 + repeated）==========
+  方案                体积(B)     编码(ns/次)     解码(ns/次)
+  TLV                98          4390.0         2995.0
+  Protobuf           50          573.1          1792.2
+  Proto/TLV          51.0%       13.1%          59.8%
+
+
+Results: 4 passed, 0 failed
