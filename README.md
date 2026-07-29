@@ -1,34 +1,51 @@
 # TinyRPC
 
-> 基于 C++20 的轻量级 RPC 框架，自实现 TLV 二进制序列化协议，基于 epoll 异步 I/O。正在向游戏服务端方向演进。
+> **基于 C++20 的轻量级 RPC 框架 → 游戏服务端项目**
+>
+> 自研六层通信内核（TLV 序列化 / 协议帧 / epoll Reactor / 线程池 / Stub-Dispatch）之上，
+> 构建完整游戏业务模块：房间管理 / 帧同步 / 匹配系统 / 会话管理 / 压测工具。
+> 从零造轮子，165 项测试全部通过。
+
+[![C++20](https://img.shields.io/badge/C%2B%2B-20-00599C?logo=c%2B%2B)](https://en.cppreference.com/w/cpp/20)
+[![CMake](https://img.shields.io/badge/CMake-3.16%2B-064F8C?logo=cmake)](https://cmake.org/)
+[![Linux](https://img.shields.io/badge/Linux-epoll-FCC624?logo=linux)](https://kernel.org)
+[![Protobuf](https://img.shields.io/badge/Protobuf-proto3-4285F4?logo=google)](https://protobuf.dev/)
+[![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-165%2F165-brightgreen)](./tests/)
+[![Version](https://img.shields.io/badge/Version-v0.11-blue)](https://github.com/Archer11-q/tinrpc/tags)
 
 ---
 
-## 架构设计
-
-框架采用分层架构，各层职责独立、可单独测试和替换：
+## 架构总览
 
 ```
-┌──────────────────────────────────────────────┐
-│  游戏业务层          房间 ✅ / 帧同步 ✅ / 匹配 🚧 │  🚧
-├──────────────────────────────────────────────┤
-│  RPC 通信层（六层）                           │  ✅
-├──────────────────────────────────────────────┤
-│  5. Stub / Dispatch     远程调用透明化        │  ✅ v0.5
-├──────────────────────────────────────────────┤
-│  4. 协议帧层            二进制帧格式          │  ✅ v0.2
-├──────────────────────────────────────────────┤
-│  3. 序列化层            TLV 编码              │  ✅ v0.1
-├──────────────────────────────────────────────┤
-│  2. 线程池              任务调度              │  ✅ v0.4
-├──────────────────────────────────────────────┤
-│  1. 网络 IO 层          epoll + 非阻塞        │  ✅ v0.3
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                     游戏业务层  (v0.11 ✅)                        │
+│                                                                  │
+│  游戏协议 (v0.7)    TimerManager (v0.8)    压测工具 (v0.11)       │
+│  ├─ Protobuf proto3   ├─ 小顶堆定时器       ├─ bench_game_client  │
+│  └─ Login/Room/Frame  └─ Schedule/Cancel    └─ 6 种压测模式       │
+│                                                                  │
+│  房间服务器 (v0.8)        帧同步系统 (v0.9)    匹配系统 (v0.10)    │
+│  ├─ GameRoom (状态机)     ├─ FrameSyncManager   ├─ EloCalculator  │
+│  ├─ RoomManager           ├─ InputBuffer        ├─ MatchQueue     │
+│  ├─ Broadcast             ├─ GameState/tickLogic├─ MatchService   │
+│  ├─ RoomService (RPC)     ├─ CatchUp (追帧)     ├─ GameService    │
+│  └─ EPOLLRDHUP 断连       ├─ SnapshotManager    └─ SessionManager │
+│                            └─ Reconciliation                     │
+├──────────────────────────────────────────────────────────────────┤
+│                    RPC 通信层  (v0.1~v0.6 ✅)                      │
+│                                                                  │
+│  Stub / Dispatch (v0.5)    协议帧层 (v0.2)    序列化层 (v0.1)     │
+│  ├─ RpcClient (代理)       ├─ 13字节帧头       ├─ TLV 编解码      │
+│  └─ Dispatch (分发)        └─ Buffer粘包/拆包   └─ Protobuf 双轨  │
+│                                                                  │
+│  线程池 (v0.4)              网络 IO 层 (v0.3)                     │
+│  └─ 生产者-消费者            └─ epoll ET + Reactor + eventfd      │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-- 客户端调用经 **Stub 代理 → 协议帧封装 → 序列化 → 网络层** 发出
-- 服务端反向解包：**网络层 → 协议帧解析 → 反序列化 → Dispatch → 执行**
-- 序列化层与协议帧层完全解耦，`body` 为不透明字节，可替换为 Protobuf 等方案
+**数据流向**：客户端 `Stub Call → 序列化 → 协议帧 → send()` → 服务端 `epoll → Buffer → Decode → Dispatch → 业务逻辑 → Encode → send()`
 
 ---
 
@@ -36,93 +53,148 @@
 
 ### 环境要求
 
-| 工具 | 版本 | 说明 |
-|------|------|------|
-| CMake | ≥ 3.16 | 构建系统 |
-| GCC / Clang | ≥ 9 / ≥ 10 | 需支持 C++20 |
-| 操作系统 | Linux（推荐 WSL2） | 使用 epoll |
+| 工具 | 最低版本 | 说明 |
+|------|---------|------|
+| CMake | 3.16 | 构建系统 |
+| GCC | 9.0 | 需 C++20（concepts/ranges/coroutines） |
+| Protobuf | 3.x | `protoc` + `libprotobuf` |
+| OS | Linux（推荐 WSL2） | epoll 为 Linux 专属 |
 
-### 构建与运行
+### 一键构建 & 测试
 
 ```bash
 git clone git@github.com:Archer11-q/tinrpc.git
 cd tinrpc
 mkdir build && cd build
-cmake ..
-make -j$(nproc)
-./test_serializer
+cmake .. && make -j$(nproc)
+
+# 运行全部模块单元测试（165 项）
+./test_serializer && ./test_protocol && ./test_network && ./test_thread_pool
+./test_rpc && ./test_room_service && ./test_input_buffer && ./test_frame_sync
+./test_game_state && ./test_snapshot_manager && ./test_match_queue
+./test_frame_sync_flow
 ```
 
-预期输出 11 项测试全部 PASS。
+### 启动游戏服务器
+
+```bash
+./rpc                                    # 端口 8080，启动全部游戏模块
+```
+
+### 运行压测
+
+```bash
+# 单连接基线
+./bench_game_client --mode single
+
+# 100 并发稳态 5 分钟
+./bench_game_client --mode steady --connections 100 --duration 300
+
+# 渐进加压到 500 连接
+./bench_game_client --mode ramp --connections 500 --ramp-rate 50
+```
 
 ---
 
 ## 核心特性
 
-### 自实现 TLV 二进制序列化
+### RPC 通信层（v0.1 ~ v0.6）
 
-- 200 行 C++ 实现完整 TLV 编解码，零外部依赖
-- 每字段含 Type 标记，读取时校验类型，防止错位解析
-- 网络传输统一大端字节序，位运算实现跨平台字节序转换
-- 所有反序列化操作均做边界检查、类型检查、长度校验
+| 模块 | 版本 | 核心能力 |
+|------|------|---------|
+| TLV 序列化 | v0.1 | 200 行零依赖，Type-Length-Value 编码，边界/类型/长度三重校验 |
+| 协议帧 | v0.2 | 13 字节帧头（魔数 0xBABE），Buffer 粘包/拆包，body 不透明 |
+| 网络 IO | v0.3 | epoll ET + Reactor + eventfd，非阻塞 IO |
+| 线程池 | v0.4 | 生产者-消费者模型，Frame 回调异步执行 |
+| Stub/Dispatch | v0.5 | RpcClient 代理匹配请求/响应，Dispatch 方法注册表，pending 表超时 |
+| Benchmark | v0.6 | RPC vs HTTP+JSON 三层对比（序列化/网络/端到端） |
 
-### `std::optional<T>` 错误处理
+### 游戏业务层（v0.7 ~ v0.11）
 
-- 反序列化可能失败（数据损坏、长度不匹配），`optional` 在类型层面表达"可能失败"，成功路径零开销
-- 调用方直接检查返回值，无需 try-catch
+| 模块 | 版本 | 核心能力 |
+|------|------|---------|
+| 游戏协议 | v0.7 | Protobuf proto3，Login/Room/Frame/Match 等消息，TLV 与 Proto 双轨共存 |
+| 房间服务器 | v0.8 | 六状态房间状态机，RoomManager CRUD，Broadcast 房间广播，RoomService RPC，EPOLLRDHUP 断连清理 |
+| 帧同步系统 | v0.9 | FrameSyncManager 20fps tick，InputBuffer Jitter Buffer（deque+二分查找），确定性 tickLogic，CatchUp 2帧追帧，SnapshotManager 环形快照，Reconciliation 预测/和解 |
+| 匹配系统 | v0.10 | EloCalculator K=32 评分，MatchQueue 有序 vector 二分插入+超时分差放宽，MatchService 匹配→房间→通知，GameService 集中入口 main() |
+| 会话管理 | v0.10 | SessionManager 接口定义 + 断线重连方案设计文档 |
+| 压测工具 | v0.11 | bench_game_client 6 种模式（single/ramp/steady/chaos/fs/match），BenchStats 直方图+分位数，ServerMetrics 实时指标 |
+| 性能分析 | v0.11 | perf + FlameGraph 火焰图，3 种业务场景 ×3 个并发档位，CPU 热点精确到函数级 |
 
-### 游戏房间服务器（v0.8）
+---
 
-- **GameRoom** — 六状态房间状态机（IDLE → WAITING → PLAYING → FINISHED → DESTROYED）
-- **RoomManager** — 房间 CRUD + 玩家-房间映射 + 超时自动淘汰
-- **Broadcast** — 房间内广播（PlayerJoinNtf / PlayerLeaveNtf / GameStartNtf）
-- **RoomService** — RPC Service 接口（纯虚基类）→ Dispatch 注册 → Stub 客户端代理
-- 5 个 RPC 方法：CreateRoom / JoinRoom / LeaveRoom / SendMessage / GetRoomList
-- **ErrorCode 统一整合**：全部 Response 消息含 `error_code` 字段，服务端透传 RoomManager 错误码至客户端
-- 37 项 GameRoom 单元测试 + 13 项 RoomService RPC 测试（7 功能 + 6 错误码链路）
+## 压测数据（v0.11）
 
-### 匹配系统（v0.10）
+### 常规 RPC — 全档位容量测试（200ms think time）
 
-- **EloCalculator** — ELO 评分，CalcExpected/UpdateRating，标准公式 K=32（33 项匹配测试）
-- **MatchQueue** — 有序 vector 按 ELO 升序，二分插入 + 超时分差线性放宽 + TryMatch 批量配对
-- **MatchService** — 匹配成功回调：自动创建房间 + MatchFoundNtf 通知双方 + 30s 超时重新入队
-- **GameService** — 集中入口：组装全部模块（RoomManager+MatchQueue+Broadcast+Dispatch），main() 一键启动
-- **断连清理** — CancelMatch 在 EPOLLRDHUP 回调中调用，3 人入队中间断连→剩余自动配对
-- **SessionManager** — 接口定义（待第 10 周实现）：createSession/validateSession/heartbeat/Tick
+| 并发连接 | 模式 | QPS | avg(μs) | p50(μs) | p95(μs) | p99(μs) | 错误率 |
+|---------|------|-----|---------|---------|---------|---------|--------|
+| 1（基线） | single 30s | ~5 | 628.6 | 300.0 | 383.0 | 534.0 | 0% |
+| 10 | ramp 60s | ~50 | 469.4 | 314.0 | 475.0 | 781.0 | 0% |
+| 50 | ramp 60s | ~250 | 400.4 | 253.0 | 361.0 | 476.0 | 0% |
+| 100 | steady 300s | ~510 | 236.0 | 224.0 | 320.0 | 408.0 | 0% |
+| 300 | steady 300s | ~1,515 | 247.4 | 202.0 | 274.0 | 381.0 | 0% |
+| **500** | ramp 60s | **~2,500** | 346.7 | **196.0** | 275.0 | 389.0 | **0%** |
 
-### 帧同步系统（v0.9）
+> **关键结论**：吞吐量随并发严格线性增长（R²≈1.0），未出现性能拐点。p50 收敛至 ~200μs，无错误。
 
-- **InputBuffer** — Jitter Buffer，deque 存储 + 二分查找，支持乱序插入/覆盖/容量淘汰（20 项测试）
-- **FrameSyncManager** — 帧号计数器 + 输入收集 + 帧广播 + TimerManager 驱动 20fps tick（27 项测试）
-- **GameState + tickLogic** — 确定性状态更新（按 player_id 字典序、无随机数），3 玩家 10 帧一致性验证（11 项测试）
-- **CatchUp 追帧** — 帧历史缓冲区 + GetCatchUpFrames，每次 2 帧加速策略，慢客户端分步追上（集成测试）
-- **SnapshotManager** — 环形缓冲区存 60 帧 GameState，restoreFromSnapshot 占位（17 项测试）
-- **预测/和解(Reconciliation)** — CompareStates 检测服务端权威与客户端预测偏差，ReconcileState alpha 插值平滑纠正（21 项测试含和解）
-- **房间衔接** — StartGame 自动 InitFrameSync + 注册 FrameData 广播回调，SendInput / StopGame RPC
-- **全流程模拟** — 3 玩家 60 帧耗时报告：Tick 0.4μs/帧，输入 0.3μs/帧，CPU 开销可忽略
+### 帧同步 — 20fps 输入广播
 
-### 分层解耦
+| 并发连接 | 房间数 | QPS | p50(μs) | p95(μs) | p99(μs) | 错误率 |
+|---------|--------|-----|---------|---------|---------|--------|
+| 100 | 50 | ~1,980 | 364 | 713 | 924 | 0% |
+| 300 | 150 | ~5,955 | 333 | 774 | 1,116 | 0% |
+| **500** | 250 | **~9,923** | 253 | 842 | 2,268 | **0%** |
 
-- 序列化层与协议帧层、网络层完全解耦
-- 帧层的 `body` 字段为 `vector<uint8_t>`，不关心内容编码格式（TLV / Protobuf / JSON）
-- 后续可单独替换序列化方案而不影响其他层
+### 匹配系统 — EnterMatch/CancelMatch 循环
+
+| 并发连接 | QPS | p50(μs) | p95(μs) | p99(μs) | 错误率 |
+|---------|-----|---------|---------|---------|--------|
+| 100 | ~360 | 230 | 328 | 420 | 0% |
+| 300 | ~1,095 | 212 | 304 | 402 | 0% |
+| **500** | **~1,821** | 202 | 307 | 417 | **0%** |
+
+### CPU 热点定位（perf + 火焰图）
+
+| 场景 | #1 热点 | 用户态最高热点 | 瓶颈类型 |
+|------|---------|--------------|---------|
+| 常规 RPC | srso_alias_safe_ret (3.9~5.1%) | 无显著（<3%） | 内核网络发送 |
+| 帧同步 | srso_alias_safe_ret (3.7~4.1%) | InputBuffer::AddInput (2.3%) | 内核广播 + 二分查找 |
+| 匹配 | srso_alias_safe_ret (2.2~3.2%) | tcp_ack (2.1%) | 内核 TCP ACK |
+
+> 完整数据见 [`docs/bench/00-comprehensive-report.md`](docs/bench/00-comprehensive-report.md)
+
+---
+
+## 火焰图
+
+| 100 并发稳态 | 300 并发稳态 | 500 并发渐进 |
+|:---:|:---:|:---:|
+| [![100-steady](docs/bench/perf/flamegraph_100-steady.svg)](docs/bench/perf/flamegraph_100-steady.svg) | [![300-steady](docs/bench/perf/flamegraph_300-steady.svg)](docs/bench/perf/flamegraph_300-steady.svg) | [![500-ramp](docs/bench/perf/flamegraph_500-ramp.svg)](docs/bench/perf/flamegraph_500-ramp.svg) |
+
+> 红色 = 内核网络栈（发送路径为主），黄绿色 = 用户态业务逻辑。X 轴越宽 = CPU 占比越高。
+> <!-- TODO: 添加服务端启动和压测实时输出的截图/GIF -->
 
 ---
 
 ## 开发路线图
 
 | 版本 | 模块 | 状态 | 核心产出 |
-|------|------|------|----------|
-| v0.1 | 序列化层 | ✅ 已完成 | TLV 编码器/解码器，11 项单元测试 |
-| v0.2 | 协议帧层 | ✅ 已完成 | 二进制帧格式设计，粘包/拆包处理 |
-| v0.3 | 网络 IO 层 | ✅ 已完成 | epoll 边缘触发 + Reactor 事件分发 |
-| v0.4 | 线程池 | ✅ 已完成 | 生产者-消费者模型，Frame 回调异步执行，6 项测试 |
-| v0.5 | Stub / Dispatch | ✅ 已完成 | RpcClient + Dispatch 分发，发送路径，4 项集成测试 |
-| v0.6 | Benchmark | ✅ 已完成 | RPC vs HTTP+JSON 三层性能对比 |
-| v0.7 | 游戏协议 | ✅ 已完成 | Protobuf proto3 协议定义，TLV vs Proto 对比测试 |
-| v0.8 | 游戏房间服务器 | ✅ 已完成 | TimerManager、GameRoom、RoomManager、Broadcast、RoomService RPC |
-| v0.9 | 帧同步系统 | ✅ 已完成 | FrameSyncManager、InputBuffer、GameState/tickLogic、SnapshotManager、追帧、预测/和解 |
-| v0.10 | 匹配系统 | 🚧 进行中 | EloCalculator、MatchQueue、MatchService、GameService、SessionManager |
+|------|------|:----:|----------|
+| v0.1 | 序列化层 | ✅ | TLV 编码器/解码器，11 项单元测试 |
+| v0.2 | 协议帧层 | ✅ | 二进制帧格式，粘包/拆包，16 项测试 |
+| v0.3 | 网络 IO 层 | ✅ | epoll ET + Reactor + eventfd，7 项测试 |
+| v0.4 | 线程池 | ✅ | 生产者-消费者异步回调，6 项测试 |
+| v0.5 | Stub / Dispatch | ✅ | RpcClient + Dispatch 分发，4 项集成测试 |
+| v0.6 | Benchmark | ✅ | RPC vs HTTP+JSON 三层性能对比 |
+| v0.7 | 游戏协议 | ✅ | Protobuf proto3，TLV vs Proto 对比 |
+| v0.8 | 房间服务器 | ✅ | GameRoom/RoomManager/Broadcast/RoomService RPC/EPOLLRDHUP，50 项测试 |
+| v0.9 | 帧同步系统 | ✅ | FrameSyncManager/InputBuffer/GameState/追帧/快照/预测和解，129 项测试 |
+| v0.10 | 匹配系统 | ✅ | EloCalculator/MatchQueue/MatchService/GameService/SessionManager，33 项测试 |
+| v0.11 | 压测 + 性能分析 | ✅ | bench_game_client/Metrics/perf火焰图/综合压测报告/4 个 Bug 修复 |
+| v0.12 | 规划中 | 🔲 | 断线重连实现 / 极限压测 / InputBuffer 优化 |
+
+**测试总计：165 项，全部通过。**
 
 ---
 
@@ -130,56 +202,45 @@ make -j$(nproc)
 
 | 文档 | 内容 |
 |------|------|
-| [工程日志](docs/devlog.md) | 每层开发中的决策过程与问题解决记录 |
+| [综合压测报告](docs/bench/00-comprehensive-report.md) | v0.11 全场景压测数据 + CPU 热点分析 + 优化建议 |
+| [工程日志](docs/devlog.md) | 每层开发中的设计决策与问题解决记录 |
 | [更新日志](docs/CHANGELOG.md) | 版本变更记录 |
+| [设计文档](docs/) | 各层理论文档（01~06）+ 踩坑记录 |
+| [技术博客](docs/blog-v0.9-frame-sync.md) | 帧同步系统设计博客 |
+| [技术博客](docs/blog-v0.10-match-system.md) | 匹配系统设计博客 |
 
-## Benchmark（v0.6）
+---
 
-TinyRPC（TLV 二进制协议）对比 HTTP+JSON，分两层测量：
+## 项目结构
 
-### Layer 1：纯序列化（无网络）
-
-6 字段结构体（int64×2 + int32×2 + double + bool + string），50 万次迭代：
-
-| 场景 | TLV体积 | JSON体积 | 节省 | TLV解码 | JSON解码 | 加速比 |
-|------|--------|---------|------|---------|---------|-------|
-| 大整数(6字段) | 63 B | 89 B | **29%** | 442 ns | 1,803 ns | **4.1x** |
-| 多字段混合 | 132 B | 163 B | **19%** | 704 ns | 1,907 ns | **2.7x** |
-| +10KB字符串 | 10,322 B | 10,358 B | 0.3% | 1,270 ns | 2,325 ns | **1.8x** |
-
-> TLV 解码速度稳定领先 1.8x~4.1x。大整数场景体积节省最明显（定长 4/8 字节 vs 变长文本）。字符串占比大时体积差距缩小，但解码仍有优势。
-
-### Layer 2+3：端到端（变并发）
-
-`Add(3,5)` 小请求，每线程 5,000 次，loopback：
-
-| 协议 | 1线程 | 4线程 | 8线程 |
-|------|-------|-------|-------|
-| **TinyRPC** | 5,021 QPS | 22,319 QPS | 22,608 QPS |
-| **HTTP+JSON** | 7,989 QPS | 24,488 QPS | 24,385 QPS |
-
-| 协议 | 1线程 p99 | 4线程 p99 | 8线程 p99 |
-|------|-----------|-----------|-----------|
-| **TinyRPC** | 360 μs | 269 μs | 476 μs |
-| **HTTP+JSON** | 175 μs | 258 μs | 483 μs |
-
-> 两端均使用 epoll ET + Reactor 网络模型（统一变量）。1 线程下 HTTP 朴素阻塞 IO 更快（无异步层开销）。4~8 线程时两者 QPS 接近（22k vs 24k），epoll Reactor 连接复用抵消了异步框架开销。p99 延迟在高并发下 RPC 更稳定。
-
-### 一键运行
-
-```bash
-cd build && cmake .. && make -j$(nproc)
-bash ../bench/run_all.sh          # 自动跑三层 + 输出汇总报告
 ```
-
-或手动分步：
-```bash
-./bench_server --mode rpc --port 8080     # 启动服务端
-./bench_client --mode rpc --port 8080 --threads 8 --requests 10000 --warmup 1000
-./bench_serialize                          # Layer 1 纯序列化
+tinrpc/
+├── include/
+│   ├── rpc/              # RPC 框架头文件（10 个）
+│   └── game/             # 游戏模块头文件（12 个）
+├── src/
+│   ├── *.cpp             # RPC 框架实现
+│   └── game/             # 游戏模块实现
+├── proto/
+│   └── game.proto        # Protobuf 协议定义
+├── bench/                # 压测工具
+├── tests/                # 单元测试（165 项）
+├── scripts/              # 压测/火焰图脚本
+├── docs/
+│   ├── bench/            # 压测报告 + 火焰图
+│   └── 0*-*.md           # 各层设计文档
+├── CMakeLists.txt
+└── README.md
 ```
 
 ---
+
 ## License
 
-MIT
+MIT © [Archer](https://github.com/Archer11-q)
+
+---
+
+> **从零造轮子，每一行代码都是思考的痕迹。**  
+> 项目博客：[帧同步系统设计](docs/blog-v0.9-frame-sync.md) | [匹配系统设计](docs/blog-v0.10-match-system.md)  
+> GitHub：[github.com/Archer11-q/tinrpc](https://github.com/Archer11-q/tinrpc)
