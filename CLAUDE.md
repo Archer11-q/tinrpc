@@ -182,10 +182,9 @@ D:\CLion\rpc\
 │   ├── 04-thread-pool.md
 │   ├── 05-stub-dispatch.md
 │   ├── 06-benchmark.md
-│   ├── bench/                # ✅ v0.11 — 压测报告（01-基线 02-容量 03-序列化 05-异常 06-Lv3全流程）
-│   ├── CHANGELOG.md
+│   ├── bench/                # ✅ v0.11 — 压测报告（01-基线 02-容量 03-序列化 05-异常 06-Lv3全流程 + 综合报告）
 │   ├── devlog.md
-│   └── pitfalls/          # 踩坑记录
+│   └── pitfalls/          # 踩坑记录（8 篇：按模块/版本归档）
 ├── main.cpp              # 空壳，尚未使用
 ├── CMakeLists.txt
 ├── README.md
@@ -222,7 +221,7 @@ stub->Call("Add", body)
 6. **RpcClient 使用直接 send()**：客户端请求通过 `send()` 直接发送。Connection 所有权在 Register 后转移给 EventLoop。
 7. **TimerManager**：跨模块基础设施，不归属任一业务模块。房间超时、帧同步 tick、匹配超时共用。
 8. **Benchmark 独立目录**：RPC 框架层对比代码在 `bench/`，游戏业务压测在 `stress/`，层次清晰。
-9. **理论文档不上传**：`docs/0*-*.md` 在 `.gitignore`，仅 `CHANGELOG.md` 和 `devlog.md` 上传 GitHub。
+9. **理论文档不上传**：`docs/0*-*.md` 在 `.gitignore`，仅 `devlog.md` 上传 GitHub。
 
 ## 开发协作模式（必须遵守）
 
@@ -256,6 +255,5 @@ stub->Call("Add", body)
 ## docs/ 目录约定
 
 - 理论文档：`docs/0X-模块名.md`
-- 更新日志：`docs/CHANGELOG.md`（每个版本新增功能 + 设计思路）
-- 工程日志：`docs/devlog.md`（设计决策 + 遇到问题 + 解决方案）
+- 工程日志：`docs/devlog.md`（设计决策 + 遇到问题 + 解决方案，含版本变更记录）
 - 全部中文撰写

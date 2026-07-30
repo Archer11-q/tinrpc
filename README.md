@@ -204,10 +204,7 @@ cmake .. && make -j$(nproc)
 |------|------|
 | [综合压测报告](docs/bench/00-comprehensive-report.md) | v0.11 全场景压测数据 + CPU 热点分析 + 优化建议 |
 | [工程日志](docs/devlog.md) | 每层开发中的设计决策与问题解决记录 |
-| [更新日志](docs/CHANGELOG.md) | 版本变更记录 |
-| [设计文档](docs/) | 各层理论文档（01~06）+ 踩坑记录 |
-| [技术博客](docs/blog-v0.9-frame-sync.md) | 帧同步系统设计博客 |
-| [技术博客](docs/blog-v0.10-match-system.md) | 匹配系统设计博客 |
+| [设计文档](docs/) | 各层理论文档（01~06）+ [踩坑记录](docs/pitfalls/)（8 篇） |
 
 ---
 
@@ -242,5 +239,15 @@ MIT © [Archer](https://github.com/Archer11-q)
 ---
 
 > **从零造轮子，每一行代码都是思考的痕迹。**  
-> 项目博客：[帧同步系统设计](docs/blog-v0.9-frame-sync.md) | [匹配系统设计](docs/blog-v0.10-match-system.md)  
 > GitHub：[github.com/Archer11-q/tinrpc](https://github.com/Archer11-q/tinrpc)
+>
+> ### 博客文章
+>
+> 1. [吃透TCP粘包拆包！自研RPC帧层+抓包实证](https://www.zhihu.com/people/zqyoum)
+> 2. [游戏服务端状态同步与帧同步选型笔记](https://www.zhihu.com/people/zqyoum)
+> 3. [TinyRPC v0.8 游戏房间服务器搭建笔记：从RPC内核到可落地的房间服务](https://www.zhihu.com/people/zqyoum)
+> 4. [TinyRPC v0.9 帧同步系统实现笔记：从Jitter Buffer到追帧的完整框架设计](https://www.zhihu.com/people/zqyoum)
+> 5. [游戏匹配系统设计：ELO、队列和超时放宽](https://www.zhihu.com/people/zqyoum)
+> 6. [C++ 游戏服务端开发避坑指南：从 TinyRPC 项目看 8 类典型陷阱](https://www.zhihu.com/people/zqyoum)
+>
+> 知乎主页：[zhihu.com/people/zqyoum](https://www.zhihu.com/people/zqyoum)

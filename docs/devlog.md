@@ -589,3 +589,79 @@ DisconnectCallback(fd):
 ```
 
 **为什么不在 MatchQueue 内部感知断连**：MatchQueue 是纯数据容器，不持有 Connection / fd。让它感知网络事件需要引入反向映射（fd → player_id），职责越界。把 `CancelMatch` 作为公开 API，由断连回调调用——职责清晰，且已在 v0.8 的断连清理链路中验证。
+
+---
+
+## v0.11 — 压测工具 + 服务端 Metrics + 综合压测报告（2026-07-25 ~ 07-29）
+
+### 决策：压测工具自研 vs 使用 wrk/ab
+
+**背景**：需要对游戏业务全流程（连接→登录→房间→帧同步→匹配→离开）做压测，不能用通用 HTTP 压测工具（wrk/ab 只支持 HTTP 协议）。
+
+**最终决策**：自研 `bench_game_client`（~1400 行），支持 6 种模式：
+- `single`：单连接基线（验证框架基础延迟）
+- `ramp`：渐进加压（探测拐点）
+- `steady`：稳态长跑（验证稳定性、内存泄漏）
+- `chaos`：异常注入（断连/恶意消息/超大包）
+- `fs`：帧同步专项压测（20fps、1:N 广播模型）
+- `match`：匹配系统专项压测（EnterMatch→CancelMatch 循环）
+
+每种模式都内建了泊松 think time 模拟真实玩家操作节奏。
+
+### 决策：BenchStats 直方图 + 分位数
+
+**背景**：需要精确的 p50/p95/p99 延迟数据。
+
+**选项**：
+- **全量排序**：O(n log n)，内存爆炸
+- **T-Digest / HdrHistogram**：工业方案，精度高但需外部依赖
+- **等距直方图**：固定桶宽，精度有限但实现简单
+
+**最终决策**：自实现等距直方图 `BenchStats`。按 100μs 桶宽分桶，从桶中估算分位数。对微秒级测量足够精确，且零外部依赖。
+
+同时实现了 `ServerMetrics`（服务端侧指标）：连接数、房间数、QPS、延迟分位数（客户端/服务端双边对齐）、错误计数。
+
+### 决策：压测与 perf 火焰图同步采集
+
+**背景**：仅靠 QPS/延迟数据只能看到"有瓶颈"，无法定位"瓶颈在哪里"。
+
+**最终决策**：在 3 种压测模式（常规 RPC / 帧同步 / 匹配）× 3 个并发档位（100/300/500）下同步运行 `perf record -F 99 -g --call-graph dwarf`。
+
+**踩坑**：[WSL2 DrvFs 下 perf mmap 失败](pitfalls/wsl2-perf-mmap-failure.md) — perf 使用 mmap 写入数据，但 WSL2 的 /mnt/d 是 9P 文件系统，不支持 mmap。解决方案：输出到 `/tmp/`（WSL2 原生 ext4）。
+
+### 压测中发现并修复的 Bug
+
+详见 `docs/pitfalls/`：
+
+| Bug | 文件 | 类型 |
+|-----|------|------|
+| [RoomServiceImpl 悬空指针](pitfalls/room-service-dangling-pointer.md) | `src/game/game_service.cpp` | 生命周期 |
+| [Connection::OnClose() UAF](pitfalls/connection-onclose-uaf.md) | `src/connection.cpp` | Use-After-Free |
+| [RpcClient 多线程 send() 竞争](pitfalls/rpc-client-multithread-send.md) | `src/rpc_client.cpp` | 线程安全 |
+| [GetMetricsRes 缺少 success 字段](pitfalls/proto-field-missing-compile-error.md) | `proto/game.proto` | Proto 设计 |
+
+这些 Bug 全部在压测过程中暴露，单连接测试无法复现。压测是发现并发竞争、生命周期等隐蔽问题的**唯一有效手段**。
+
+### 性能分析发现：TTY 同步日志 "假死"
+
+**踩坑**：[TTY 同步日志导致 300 连接时"假死"](pitfalls/tty-sync-logging-bottleneck.md)
+
+在 300 并发匹配压测时，火焰图出现 `tty_write → pty_write → __spin_lock_slowpath` 的尖塔——调试 `printf` 的输出全部排队等内核 TTY 锁，服务端 CPU 空转在内核自旋锁上。此后压测前第一条命令就是 `> /dev/null 2>&1`。
+
+### 综合压测结论
+
+详见 [`docs/bench/00-comprehensive-report.md`](../bench/00-comprehensive-report.md)。核心数据：
+
+- **RPC 框架基础延迟**：p50≈300μs，服务端内部处理仅 ~70μs
+- **吞吐线性扩展**：1→500 连接，QPS 从 5→2500，严格正比例（R²≈1.0）
+- **帧同步**：500 连接 250 房间 20fps → QPS≈10,000，p50=253μs
+- **匹配系统**：500 连接 → QPS≈1,821，p50=202μs
+- **CPU 瓶颈**：内核网络发送路径（srso_alias_safe_ret 4%），用户态业务开销可忽略
+- **全档位零错误**：165 项测试全部通过，连接成功率 100%
+
+### 下一版本计划
+
+- 断线重连实现（SessionManager + 快照恢复）
+- 极限压测（think time=0，找到真正 QPS 饱和点）
+- InputBuffer 优化（vector 替换 deque 的 lower_bound）
+- 可能：io_uring 异步 IO 调研
