@@ -46,7 +46,7 @@
 // ============================================================
 // 命令行参数
 // ============================================================
-static uint16_t    g_port     = 8080;
+static uint16_t g_port = 8080;
 static const char* g_scenario = "all";
 
 // ============================================================
@@ -85,7 +85,7 @@ static int ConnectToServer() {
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_port   = htons(g_port);
+    addr.sin_port = htons(g_port);
     if (inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr) <= 0) {
         fprintf(stderr, "[错误] inet_pton() 失败\n");
         close(fd);
@@ -116,7 +116,7 @@ static std::vector<rpc::Frame> ReceiveResponses(int fd, int expected_count, int 
 
     // 设置接收超时
     struct timeval tv;
-    tv.tv_sec  = timeout_ms / 1000;
+    tv.tv_sec = timeout_ms / 1000;
     tv.tv_usec = (timeout_ms % 1000) * 1000;
     setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 
@@ -148,7 +148,8 @@ static std::vector<rpc::Frame> ReceiveResponses(int fd, int expected_count, int 
         // 循环弹出完整帧（模拟 TryPopFrame 的粘包/拆包处理）
         while (true) {
             auto raw = buf.TryPopFrame();
-            if (!raw) break;  // 不够一帧 → 等待更多数据
+            if (!raw)
+                break; // 不够一帧 → 等待更多数据
 
             auto frame = rpc::ProtocolFrame::Decode(*raw);
             if (!frame) {
@@ -158,7 +159,8 @@ static std::vector<rpc::Frame> ReceiveResponses(int fd, int expected_count, int 
 
             if (frame->msg_type == rpc::MessageType::Response) {
                 int result = DecodeResponseResult(*frame);
-                printf("      TryPopFrame → %zu 字节 (完整帧: request_id=%u, result=%d) | Buffer 剩余: %zu 字节\n",
+                printf("      TryPopFrame → %zu 字节 (完整帧: request_id=%u, result=%d) | Buffer "
+                       "剩余: %zu 字节\n",
                        raw->size(), frame->request_id, result, buf.Size());
                 responses.push_back(std::move(*frame));
             } else {
@@ -180,11 +182,12 @@ static bool RunNormal() {
     printf("\n=== 场景 1: normal（对照组：3 帧逐帧发送）===\n");
 
     int fd = ConnectToServer();
-    if (fd < 0) return false;
+    if (fd < 0)
+        return false;
 
-    auto f1 = MakeAddFrame(1, 3, 5);   // Add(3,5) = 8
+    auto f1 = MakeAddFrame(1, 3, 5); // Add(3,5) = 8
     auto f2 = MakeAddFrame(2, 10, 20); // Add(10,20) = 30
-    auto f3 = MakeAddFrame(3, 7, 2);   // Add(7,2) = 9
+    auto f3 = MakeAddFrame(3, 7, 2); // Add(7,2) = 9
 
     printf("  发送: 3 帧，逐帧 send()\n");
     printf("    帧 #1: %zu 字节 (request_id=1, Add(3,5))\n", f1.size());
@@ -199,8 +202,7 @@ static bool RunNormal() {
     close(fd);
 
     // 验证
-    bool ok = (responses.size() == 3) &&
-              (DecodeResponseResult(responses[0]) == 8) &&
+    bool ok = (responses.size() == 3) && (DecodeResponseResult(responses[0]) == 8) &&
               (DecodeResponseResult(responses[1]) == 30) &&
               (DecodeResponseResult(responses[2]) == 9);
     printf("  验证: %s\n\n", ok ? "✓ 通过" : "✗ 失败");
@@ -214,7 +216,8 @@ static bool RunSticky2() {
     printf("\n=== 场景 2: sticky_2（粘包：2 帧合并发送）===\n");
 
     int fd = ConnectToServer();
-    if (fd < 0) return false;
+    if (fd < 0)
+        return false;
 
     auto f1 = MakeAddFrame(1, 3, 5);
     auto f2 = MakeAddFrame(2, 10, 20);
@@ -224,8 +227,8 @@ static bool RunSticky2() {
     combined.insert(combined.end(), f1.begin(), f1.end());
     combined.insert(combined.end(), f2.begin(), f2.end());
 
-    printf("  发送: 帧 #1(%zu 字节) + 帧 #2(%zu 字节) 拼接 = %zu 字节，一次 send()\n",
-           f1.size(), f2.size(), combined.size());
+    printf("  发送: 帧 #1(%zu 字节) + 帧 #2(%zu 字节) 拼接 = %zu 字节，一次 send()\n", f1.size(),
+           f2.size(), combined.size());
     printf("  预期: 服务端一次 recv 收到粘包的 2 帧，Buffer.TryPopFrame 逐帧弹出\n");
 
     send(fd, combined.data(), combined.size(), MSG_NOSIGNAL);
@@ -233,8 +236,7 @@ static bool RunSticky2() {
     auto responses = ReceiveResponses(fd, 2, 2000);
     close(fd);
 
-    bool ok = (responses.size() == 2) &&
-              (DecodeResponseResult(responses[0]) == 8) &&
+    bool ok = (responses.size() == 2) && (DecodeResponseResult(responses[0]) == 8) &&
               (DecodeResponseResult(responses[1]) == 30);
     printf("  验证: %s\n\n", ok ? "✓ 通过" : "✗ 失败");
     return ok;
@@ -247,7 +249,8 @@ static bool RunSticky5() {
     printf("\n=== 场景 3: sticky_5（粘包：5 帧合并发送）===\n");
 
     int fd = ConnectToServer();
-    if (fd < 0) return false;
+    if (fd < 0)
+        return false;
 
     std::vector<uint8_t> combined;
     int expected_results[5];
@@ -258,8 +261,8 @@ static bool RunSticky5() {
         auto f = MakeAddFrame(static_cast<uint32_t>(i + 1), a, b);
         expected_results[i] = a + b;
         combined.insert(combined.end(), f.begin(), f.end());
-        printf("  帧 #%d: %zu 字节 (request_id=%d, Add(%d,%d)=%d)\n",
-               i + 1, f.size(), i + 1, a, b, expected_results[i]);
+        printf("  帧 #%d: %zu 字节 (request_id=%d, Add(%d,%d)=%d)\n", i + 1, f.size(), i + 1, a, b,
+               expected_results[i]);
     }
 
     printf("  发送: 5 帧拼接 = %zu 字节，一次 send()\n", combined.size());
@@ -285,7 +288,8 @@ static bool RunSplitHalf() {
     printf("\n=== 场景 4: split_half（拆包：1 帧分两次发送）===\n");
 
     int fd = ConnectToServer();
-    if (fd < 0) return false;
+    if (fd < 0)
+        return false;
 
     auto frame = MakeAddFrame(1, 3, 5);
     size_t half = frame.size() / 2;
@@ -306,8 +310,7 @@ static bool RunSplitHalf() {
     auto responses = ReceiveResponses(fd, 1, 2000);
     close(fd);
 
-    bool ok = (responses.size() == 1) &&
-              (DecodeResponseResult(responses[0]) == 8);
+    bool ok = (responses.size() == 1) && (DecodeResponseResult(responses[0]) == 8);
     printf("  验证: %s\n\n", ok ? "✓ 通过" : "✗ 失败");
     return ok;
 }
@@ -319,7 +322,8 @@ static bool RunSplitByte() {
     printf("\n=== 场景 5: split_byte（极端拆包：逐字节发送）===\n");
 
     int fd = ConnectToServer();
-    if (fd < 0) return false;
+    if (fd < 0)
+        return false;
 
     auto frame = MakeAddFrame(1, 3, 5);
 
@@ -337,8 +341,7 @@ static bool RunSplitByte() {
     auto responses = ReceiveResponses(fd, 1, 3000);
     close(fd);
 
-    bool ok = (responses.size() == 1) &&
-              (DecodeResponseResult(responses[0]) == 8);
+    bool ok = (responses.size() == 1) && (DecodeResponseResult(responses[0]) == 8);
     printf("  验证: %s\n\n", ok ? "✓ 通过" : "✗ 失败");
     return ok;
 }
@@ -351,9 +354,10 @@ static bool RunCombo() {
     printf("\n=== 场景 6: combo（粘包+拆包组合）===\n");
 
     int fd = ConnectToServer();
-    if (fd < 0) return false;
+    if (fd < 0)
+        return false;
 
-    auto fA = MakeAddFrame(1, 1, 2);  // Add(1,2) = 3
+    auto fA = MakeAddFrame(1, 1, 2); // Add(1,2) = 3
     auto fB = MakeAddFrame(2, 10, 5); // Add(10,5) = 15
 
     size_t halfA = fA.size() / 2;
@@ -380,8 +384,7 @@ static bool RunCombo() {
     auto responses = ReceiveResponses(fd, 2, 2000);
     close(fd);
 
-    bool ok = (responses.size() == 2) &&
-              (DecodeResponseResult(responses[0]) == 3) &&
+    bool ok = (responses.size() == 2) && (DecodeResponseResult(responses[0]) == 3) &&
               (DecodeResponseResult(responses[1]) == 15);
     printf("  验证: %s\n\n", ok ? "✓ 通过" : "✗ 失败");
     return ok;
@@ -394,7 +397,8 @@ static bool RunRandomChunks() {
     printf("\n=== 场景 7: random_chunks（随机分片：3 帧切割为随机大小块发送）===\n");
 
     int fd = ConnectToServer();
-    if (fd < 0) return false;
+    if (fd < 0)
+        return false;
 
     auto f1 = MakeAddFrame(1, 3, 5);
     auto f2 = MakeAddFrame(2, 8, 2);
@@ -417,7 +421,7 @@ static bool RunRandomChunks() {
     int seed = 42;
     while (offset < combined.size()) {
         seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-        size_t chunk_size = 1 + static_cast<size_t>(seed % 15);  // 1~15 字节
+        size_t chunk_size = 1 + static_cast<size_t>(seed % 15); // 1~15 字节
         if (offset + chunk_size > combined.size())
             chunk_size = combined.size() - offset;
         chunks.emplace_back(combined.begin() + static_cast<ptrdiff_t>(offset),
@@ -438,8 +442,7 @@ static bool RunRandomChunks() {
     auto responses = ReceiveResponses(fd, 3, 3000);
     close(fd);
 
-    bool ok = (responses.size() == 3) &&
-              (DecodeResponseResult(responses[0]) == 8) &&
+    bool ok = (responses.size() == 3) && (DecodeResponseResult(responses[0]) == 8) &&
               (DecodeResponseResult(responses[1]) == 10) &&
               (DecodeResponseResult(responses[2]) == 10);
     printf("  验证: %s\n\n", ok ? "✓ 通过" : "✗ 失败");
@@ -486,7 +489,8 @@ int main(int argc, char* argv[]) {
     {
         int test_fd = ConnectToServer();
         if (test_fd < 0) {
-            fprintf(stderr, "\n[错误] 无法连接到 127.0.0.1:%u，请先启动 bench_server --mode rpc\n", g_port);
+            fprintf(stderr, "\n[错误] 无法连接到 127.0.0.1:%u，请先启动 bench_server --mode rpc\n",
+                    g_port);
             return 1;
         }
         close(test_fd);
@@ -499,18 +503,18 @@ int main(int argc, char* argv[]) {
     };
 
     ScenarioEntry all_scenarios[] = {
-        {"normal",        RunNormal},
-        {"sticky_2",      RunSticky2},
-        {"sticky_5",      RunSticky5},
-        {"split_half",    RunSplitHalf},
-        {"split_byte",    RunSplitByte},
-        {"combo",         RunCombo},
+        {"normal", RunNormal},
+        {"sticky_2", RunSticky2},
+        {"sticky_5", RunSticky5},
+        {"split_half", RunSplitHalf},
+        {"split_byte", RunSplitByte},
+        {"combo", RunCombo},
         {"random_chunks", RunRandomChunks},
     };
 
     int passed = 0;
     int failed = 0;
-    int total  = 0;
+    int total = 0;
 
     for (auto& entry : all_scenarios) {
         if (strcmp(g_scenario, "all") != 0 && strcmp(g_scenario, entry.name) != 0)
@@ -518,8 +522,10 @@ int main(int argc, char* argv[]) {
 
         total++;
         bool result = entry.fn();
-        if (result) passed++;
-        else        failed++;
+        if (result)
+            passed++;
+        else
+            failed++;
     }
 
     // 汇总报告

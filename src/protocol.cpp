@@ -5,14 +5,14 @@
 
 namespace rpc {
 
-std::vector<uint8_t> ProtocolFrame::Encode(
-    uint32_t request_id,                // 请求ID
-    MessageType msg_type,               // 消息类型
-    const std::string& method_name,     // 方法名
-    const std::vector<uint8_t>& body)   // 序列化后的参数或返回值
+std::vector<uint8_t> ProtocolFrame::Encode(uint32_t request_id, // 请求ID
+                                           MessageType msg_type, // 消息类型
+                                           const std::string& method_name, // 方法名
+                                           const std::vector<uint8_t>& body) // 序列化后的参数或返回值
 {
-    uint32_t total_len = kFrameHeaderSize + method_name.size() + body.size();   // 帧总长度 = 固定头 + 方法名 + body
-    std::vector<uint8_t> frame;         // 帧字节序列框架： 魔数 + 总长度 + 请求ID + 消息类型 + 方法名长度 + 方法名 + body
+    uint32_t total_len = kFrameHeaderSize + method_name.size() +
+                         body.size(); // 帧总长度 = 固定头 + 方法名 + body
+    std::vector<uint8_t> frame; // 帧字节序列框架： 魔数 + 总长度 + 请求ID + 消息类型 + 方法名长度 + 方法名 + body
     frame.reserve(total_len);
 
     // 1. 魔数（2 字节，大端）
@@ -49,10 +49,11 @@ std::vector<uint8_t> ProtocolFrame::Encode(
 }
 
 std::optional<Frame> ProtocolFrame::Decode(const std::vector<uint8_t>& raw_frame) {
-    size_t size = raw_frame.size();     // 帧字节序列框架实际总大小
+    size_t size = raw_frame.size(); // 帧字节序列框架实际总大小
 
     // 1. 长度至少为帧头大小
-    if (size < kFrameHeaderSize) return std::nullopt;
+    if (size < kFrameHeaderSize)
+        return std::nullopt;
 
     size_t pos = 0;
 
@@ -60,15 +61,18 @@ std::optional<Frame> ProtocolFrame::Decode(const std::vector<uint8_t>& raw_frame
     uint16_t magic;
     std::memcpy(&magic, raw_frame.data() + pos, 2);
     pos += 2;
-    if (NetworkToHost16(magic) != kProtocolMagic) return std::nullopt;
+    if (NetworkToHost16(magic) != kProtocolMagic)
+        return std::nullopt;
 
     // 3. 总长度
     uint32_t total_len;
     std::memcpy(&total_len, raw_frame.data() + pos, 4);
     pos += 4;
     total_len = NetworkToHost32(total_len);
-    if (total_len < kFrameHeaderSize || total_len > kMaxFrameSize) return std::nullopt;
-    if (total_len != size) return std::nullopt;  // 声称的长度与实际不符
+    if (total_len < kFrameHeaderSize || total_len > kMaxFrameSize)
+        return std::nullopt;
+    if (total_len != size)
+        return std::nullopt; // 声称的长度与实际不符
 
     // 4. 请求 ID
     uint32_t request_id;
@@ -94,7 +98,8 @@ std::optional<Frame> ProtocolFrame::Decode(const std::vector<uint8_t>& raw_frame
 
     // 方法名长度不能超过剩余字节数
     size_t remaining = size - pos;
-    if (mname_len > remaining) return std::nullopt;
+    if (mname_len > remaining)
+        return std::nullopt;
 
     // 7. 方法名
     std::string method_name(reinterpret_cast<const char*>(raw_frame.data() + pos), mname_len);

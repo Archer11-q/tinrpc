@@ -16,7 +16,8 @@ Socket::Socket() {
     }
 }
 
-Socket::Socket(int fd) : fd_(fd) {}
+Socket::Socket(int fd) : fd_(fd) {
+}
 
 Socket::~Socket() {
     if (fd_ >= 0) {
@@ -30,7 +31,8 @@ Socket::Socket(Socket&& other) noexcept : fd_(other.fd_) {
 
 Socket& Socket::operator=(Socket&& other) noexcept {
     if (this != &other) {
-        if (fd_ >= 0) close(fd_);
+        if (fd_ >= 0)
+            close(fd_);
         fd_ = other.fd_;
         other.fd_ = -1;
     }
@@ -39,8 +41,8 @@ Socket& Socket::operator=(Socket&& other) noexcept {
 
 void Socket::Bind(uint16_t port) {
     sockaddr_in addr{};
-    addr.sin_family = AF_INET;          // IPv4
-    addr.sin_addr.s_addr = INADDR_ANY;  // 绑定到所有接口
+    addr.sin_family = AF_INET; // IPv4
+    addr.sin_addr.s_addr = INADDR_ANY; // 绑定到所有接口
     addr.sin_port = htons(port);
 
     if (bind(fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
@@ -56,7 +58,7 @@ void Socket::Listen(int backlog) {
 
 int Socket::Accept() {
     int client_fd = accept(fd_, nullptr, nullptr);
-    return client_fd;  // 非阻塞下可能返回 -1（errno=EAGAIN）
+    return client_fd; // 非阻塞下可能返回 -1（errno=EAGAIN）
 }
 
 void Socket::SetNonBlocking() {
@@ -64,7 +66,7 @@ void Socket::SetNonBlocking() {
 }
 
 void Socket::SetNonBlocking(int fd) {
-    int flags = fcntl(fd, F_GETFL, 0);  // 获取当前文件状态标志
+    int flags = fcntl(fd, F_GETFL, 0); // 获取当前文件状态标志
     if (flags < 0) {
         throw std::runtime_error("fcntl(F_GETFL) failed");
     }

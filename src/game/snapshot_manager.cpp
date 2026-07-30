@@ -8,16 +8,13 @@ namespace game {
 // SnapshotManager
 // ============================================================
 
-SnapshotManager::SnapshotManager(size_t max_snapshots)
-    : max_snapshots_(max_snapshots) {
+SnapshotManager::SnapshotManager(size_t max_snapshots) : max_snapshots_(max_snapshots) {
 }
 
 auto SnapshotManager::FindSnapshot(uint32_t frame_no) const -> decltype(snapshots_.begin()) {
     // deque 按 frame_no 升序，二分查找
-    auto it = std::lower_bound(
-        snapshots_.begin(), snapshots_.end(), frame_no,
-        [](const Snapshot& s, uint32_t no) { return s.frame_no < no; }
-    );
+    auto it = std::lower_bound(snapshots_.begin(), snapshots_.end(), frame_no,
+                               [](const Snapshot& s, uint32_t no) { return s.frame_no < no; });
     if (it != snapshots_.end() && it->frame_no == frame_no) {
         return it;
     }
@@ -32,10 +29,8 @@ void SnapshotManager::SaveSnapshot(uint32_t frame_no, const GameState& state) {
     snap.frame_no = frame_no;
     snap.state = state;
 
-    auto it = std::lower_bound(
-        snapshots_.begin(), snapshots_.end(), frame_no,
-        [](const Snapshot& s, uint32_t no) { return s.frame_no < no; }
-    );
+    auto it = std::lower_bound(snapshots_.begin(), snapshots_.end(), frame_no,
+                               [](const Snapshot& s, uint32_t no) { return s.frame_no < no; });
 
     if (it != snapshots_.end() && it->frame_no == frame_no) {
         // 帧号已存在：覆盖旧快照
@@ -72,7 +67,7 @@ GameState SnapshotManager::RestoreFromSnapshot(uint32_t frame_no) const {
 
     const GameState* snap = GetSnapshot(frame_no);
     if (snap) {
-        return *snap;  // 返回副本
+        return *snap; // 返回副本
     }
 
     // 快照不存在（已淘汰）→ 返回空状态，由调用方决定降级策略

@@ -29,8 +29,10 @@ EventLoop::EventLoop() {
 }
 
 EventLoop::~EventLoop() {
-    if (epfd_ >= 0) close(epfd_);
-    if (wakeup_fd_ >= 0) close(wakeup_fd_);
+    if (epfd_ >= 0)
+        close(epfd_);
+    if (wakeup_fd_ >= 0)
+        close(wakeup_fd_);
 }
 
 void EventLoop::Run() {
@@ -43,7 +45,8 @@ void EventLoop::Run() {
         int n = epoll_wait(epfd_, events, kMaxEvents, -1);
 
         if (n < 0) {
-            if (errno == EINTR) continue;
+            if (errno == EINTR)
+                continue;
             break;
         }
 
@@ -58,7 +61,8 @@ void EventLoop::Run() {
             }
 
             auto it = handlers_.find(fd);
-            if (it == handlers_.end()) continue;
+            if (it == handlers_.end())
+                continue;
 
             EventHandler* handler = it->second.get();
             uint32_t ev = events[i].events;
@@ -66,8 +70,10 @@ void EventLoop::Run() {
             if (ev & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
                 handler->OnClose();
             } else {
-                if (ev & EPOLLIN)  handler->OnRead();
-                if (ev & EPOLLOUT) handler->OnWrite();
+                if (ev & EPOLLIN)
+                    handler->OnRead();
+                if (ev & EPOLLOUT)
+                    handler->OnWrite();
             }
         }
     }

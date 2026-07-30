@@ -47,14 +47,14 @@ void TestEloHigherWins() {
     game::EloCalculator elo;
     // 1600 vs 1400 → 高分的期望胜率 > 0.5
     double e = elo.CalcExpected(1600, 1400);
-    assert(e > 0.7);  // 约 0.76
+    assert(e > 0.7); // 约 0.76
 }
 
 void TestEloUpdateRatingWin() {
     game::EloCalculator elo(32);
     // A(1500) 胜 B(1500) → A 加分
     double new_a = elo.UpdateRating(1500, 1500, 1.0);
-    assert(new_a > 1500);  // 1500 + 32*(1-0.5) = 1516
+    assert(new_a > 1500); // 1500 + 32*(1-0.5) = 1516
     assert(new_a >= 1515 && new_a <= 1517);
 }
 
@@ -62,7 +62,7 @@ void TestEloUpdateRatingLose() {
     game::EloCalculator elo(32);
     // A(1500) 负 B(1500) → A 扣分
     double new_a = elo.UpdateRating(1500, 1500, 0.0);
-    assert(new_a < 1500);  // 1500 + 32*(0-0.5) = 1484
+    assert(new_a < 1500); // 1500 + 32*(0-0.5) = 1484
     assert(new_a >= 1483 && new_a <= 1485);
 }
 
@@ -87,9 +87,9 @@ void TestEloUpset() {
 }
 
 void TestEloCustomK() {
-    game::EloCalculator elo(16);  // 小 K → 变化小
+    game::EloCalculator elo(16); // 小 K → 变化小
     double new_a = elo.UpdateRating(1500, 1500, 1.0);
-    assert(new_a == 1508);  // 1500 + 16*0.5 = 1508
+    assert(new_a == 1508); // 1500 + 16*0.5 = 1508
 }
 
 // ============================================================
@@ -116,7 +116,7 @@ void TestEnterQueueMultiple() {
 void TestEnterQueueDuplicate() {
     game::MatchQueue mq;
     mq.EnterQueue("p1", 1500);
-    mq.EnterQueue("p1", 1550);  // 更新分数
+    mq.EnterQueue("p1", 1550); // 更新分数
     assert(mq.QueueSize() == 1);
     assert(mq.GetScore("p1") == 1550);
 }
@@ -135,7 +135,7 @@ void TestLeaveQueue() {
 void TestLeaveQueueNonExistent() {
     game::MatchQueue mq;
     mq.EnterQueue("p1", 1500);
-    mq.LeaveQueue("p999");  // 不崩溃
+    mq.LeaveQueue("p999"); // 不崩溃
     assert(mq.QueueSize() == 1);
 }
 
@@ -144,29 +144,29 @@ void TestLeaveQueueNonExistent() {
 // ============================================================
 
 void TestFindMatchClosest() {
-    game::MatchQueue mq(30, 200, 0);  // 不随时间放宽
+    game::MatchQueue mq(30, 200, 0); // 不随时间放宽
     mq.EnterQueue("p1", 1500);
     mq.EnterQueue("p2", 1520);
-    mq.EnterQueue("p3", 1800);  // 分差太大
+    mq.EnterQueue("p3", 1800); // 分差太大
 
     std::string opp = mq.FindMatch("p1");
-    assert(opp == "p2");  // 最近对手
+    assert(opp == "p2"); // 最近对手
 
     // 匹配后双方离队
     assert(!mq.IsInQueue("p1"));
     assert(!mq.IsInQueue("p2"));
-    assert(mq.IsInQueue("p3"));  // p3 未被匹配
+    assert(mq.IsInQueue("p3")); // p3 未被匹配
     assert(mq.QueueSize() == 1);
 }
 
 void TestFindMatchNoSuitable() {
-    game::MatchQueue mq(30, 50, 0);  // 分差仅 50
+    game::MatchQueue mq(30, 50, 0); // 分差仅 50
     mq.EnterQueue("p1", 1500);
-    mq.EnterQueue("p2", 1600);  // 差 100 > 50
+    mq.EnterQueue("p2", 1600); // 差 100 > 50
 
     std::string opp = mq.FindMatch("p1");
-    assert(opp.empty());  // 无合适对手
-    assert(mq.QueueSize() == 2);  // 双方仍在队列
+    assert(opp.empty()); // 无合适对手
+    assert(mq.QueueSize() == 2); // 双方仍在队列
 }
 
 void TestFindMatchNotInQueue() {
@@ -192,18 +192,18 @@ void TestEloRangeExpands() {
     // (入队时间不刷新——waited 靠 Now()-enqueue_time 自然增长)
     game::MatchQueue mq(30, 50, 100);
 
-    mq.EnterQueue("p1", 1500);  // enqueue_time = T0
-    mq.EnterQueue("p2", 1600);  // enqueue_time = T0
+    mq.EnterQueue("p1", 1500); // enqueue_time = T0
+    mq.EnterQueue("p2", 1600); // enqueue_time = T0
 
-    assert(mq.FindMatch("p1").empty());  // range=50 < diff=100
-    assert(mq.IsInQueue("p1"));          // 匹配失败，留在队列
+    assert(mq.FindMatch("p1").empty()); // range=50 < diff=100
+    assert(mq.IsInQueue("p1")); // 匹配失败，留在队列
 
     std::this_thread::sleep_for(std::chrono::milliseconds(600));
 
     // p1 的 enqueue_time 仍是 T0, waited = Now()-T0 ≈ 600ms
     // CurrentEloRange 返回 50 + 100*0.6 = 110 > 分差100
     assert(mq.FindMatch("p1") == "p2");
-    assert(mq.IsEmpty());  // 匹配成功，双方出队
+    assert(mq.IsEmpty()); // 匹配成功，双方出队
 }
 
 void TestMatchRemovesBothPlayers() {
@@ -242,7 +242,7 @@ void TestEmptyQueue() {
     game::MatchQueue mq;
     assert(mq.IsEmpty());
     assert(mq.QueueSize() == 0);
-    mq.LeaveQueue("nobody");  // 不崩溃
+    mq.LeaveQueue("nobody"); // 不崩溃
 }
 
 // ============================================================
@@ -252,9 +252,9 @@ void TestEmptyQueue() {
 void TestTryMatchExactPair() {
     game::MatchQueue mq(30, 200, 0);
     mq.EnterQueue("p1", 1500);
-    mq.EnterQueue("p2", 1510);  // 分差 10 ≤ 200 → 匹配
+    mq.EnterQueue("p2", 1510); // 分差 10 ≤ 200 → 匹配
     mq.EnterQueue("p3", 1800);
-    mq.EnterQueue("p4", 1810);  // 分差 10 ≤ 200 → 匹配
+    mq.EnterQueue("p4", 1810); // 分差 10 ≤ 200 → 匹配
 
     auto pairs = mq.TryMatch();
     assert(pairs.size() == 2);
@@ -265,29 +265,29 @@ void TestTryMatchExactPair() {
                   (pairs[1].first == "p3" && pairs[1].second == "p4");
     assert(has_12 && has_34);
 
-    assert(mq.IsEmpty());  // 全部配对出队
+    assert(mq.IsEmpty()); // 全部配对出队
 }
 
 void TestTryMatchNoPair() {
     game::MatchQueue mq(30, 50, 0);
     mq.EnterQueue("p1", 1500);
-    mq.EnterQueue("p2", 1600);  // 分差 100 > 50
-    mq.EnterQueue("p3", 1700);  // 分差 100 > 50
+    mq.EnterQueue("p2", 1600); // 分差 100 > 50
+    mq.EnterQueue("p3", 1700); // 分差 100 > 50
 
     auto pairs = mq.TryMatch();
     assert(pairs.empty());
-    assert(mq.QueueSize() == 3);  // 无人离队
+    assert(mq.QueueSize() == 3); // 无人离队
 }
 
 void TestTryMatchPartial() {
     game::MatchQueue mq(30, 100, 0);
     mq.EnterQueue("p1", 1500);
-    mq.EnterQueue("p2", 1550);  // 分差 50 ≤ 100 → 匹配
-    mq.EnterQueue("p3", 1700);  // 分差 150 > 100 → 不匹配
+    mq.EnterQueue("p2", 1550); // 分差 50 ≤ 100 → 匹配
+    mq.EnterQueue("p3", 1700); // 分差 150 > 100 → 不匹配
 
     auto pairs = mq.TryMatch();
     assert(pairs.size() == 1);
-    assert(mq.QueueSize() == 1);    // p3 留在队列
+    assert(mq.QueueSize() == 1); // p3 留在队列
     assert(mq.IsInQueue("p3"));
 }
 
@@ -311,11 +311,11 @@ void TestTryMatchWithExpandedRange() {
 
     // 等待后重新入队刷新时间，模拟定时扫描
     std::this_thread::sleep_for(std::chrono::milliseconds(700));
-    mq.EnterQueue("p1", 1500);  // 刷新入队时间让范围生效
+    mq.EnterQueue("p1", 1500); // 刷新入队时间让范围生效
     mq.EnterQueue("p2", 1600);
 
     auto pairs = mq.TryMatch();
-    assert(pairs.size() == 1);  // 范围放宽后匹配成功
+    assert(pairs.size() == 1); // 范围放宽后匹配成功
 }
 
 void TestTryMatchThreePlayers() {
@@ -326,7 +326,7 @@ void TestTryMatchThreePlayers() {
     mq.EnterQueue("p3", 1540);
 
     auto pairs = mq.TryMatch();
-    assert(pairs.size() == 1);   // p1 配 p2（不是 p2 配 p3，因 p2 已被消费）
+    assert(pairs.size() == 1); // p1 配 p2（不是 p2 配 p3，因 p2 已被消费）
     assert(mq.QueueSize() == 1); // p3 剩余
 }
 
@@ -341,7 +341,8 @@ void TestCallbackOnFindMatch() {
 
     std::string cb_p1, cb_p2;
     mq.SetMatchCallback([&](const std::string& a, double, const std::string& b, double) {
-        cb_p1 = a; cb_p2 = b;
+        cb_p1 = a;
+        cb_p2 = b;
     });
 
     mq.FindMatch("p1");
@@ -356,27 +357,24 @@ void TestCallbackOnTryMatch() {
     mq.EnterQueue("p4", 1710);
 
     int cb_count = 0;
-    mq.SetMatchCallback([&](const std::string&, double, const std::string&, double) {
-        cb_count++;
-    });
+    mq.SetMatchCallback([&](const std::string&, double, const std::string&, double) { cb_count++; });
 
     auto pairs = mq.TryMatch();
     assert(pairs.size() == 2);
-    assert(cb_count == 2);  // 每对触发一次
+    assert(cb_count == 2); // 每对触发一次
 }
 
 void TestCallbackNotCalledOnFail() {
     game::MatchQueue mq(30, 50, 0);
     mq.EnterQueue("p1", 1500);
-    mq.EnterQueue("p2", 1600);  // 分差太大
+    mq.EnterQueue("p2", 1600); // 分差太大
 
     bool called = false;
-    mq.SetMatchCallback([&](const std::string&, double, const std::string&, double) {
-        called = true;
-    });
+    mq.SetMatchCallback(
+        [&](const std::string&, double, const std::string&, double) { called = true; });
 
     assert(mq.FindMatch("p1").empty());
-    assert(!called);  // 匹配失败不触发回调
+    assert(!called); // 匹配失败不触发回调
 }
 
 // ============================================================
@@ -390,15 +388,15 @@ void TestCancelMatch() {
     mq.EnterQueue("p3", 1700);
     assert(mq.QueueSize() == 3);
 
-    mq.CancelMatch("p2");  // 新名
+    mq.CancelMatch("p2"); // 新名
     assert(!mq.IsInQueue("p2"));
     assert(mq.QueueSize() == 2);
 
-    mq.LeaveQueue("p3");   // 旧名仍可使用
+    mq.LeaveQueue("p3"); // 旧名仍可使用
     assert(!mq.IsInQueue("p3"));
     assert(mq.QueueSize() == 1);
 
-    mq.CancelMatch("p999");  // 不存在不崩溃
+    mq.CancelMatch("p999"); // 不存在不崩溃
     assert(mq.QueueSize() == 1);
 }
 
@@ -496,14 +494,16 @@ void TestE2EMatchToRoomFlow() {
         game::GameRoom::Config cfg;
         cfg.max_players = 2;
         auto result = room_mgr.CreateRoom(p1, cfg);
-        if (!result.ok) return;
+        if (!result.ok)
+            return;
         std::string rid = result.room_id;
         room_mgr.GetRoom(rid)->SetState(game::ROOM_STATE_WAITING);
         room_mgr.JoinRoom(rid, p2);
 
         // 2. 通知双方（MatchFoundNtf）
         int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count();
+                          std::chrono::system_clock::now().time_since_epoch())
+                          .count();
         notifications.push_back({rid, p1, p2});
         notifications.push_back({rid, p2, p1});
 
@@ -524,31 +524,51 @@ void TestE2EMatchToRoomFlow() {
     mq.EnterQueue("player_b", 1520);
 
     std::string opp = mq.FindMatch("player_a");
-    if (opp.empty()) { printf("[FAIL] Phase1: no match\n"); abort(); }
-    if (opp != "player_b") { printf("[FAIL] Phase1: wrong opponent=%s\n", opp.c_str()); abort(); }
+    if (opp.empty()) {
+        printf("[FAIL] Phase1: no match\n");
+        abort();
+    }
+    if (opp != "player_b") {
+        printf("[FAIL] Phase1: wrong opponent=%s\n", opp.c_str());
+        abort();
+    }
 
     // 验证：房间已创建
-    if (room_mgr.room_count() != 1) { printf("[FAIL] no room\n"); abort(); }
+    if (room_mgr.room_count() != 1) {
+        printf("[FAIL] no room\n");
+        abort();
+    }
     auto room_ids = room_mgr.GetAllRoomIds();
     std::string rid = room_ids[0];
     auto* room = room_mgr.GetRoom(rid);
-    if (room->player_count() != 2) { printf("[FAIL] room count=%d\n", room->player_count()); abort(); }
+    if (room->player_count() != 2) {
+        printf("[FAIL] room count=%d\n", room->player_count());
+        abort();
+    }
 
     // 验证：通知已发送（2 条，双方各一条）
-    if (notifications.size() != 2) { printf("[FAIL] notifications=%zu\n", notifications.size()); abort(); }
-    if (notifications[0].room_id != rid || notifications[1].room_id != rid)
-        { printf("[FAIL] wrong room_id in notification\n"); abort(); }
+    if (notifications.size() != 2) {
+        printf("[FAIL] notifications=%zu\n", notifications.size());
+        abort();
+    }
+    if (notifications[0].room_id != rid || notifications[1].room_id != rid) {
+        printf("[FAIL] wrong room_id in notification\n");
+        abort();
+    }
 
     printf("\n    [Phase1] room=%s, 双方已通知, timeout=30s\n", rid.c_str());
 
     // ---- Phase 2: 超时释放 ----
     // 模拟超时：手动触发回调（不等 30s）
-    timer.Tick();  // 不会触发（还没到 30s）
+    timer.Tick(); // 不会触发（还没到 30s）
     // 换成短超时重新测试
     // 简化验证：直接模拟超时逻辑
     {
         auto* r = room_mgr.GetRoom(rid);
-        if (!r) { printf("[FAIL] room gone\n"); abort(); }
+        if (!r) {
+            printf("[FAIL] room gone\n");
+            abort();
+        }
         // 模拟超时：房间非 PLAYING → 释放
         room_mgr.RemoveRoom(rid);
         // 重新入队（使用超时场景，分数保留）
@@ -558,19 +578,30 @@ void TestE2EMatchToRoomFlow() {
     }
 
     // 验证：房间已销毁
-    if (room_mgr.room_count() != 0) { printf("[FAIL] room not destroyed\n"); abort(); }
+    if (room_mgr.room_count() != 0) {
+        printf("[FAIL] room not destroyed\n");
+        abort();
+    }
 
     // 验证：玩家重新入队
-    if (mq.QueueSize() != 2) { printf("[FAIL] not re-queued: size=%zu\n", mq.QueueSize()); abort(); }
+    if (mq.QueueSize() != 2) {
+        printf("[FAIL] not re-queued: size=%zu\n", mq.QueueSize());
+        abort();
+    }
 
     // ---- Phase 3: 重新匹配 ----
     opp = mq.FindMatch("player_a");
-    if (opp.empty() || opp != "player_b") { printf("[FAIL] Phase3 rematch\n"); abort(); }
-    if (room_mgr.room_count() != 1) { printf("[FAIL] Phase3 no room\n"); abort(); }
+    if (opp.empty() || opp != "player_b") {
+        printf("[FAIL] Phase3 rematch\n");
+        abort();
+    }
+    if (room_mgr.room_count() != 1) {
+        printf("[FAIL] Phase3 no room\n");
+        abort();
+    }
 
     printf("    [Phase2] 超时→房间释放→重新入队→再次匹配成功\n");
-    printf("    最终房间数=%zu, 队列残余=%zu\n",
-           room_mgr.room_count(), mq.QueueSize());
+    printf("    最终房间数=%zu, 队列残余=%zu\n", room_mgr.room_count(), mq.QueueSize());
 }
 
 // ============================================================
@@ -583,59 +614,59 @@ int main() {
     printf("=== EloCalculator + MatchQueue 测试 ===\n\n");
 
     printf("[EloCalculator]\n");
-    RunTest("同分期望胜率 0.5",            TestEloEqualRatings);
-    RunTest("高分期望胜率 > 0.7",           TestEloHigherWins);
-    RunTest("胜方加分",                    TestEloUpdateRatingWin);
-    RunTest("负方扣分",                    TestEloUpdateRatingLose);
-    RunTest("平局向期望值靠近",            TestEloUpdateRatingDraw);
-    RunTest("弱胜强加分更多",              TestEloUpset);
-    RunTest("自定义 K 因子",               TestEloCustomK);
+    RunTest("同分期望胜率 0.5", TestEloEqualRatings);
+    RunTest("高分期望胜率 > 0.7", TestEloHigherWins);
+    RunTest("胜方加分", TestEloUpdateRatingWin);
+    RunTest("负方扣分", TestEloUpdateRatingLose);
+    RunTest("平局向期望值靠近", TestEloUpdateRatingDraw);
+    RunTest("弱胜强加分更多", TestEloUpset);
+    RunTest("自定义 K 因子", TestEloCustomK);
 
     printf("\n[MatchQueue 入队/离队]\n");
-    RunTest("入队",                        TestEnterQueue);
-    RunTest("多人入队",                    TestEnterQueueMultiple);
-    RunTest("重复入队更新分数",            TestEnterQueueDuplicate);
-    RunTest("离队",                        TestLeaveQueue);
-    RunTest("离队不存在的玩家不崩溃",      TestLeaveQueueNonExistent);
+    RunTest("入队", TestEnterQueue);
+    RunTest("多人入队", TestEnterQueueMultiple);
+    RunTest("重复入队更新分数", TestEnterQueueDuplicate);
+    RunTest("离队", TestLeaveQueue);
+    RunTest("离队不存在的玩家不崩溃", TestLeaveQueueNonExistent);
 
     printf("\n[MatchQueue 匹配]\n");
-    RunTest("找到最近对手",                TestFindMatchClosest);
-    RunTest("分差过大无匹配",              TestFindMatchNoSuitable);
-    RunTest("不在队列返回空",              TestFindMatchNotInQueue);
-    RunTest("匹配后双方离队",              TestMatchRemovesBothPlayers);
+    RunTest("找到最近对手", TestFindMatchClosest);
+    RunTest("分差过大无匹配", TestFindMatchNoSuitable);
+    RunTest("不在队列返回空", TestFindMatchNotInQueue);
+    RunTest("匹配后双方离队", TestMatchRemovesBothPlayers);
 
     printf("\n[超时分差放宽]\n");
-    RunTest("等待后分差放宽匹配成功",      TestEloRangeExpands);
+    RunTest("等待后分差放宽匹配成功", TestEloRangeExpands);
 
     printf("\n[边界]\n");
-    RunTest("单人无匹配",                  TestSinglePlayerNoMatch);
-    RunTest("乱序插入后有序匹配",          TestManyPlayersSorted);
-    RunTest("空队列操作",                  TestEmptyQueue);
+    RunTest("单人无匹配", TestSinglePlayerNoMatch);
+    RunTest("乱序插入后有序匹配", TestManyPlayersSorted);
+    RunTest("空队列操作", TestEmptyQueue);
 
     printf("\n[TryMatch 批量匹配]\n");
-    RunTest("两对精准匹配全部出队",        TestTryMatchExactPair);
-    RunTest("分差过大无配对",              TestTryMatchNoPair);
-    RunTest("部分配对剩余留队",            TestTryMatchPartial);
-    RunTest("空队列/单人返回空",           TestTryMatchEmptyOrSingle);
-    RunTest("范围放宽后批量配对",          TestTryMatchWithExpandedRange);
-    RunTest("三人只配最近一对",            TestTryMatchThreePlayers);
+    RunTest("两对精准匹配全部出队", TestTryMatchExactPair);
+    RunTest("分差过大无配对", TestTryMatchNoPair);
+    RunTest("部分配对剩余留队", TestTryMatchPartial);
+    RunTest("空队列/单人返回空", TestTryMatchEmptyOrSingle);
+    RunTest("范围放宽后批量配对", TestTryMatchWithExpandedRange);
+    RunTest("三人只配最近一对", TestTryMatchThreePlayers);
 
     printf("\n[MatchCallback 匹配成功回调]\n");
-    RunTest("FindMatch成功后回调触发",      TestCallbackOnFindMatch);
-    RunTest("TryMatch成功后回调触发",       TestCallbackOnTryMatch);
-    RunTest("匹配失败回调不触发",           TestCallbackNotCalledOnFail);
+    RunTest("FindMatch成功后回调触发", TestCallbackOnFindMatch);
+    RunTest("TryMatch成功后回调触发", TestCallbackOnTryMatch);
+    RunTest("匹配失败回调不触发", TestCallbackNotCalledOnFail);
 
     printf("\n[CancelMatch 取消匹配]\n");
-    RunTest("CancelMatch从队列移除",        TestCancelMatch);
+    RunTest("CancelMatch从队列移除", TestCancelMatch);
 
     printf("\n[匹配→创建房间 集成]\n");
-    RunTest("匹配成功回调中创建房间",       TestMatchCreatesRoom);
+    RunTest("匹配成功回调中创建房间", TestMatchCreatesRoom);
 
     printf("\n[断连清理] 匹配队列自动移除断连玩家\n");
-    RunTest("中间断连→TryMatch匹配剩余2人",   TestDisconnectCleanup);
+    RunTest("中间断连→TryMatch匹配剩余2人", TestDisconnectCleanup);
 
     printf("\n[E2E] 匹配→房间→通知→超时\n");
-    RunTest("完整匹配到房间E2E流程",          TestE2EMatchToRoomFlow);
+    RunTest("完整匹配到房间E2E流程", TestE2EMatchToRoomFlow);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

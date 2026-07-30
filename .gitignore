@@ -39,6 +39,9 @@ Thumbs.db
 # CodeGraph index (auto-generated, each developer runs locally)
 .codegraph/
 
-# My notes (keep docs/)
+# Doxygen generated docs
+docs/doxygen/
+
+# My notes
 claude聊天记录/
 实现原理/

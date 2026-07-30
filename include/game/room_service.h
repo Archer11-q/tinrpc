@@ -15,53 +15,55 @@
 
 namespace game {
 
-// ============================================================
-// RoomService — 房间服务纯虚基类（RPC Service 接口）
-//
-// 每个方法签名与 rpc::Dispatch::Handler 对齐：
-//   接收 Protobuf 序列化后的请求 body → 返回 Protobuf 序列化后的响应 body
-//   返回 nullopt 表示参数解析失败
-//
-// 这种设计允许 RoomService 的方法直接注册到 Dispatch：
-//   dispatch.RegisterMethod("CreateRoom", [&svc](auto& b) { return svc.CreateRoom(b); });
-// ============================================================
+/**
+ * @brief 房间服务纯虚基类（RPC Service 接口）
+ *
+ * 每个方法签名与 rpc::Dispatch::Handler 对齐：
+ *   接收 Protobuf 序列化后的请求 body → 返回 Protobuf 序列化后的响应 body
+ *   返回 nullopt 表示参数解析失败
+ *
+ * 这种设计允许 RoomService 的方法直接注册到 Dispatch：
+ * @code
+ *   dispatch.RegisterMethod("CreateRoom", [&svc](auto& b) { return svc.CreateRoom(b); });
+ * @endcode
+ */
 class RoomService {
 public:
     virtual ~RoomService() = default;
 
-    // 创建房间
+    /// 创建房间
     virtual std::optional<std::vector<uint8_t>> CreateRoom(const std::vector<uint8_t>& body) = 0;
 
-    // 加入房间
+    /// 加入房间
     virtual std::optional<std::vector<uint8_t>> JoinRoom(const std::vector<uint8_t>& body) = 0;
 
-    // 离开房间
+    /// 离开房间
     virtual std::optional<std::vector<uint8_t>> LeaveRoom(const std::vector<uint8_t>& body) = 0;
 
-    // 发送房间消息（聊天等），消息广播给房间内所有玩家
+    /// 发送房间消息（聊天等），消息广播给房间内所有玩家
     virtual std::optional<std::vector<uint8_t>> SendMessage(const std::vector<uint8_t>& body) = 0;
 
-    // 获取房间列表
+    /// 获取房间列表
     virtual std::optional<std::vector<uint8_t>> GetRoomList(const std::vector<uint8_t>& body) = 0;
 
-    // 开始游戏（仅房主可调用）
+    /// 开始游戏（仅房主可调用）
     virtual std::optional<std::vector<uint8_t>> StartGame(const std::vector<uint8_t>& body) = 0;
 
-    // 发送帧输入（客户端每帧调用，输入存入 InputBuffer）
+    /// 发送帧输入（客户端每帧调用，输入存入 InputBuffer）
     virtual std::optional<std::vector<uint8_t>> SendInput(const std::vector<uint8_t>& body) = 0;
 
-    // 停止游戏（结束对局，停止帧同步）
+    /// 停止游戏（结束对局，停止帧同步）
     virtual std::optional<std::vector<uint8_t>> StopGame(const std::vector<uint8_t>& body) = 0;
 };
 
-// ============================================================
-// RoomServiceImpl — RoomService 的具体实现
-//
-// 持有 RoomManager 和 Broadcast 指针（不持有所有权），
-// 将 Protobuf 请求解析后委托给 RoomManager / Broadcast 处理。
-//
-// 线程模型：所有方法必须在 EventLoop IO 线程调用。
-// ============================================================
+/**
+ * @brief RoomServiceImpl — RoomService 的具体实现
+ *
+ * 持有 RoomManager 和 Broadcast 指针（不持有所有权），
+ * 将 Protobuf 请求解析后委托给 RoomManager / Broadcast 处理。
+ *
+ * 线程模型：所有方法必须在 EventLoop IO 线程调用。
+ */
 class RoomServiceImpl : public RoomService {
 public:
     RoomServiceImpl(RoomManager* room_mgr, Broadcast* broadcast);
@@ -76,18 +78,18 @@ public:
     std::optional<std::vector<uint8_t>> StopGame(const std::vector<uint8_t>& body) override;
 
 private:
-    RoomManager* room_mgr_;    // 不持有所有权
-    Broadcast*   broadcast_;   // 不持有所有权
+    RoomManager* room_mgr_; // 不持有所有权
+    Broadcast* broadcast_; // 不持有所有权
 };
 
-// ============================================================
-// RoomServiceStub — 客户端代理（Stub 模式）
-//
-// 封装 RpcClient，将 Protobuf 请求消息序列化后通过 RPC 发送，
-// 再将响应反序列化为 Protobuf 消息返回。
-//
-// 调用方通过此 Stub 像调用本地方法一样调用远程 RoomService。
-// ============================================================
+/**
+ * @brief 客户端代理（Stub 模式）
+ *
+ * 封装 RpcClient，将 Protobuf 请求消息序列化后通过 RPC 发送，
+ * 再将响应反序列化为 Protobuf 消息返回。
+ *
+ * 调用方通过此 Stub 像调用本地方法一样调用远程 RoomService。
+ */
 class RoomServiceStub {
 public:
     explicit RoomServiceStub(rpc::RpcClient* client);
@@ -118,42 +120,61 @@ public:
 
 private:
     // 发起 RPC 调用并等待响应，解析为指定 Protobuf 类型
-    template<typename ResProto>
-    ResProto DoCall(const std::string& method_name,
-                    const std::vector<uint8_t>& req_body);
+    template <typename ResProto>
+    ResProto DoCall(const std::string& method_name, const std::vector<uint8_t>& req_body);
 
-    rpc::RpcClient* client_;  // 不持有所有权
+    rpc::RpcClient* client_; // 不持有所有权
 };
 
-// ============================================================
-// RegisterRoomService — 将 RoomService 的 6 个方法注册到 Dispatch
-//
-// 使用方式：
-//   RoomServiceImpl svc(&room_mgr, &broadcast);
-//   RegisterRoomService(&dispatch, &svc);
-// ============================================================
+/**
+ * @brief 将 RoomService 的 8 个方法注册到 Dispatch
+ *
+ * 使用方式：
+ * @code
+ *   RoomServiceImpl svc(&room_mgr, &broadcast);
+ *   RegisterRoomService(&dispatch, &svc);
+ * @endcode
+ *
+ * @param dispatch Dispatch 实例指针
+ * @param service RoomService 实现指针（不持有所有权）
+ */
 inline void RegisterRoomService(rpc::Dispatch* dispatch, RoomService* service) {
-    dispatch->RegisterMethod("CreateRoom",  [service](const std::vector<uint8_t>& body) { return service->CreateRoom(body); });
-    dispatch->RegisterMethod("JoinRoom",    [service](const std::vector<uint8_t>& body) { return service->JoinRoom(body); });
-    dispatch->RegisterMethod("LeaveRoom",   [service](const std::vector<uint8_t>& body) { return service->LeaveRoom(body); });
-    dispatch->RegisterMethod("SendMessage", [service](const std::vector<uint8_t>& body) { return service->SendMessage(body); });
-    dispatch->RegisterMethod("GetRoomList", [service](const std::vector<uint8_t>& body) { return service->GetRoomList(body); });
-    dispatch->RegisterMethod("StartGame",   [service](const std::vector<uint8_t>& body) { return service->StartGame(body); });
-    dispatch->RegisterMethod("SendInput",   [service](const std::vector<uint8_t>& body) { return service->SendInput(body); });
-    dispatch->RegisterMethod("StopGame",    [service](const std::vector<uint8_t>& body) { return service->StopGame(body); });
+    dispatch->RegisterMethod("CreateRoom", [service](const std::vector<uint8_t>& body) {
+        return service->CreateRoom(body);
+    });
+    dispatch->RegisterMethod("JoinRoom", [service](const std::vector<uint8_t>& body) {
+        return service->JoinRoom(body);
+    });
+    dispatch->RegisterMethod("LeaveRoom", [service](const std::vector<uint8_t>& body) {
+        return service->LeaveRoom(body);
+    });
+    dispatch->RegisterMethod("SendMessage", [service](const std::vector<uint8_t>& body) {
+        return service->SendMessage(body);
+    });
+    dispatch->RegisterMethod("GetRoomList", [service](const std::vector<uint8_t>& body) {
+        return service->GetRoomList(body);
+    });
+    dispatch->RegisterMethod("StartGame", [service](const std::vector<uint8_t>& body) {
+        return service->StartGame(body);
+    });
+    dispatch->RegisterMethod("SendInput", [service](const std::vector<uint8_t>& body) {
+        return service->SendInput(body);
+    });
+    dispatch->RegisterMethod("StopGame", [service](const std::vector<uint8_t>& body) {
+        return service->StopGame(body);
+    });
 }
 
 // ============================================================
 // RoomServiceStub 内联实现（模板 + 简单转发，放在头文件中）
 // ============================================================
 
-inline RoomServiceStub::RoomServiceStub(rpc::RpcClient* client)
-    : client_(client) {
+inline RoomServiceStub::RoomServiceStub(rpc::RpcClient* client) : client_(client) {
 }
 
-template<typename ResProto>
+template <typename ResProto>
 ResProto RoomServiceStub::DoCall(const std::string& method_name,
-                                  const std::vector<uint8_t>& req_body) {
+                                 const std::vector<uint8_t>& req_body) {
     auto future = client_->Call(method_name, req_body);
     auto rsp_body = future.get();
 

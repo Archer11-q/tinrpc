@@ -44,7 +44,9 @@ void RunTest(const char* name, void (*fn)()) {
 // 辅助
 // ============================================================
 
-static std::vector<uint8_t> In(uint8_t val) { return {val}; }
+static std::vector<uint8_t> In(uint8_t val) {
+    return {val};
+}
 
 // ============================================================
 // 任务1：构造 + 属性
@@ -88,9 +90,12 @@ void TestTickIncrementsFrame() {
     game::InputBuffer buf(60);
     game::FrameSyncManager fsm(&timer, &buf);
 
-    fsm.Tick(); assert(fsm.CurrentFrame() == 1);
-    fsm.Tick(); assert(fsm.CurrentFrame() == 2);
-    fsm.Tick(); assert(fsm.CurrentFrame() == 3);
+    fsm.Tick();
+    assert(fsm.CurrentFrame() == 1);
+    fsm.Tick();
+    assert(fsm.CurrentFrame() == 2);
+    fsm.Tick();
+    assert(fsm.CurrentFrame() == 3);
 }
 
 void TestTickCollectsInput() {
@@ -129,14 +134,14 @@ void TestTickStoresHistory() {
     fsm.Tick();
     assert(fsm.HistorySize() == 2);
 
-    fsm.Tick();  // 空帧也记录
+    fsm.Tick(); // 空帧也记录
     assert(fsm.HistorySize() == 3);
 }
 
 void TestHistoryOverflow() {
     game::TimerManager timer;
     game::InputBuffer buf(120);
-    game::FrameSyncManager fsm(&timer, &buf, 50, 3);  // 仅保留 3 帧历史
+    game::FrameSyncManager fsm(&timer, &buf, 50, 3); // 仅保留 3 帧历史
 
     for (int i = 1; i <= 5; i++) {
         fsm.OnPlayerInput(static_cast<uint32_t>(i), "p1", In(static_cast<uint8_t>(i)));
@@ -200,9 +205,12 @@ void TestCallbackMultipleFrames() {
     fsm.OnPlayerInput(2, "p1", In(0x02));
     fsm.OnPlayerInput(3, "p1", In(0x03));
 
-    fsm.Tick(); assert(frames == std::vector<uint32_t>{1});
-    fsm.Tick(); assert((frames == std::vector<uint32_t>{1, 2}));
-    fsm.Tick(); assert((frames == std::vector<uint32_t>{1, 2, 3}));
+    fsm.Tick();
+    assert(frames == std::vector<uint32_t>{1});
+    fsm.Tick();
+    assert((frames == std::vector<uint32_t>{1, 2}));
+    fsm.Tick();
+    assert((frames == std::vector<uint32_t>{1, 2, 3}));
 }
 
 // ============================================================
@@ -240,7 +248,7 @@ void TestInputOverwrite() {
     game::FrameSyncManager fsm(&timer, &buf);
 
     fsm.OnPlayerInput(1, "p1", In(0x01));
-    fsm.OnPlayerInput(1, "p1", In(0xFF));  // 覆盖
+    fsm.OnPlayerInput(1, "p1", In(0xFF)); // 覆盖
     fsm.OnPlayerInput(1, "p2", In(0x02));
 
     game::FrameSyncManager::FrameInputs rec;
@@ -394,20 +402,20 @@ void TestCatchUpStepByStep() {
     assert(batch1.size() == 2);
     assert(batch1[0].frame_no == 6);
     assert(batch1[1].frame_no == 7);
-    client_frame = batch1[1].frame_no;  // 更新到帧 7
+    client_frame = batch1[1].frame_no; // 更新到帧 7
 
     // 第 2 次追帧：帧 8, 9
     auto batch2 = fsm.GetCatchUpFrames(client_frame);
     assert(batch2.size() == 2);
     assert(batch2[0].frame_no == 8);
     assert(batch2[1].frame_no == 9);
-    client_frame = batch2[1].frame_no;  // 更新到帧 9
+    client_frame = batch2[1].frame_no; // 更新到帧 9
 
     // 第 3 次追帧：帧 10（只剩 1 帧）
     auto batch3 = fsm.GetCatchUpFrames(client_frame);
     assert(batch3.size() == 1);
     assert(batch3[0].frame_no == 10);
-    client_frame = batch3[0].frame_no;  // 追上
+    client_frame = batch3[0].frame_no; // 追上
 
     // 已追上
     assert(client_frame == 10);
@@ -421,7 +429,7 @@ void TestCatchUpHistoryEvicted() {
     // 历史溢出后，太旧的帧无法追帧
     game::TimerManager timer;
     game::InputBuffer buf(60);
-    game::FrameSyncManager fsm(&timer, &buf, 50, 5);  // 仅保留 5 帧历史
+    game::FrameSyncManager fsm(&timer, &buf, 50, 5); // 仅保留 5 帧历史
 
     for (int i = 1; i <= 10; i++) {
         fsm.OnPlayerInput(static_cast<uint32_t>(i), "p1", In(static_cast<uint8_t>(i)));
@@ -436,7 +444,7 @@ void TestCatchUpHistoryEvicted() {
     // 帧 3, 4, 5 可能已淘汰；实际返回能找到的帧
     // 只验证返回的帧号都在历史范围内
     for (auto& f : frames) {
-        assert(f.frame_no >= 6);  // 历史最早是帧 6
+        assert(f.frame_no >= 6); // 历史最早是帧 6
         assert(f.frame_no <= 10);
     }
 }
@@ -478,7 +486,8 @@ void TestTickBeyondInputBuffer() {
 
     fsm.OnPlayerInput(1, "p1", In(0x01));
     size_t total = 0;
-    for (int i = 0; i < 10; i++) total += fsm.Tick();
+    for (int i = 0; i < 10; i++)
+        total += fsm.Tick();
     assert(total == 1);
     assert(fsm.CurrentFrame() == 10);
 }
@@ -516,45 +525,45 @@ int main() {
     printf("=== FrameSyncManager 单元测试 ===\n\n");
 
     printf("[构造]\n");
-    RunTest("构造 + 默认属性 (20fps)",        TestConstruct);
-    RunTest("自定义帧率 30fps / 10fps",        TestCustomFps);
-    RunTest("自定义历史缓冲区大小",            TestCustomHistorySize);
+    RunTest("构造 + 默认属性 (20fps)", TestConstruct);
+    RunTest("自定义帧率 30fps / 10fps", TestCustomFps);
+    RunTest("自定义历史缓冲区大小", TestCustomHistorySize);
 
     printf("\n[Tick 帧号]\n");
-    RunTest("Tick 帧号自增",                  TestTickIncrementsFrame);
-    RunTest("Tick 收集输入",                  TestTickCollectsInput);
-    RunTest("Tick 空帧（无输入）",            TestTickEmptyFrame);
-    RunTest("Tick 存入帧历史",                TestTickStoresHistory);
-    RunTest("历史溢出自动淘汰旧帧",           TestHistoryOverflow);
+    RunTest("Tick 帧号自增", TestTickIncrementsFrame);
+    RunTest("Tick 收集输入", TestTickCollectsInput);
+    RunTest("Tick 空帧（无输入）", TestTickEmptyFrame);
+    RunTest("Tick 存入帧历史", TestTickStoresHistory);
+    RunTest("历史溢出自动淘汰旧帧", TestHistoryOverflow);
 
     printf("\n[帧广播回调]\n");
-    RunTest("回调接收正确数据",               TestCallbackReceivesCorrectData);
-    RunTest("空帧不触发回调",                 TestCallbackNotCalledForEmptyFrame);
-    RunTest("多帧顺序回调",                   TestCallbackMultipleFrames);
+    RunTest("回调接收正确数据", TestCallbackReceivesCorrectData);
+    RunTest("空帧不触发回调", TestCallbackNotCalledForEmptyFrame);
+    RunTest("多帧顺序回调", TestCallbackMultipleFrames);
 
     printf("\n[输入收集]\n");
-    RunTest("同一帧多个玩家",                 TestInputMultiplePlayersPerFrame);
-    RunTest("乱序发送顺序取出",               TestInputOutOfOrder);
-    RunTest("同玩家覆盖旧值",                 TestInputOverwrite);
+    RunTest("同一帧多个玩家", TestInputMultiplePlayersPerFrame);
+    RunTest("乱序发送顺序取出", TestInputOutOfOrder);
+    RunTest("同玩家覆盖旧值", TestInputOverwrite);
 
     printf("\n[Start/Stop]\n");
-    RunTest("Start/Stop 状态切换",            TestStartStop);
-    RunTest("Timer 手动驱动 Tick",            TestTimerManualTick);
+    RunTest("Start/Stop 状态切换", TestStartStop);
+    RunTest("Timer 手动驱动 Tick", TestTimerManualTick);
 
     printf("\n[追帧 CatchUp]\n");
-    RunTest("基础追帧：落后5帧补2帧",        TestCatchUpBasic);
-    RunTest("已追上时不返回帧",               TestCatchUpClientCaughtUp);
-    RunTest("恰好落后2帧全补",               TestCatchUpExactlyTwoFrames);
-    RunTest("落后1帧只补1帧",                TestCatchUpOneFrameOnly);
-    RunTest("分步追帧：3次追上",              TestCatchUpStepByStep);
-    RunTest("历史淘汰后追不到旧帧",           TestCatchUpHistoryEvicted);
+    RunTest("基础追帧：落后5帧补2帧", TestCatchUpBasic);
+    RunTest("已追上时不返回帧", TestCatchUpClientCaughtUp);
+    RunTest("恰好落后2帧全补", TestCatchUpExactlyTwoFrames);
+    RunTest("落后1帧只补1帧", TestCatchUpOneFrameOnly);
+    RunTest("分步追帧：3次追上", TestCatchUpStepByStep);
+    RunTest("历史淘汰后追不到旧帧", TestCatchUpHistoryEvicted);
 
     printf("\n[边界用例]\n");
-    RunTest("10 个玩家同一帧",                TestManyPlayers);
-    RunTest("快速连续 100 帧",                TestRapidTicks);
-    RunTest("Tick 超过输入范围",              TestTickBeyondInputBuffer);
-    RunTest("Tick 前设置回调",                TestCallbackSetAfterStart);
-    RunTest("未设置回调不崩溃",               TestNoCallbackSet);
+    RunTest("10 个玩家同一帧", TestManyPlayers);
+    RunTest("快速连续 100 帧", TestRapidTicks);
+    RunTest("Tick 超过输入范围", TestTickBeyondInputBuffer);
+    RunTest("Tick 前设置回调", TestCallbackSetAfterStart);
+    RunTest("未设置回调不崩溃", TestNoCallbackSet);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

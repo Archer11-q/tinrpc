@@ -203,7 +203,7 @@ void TestLeaveRoomRoundtrip() {
 void TestStartGameRoundtrip() {
     game::StartGameReq req;
     req.set_room_id("room_001");
-    req.set_player_id("p001");  // 房主发起
+    req.set_player_id("p001"); // 房主发起
 
     std::string buf;
     assert(req.SerializeToString(&buf));
@@ -302,13 +302,13 @@ void TestRoomInfoRoundtrip() {
 int main() {
     printf("=== 游戏协议消息正确性测试 ===\n\n");
 
-    RunTest("LoginReq/Res 往返",           TestLoginRoundtrip);
-    RunTest("CreateRoomReq/Res 往返",      TestCreateRoomRoundtrip);
-    RunTest("JoinRoomReq/Res 往返",        TestJoinRoomRoundtrip);
-    RunTest("LeaveRoomReq/Res 往返",       TestLeaveRoomRoundtrip);
-    RunTest("StartGameReq/Res 往返",       TestStartGameRoundtrip);
-    RunTest("GameOverNtf 往返",            TestGameOverNtfRoundtrip);
-    RunTest("RoomInfo 完整往返",            TestRoomInfoRoundtrip);
+    RunTest("LoginReq/Res 往返", TestLoginRoundtrip);
+    RunTest("CreateRoomReq/Res 往返", TestCreateRoomRoundtrip);
+    RunTest("JoinRoomReq/Res 往返", TestJoinRoomRoundtrip);
+    RunTest("LeaveRoomReq/Res 往返", TestLeaveRoomRoundtrip);
+    RunTest("StartGameReq/Res 往返", TestStartGameRoundtrip);
+    RunTest("GameOverNtf 往返", TestGameOverNtfRoundtrip);
+    RunTest("RoomInfo 完整往返", TestRoomInfoRoundtrip);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

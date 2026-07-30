@@ -8,23 +8,25 @@
 
 namespace game {
 
-// ============================================================
-// TimerManager — 基于小顶堆的定时器管理器
-//
-// 职责：
-// - 注册定时任务（delay_ms 后触发 callback）
-// - 惰性取消（Cancel 后标记删除，Tick 时跳过）
-// - Tick 由外部驱动（GameRoom 或 EventLoop 定时调用）
-//
-// 线程安全：所有操作必须在同一线程调用（设计上与 EventLoop
-// 单线程模型一致），不加锁。
-//
-// 使用示例：
-//   TimerManager tm;
-//   auto id = tm.Schedule(5000, []{ printf("5秒到了\n"); });
-//   tm.Schedule(10000, []{ printf("10秒到了\n"); });
-//   tm.Tick();  // 每秒调一次，自动触发到期回调
-// ============================================================
+/**
+ * @brief 基于小顶堆的定时器管理器
+ *
+ * 职责：
+ * - 注册定时任务（delay_ms 后触发 callback）
+ * - 惰性取消（Cancel 后标记删除，Tick 时跳过）
+ * - Tick 由外部驱动（GameRoom 或 EventLoop 定时调用）
+ *
+ * 线程安全：所有操作必须在同一线程调用（设计上与 EventLoop
+ * 单线程模型一致），不加锁。
+ *
+ * 使用示例：
+ * @code
+ *   TimerManager tm;
+ *   auto id = tm.Schedule(5000, []{ printf("5秒到了\n"); });
+ *   tm.Schedule(10000, []{ printf("10秒到了\n"); });
+ *   tm.Tick();  // 每秒调一次，自动触发到期回调
+ * @endcode
+ */
 class TimerManager {
 public:
     using Callback = std::function<void()>;
@@ -36,21 +38,27 @@ public:
     TimerManager(const TimerManager&) = delete;
     TimerManager& operator=(const TimerManager&) = delete;
 
-    // 注册定时任务
-    // delay_ms: 延迟毫秒数
-    // callback: 到期时执行的回调
-    // 返回 timer_id，可用于 Cancel
+    /**
+     * @brief 注册定时任务
+     * @param delay_ms 延迟毫秒数
+     * @param callback 到期时执行的回调
+     * @return timer_id，可用于 Cancel
+     */
     uint64_t Schedule(int64_t delay_ms, Callback callback);
 
-    // 取消定时任务（惰性删除，Tick 时跳过）
+    /// 取消定时任务（惰性删除，Tick 时跳过）
     void Cancel(uint64_t timer_id);
 
-    // 驱动定时器：检查堆顶，触发所有到期回调
-    // 返回本次触发的回调数量
+    /**
+     * @brief 驱动定时器：检查堆顶，触发所有到期回调
+     * @return 本次触发的回调数量
+     */
     size_t Tick();
 
-    // 查询待触发定时器数量（含已取消但未清理的）
-    size_t PendingCount() const { return heap_.size(); }
+    /// 查询待触发定时器数量（含已取消但未清理的）
+    size_t PendingCount() const {
+        return heap_.size();
+    }
 
 private:
     // 定时器节点

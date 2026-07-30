@@ -27,7 +27,9 @@ public:
     // 返回 A 的新评分
     double UpdateRating(double rating_a, double rating_b, double result_a) const;
 
-    double K() const { return k_; }
+    double K() const {
+        return k_;
+    }
 
 private:
     double k_;

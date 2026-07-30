@@ -23,7 +23,7 @@ void TimerManager::Cancel(uint64_t timer_id) {
     for (auto& t : heap_) {
         if (t.id == timer_id) {
             t.cancelled = true;
-            t.callback = nullptr;  // 释放回调持有的资源
+            t.callback = nullptr; // 释放回调持有的资源
             return;
         }
     }

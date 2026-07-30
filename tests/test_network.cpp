@@ -49,13 +49,15 @@ void RunTest(const char* name, void (*fn)()) {
 // ============================================================
 class MockHandler : public rpc::EventHandler {
 public:
-    explicit MockHandler(int fd) : EventHandler(fd) {}
+    explicit MockHandler(int fd) : EventHandler(fd) {
+    }
     int read_count = 0;
     void OnRead() override {
         read_count++;
         // 消费数据 → 清空缓冲区 → 让ET模式下次能正常触发，不会失效
         char buf[64];
-        while (read(fd_, buf, sizeof(buf)) > 0) {}
+        while (read(fd_, buf, sizeof(buf)) > 0) {
+        }
     }
 };
 
@@ -65,14 +67,17 @@ public:
 class TestAcceptor : public rpc::EventHandler {
 public:
     TestAcceptor(int listen_fd, rpc::EventLoop* loop, rpc::FrameCallback cb)
-        : EventHandler(listen_fd), loop_(loop), cb_(std::move(cb)) {}
+        : EventHandler(listen_fd), loop_(loop), cb_(std::move(cb)) {
+    }
 
     void OnRead() override {
         while (true) {
             int client = accept(fd_, nullptr, nullptr);
             if (client < 0) {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) break;
-                if (errno == EINTR) continue;
+                if (errno == EAGAIN || errno == EWOULDBLOCK)
+                    break;
+                if (errno == EINTR)
+                    continue;
                 break;
             }
             rpc::Socket::SetNonBlocking(client);
@@ -186,15 +191,15 @@ void TestFullDataPath() {
 
     // 3. 启动服务端：注册 TestAcceptor（epoll 驱动 accept），启动事件循环
     std::thread server_thread([&]() {
-        auto acceptor = std::make_unique<TestAcceptor>(
-            listen_sock.Fd(), &loop,
-            [&mtx, &received_frame, &frame_received, &cv](const rpc::Frame& f, rpc::Connection* /*conn*/) {
-                std::lock_guard<std::mutex> lk(mtx);
-                received_frame = f;
-                frame_received = true;
-                cv.notify_one();
-            }
-        );
+        auto acceptor = std::make_unique<TestAcceptor>(listen_sock.Fd(), &loop,
+                                                       [&mtx, &received_frame, &frame_received,
+                                                        &cv](const rpc::Frame& f,
+                                                             rpc::Connection* /*conn*/) {
+                                                           std::lock_guard<std::mutex> lk(mtx);
+                                                           received_frame = f;
+                                                           frame_received = true;
+                                                           cv.notify_one();
+                                                       });
         loop.Register(std::move(acceptor), EPOLLIN | EPOLLET);
 
         // 1 秒后自动停止
@@ -223,8 +228,8 @@ void TestFullDataPath() {
     rpc::Serializer ser;
     ser.WriteInt32(42);
     ser.WriteString("hello from test");
-    auto frame_bytes = rpc::ProtocolFrame::Encode(
-        1, rpc::MessageType::Request, "TestMethod", ser.GetBuffer());
+    auto frame_bytes = rpc::ProtocolFrame::Encode(1, rpc::MessageType::Request, "TestMethod",
+                                                  ser.GetBuffer());
 
     ssize_t sent = send(client_sock, frame_bytes.data(), frame_bytes.size(), MSG_NOSIGNAL);
     assert(sent == static_cast<ssize_t>(frame_bytes.size()));
@@ -261,17 +266,17 @@ int main() {
     printf("=== Network IO Tests ===\n\n");
 
     printf("--- Socket ---\n");
-    RunTest("TestSocketCreate",         TestSocketCreate);
-    RunTest("TestSocketBindListen",     TestSocketBindListen);
+    RunTest("TestSocketCreate", TestSocketCreate);
+    RunTest("TestSocketBindListen", TestSocketBindListen);
     RunTest("TestSocketSetNonBlocking", TestSocketSetNonBlocking);
-    RunTest("TestSocketMove",           TestSocketMove);
+    RunTest("TestSocketMove", TestSocketMove);
 
     printf("\n--- EventLoop ---\n");
     RunTest("TestEventLoopRegisterUnregister", TestEventLoopRegisterUnregister);
-    RunTest("TestEventLoopStop",               TestEventLoopStop);
+    RunTest("TestEventLoopStop", TestEventLoopStop);
 
     printf("\n--- Integration ---\n");
-    RunTest("TestFullDataPath",         TestFullDataPath);
+    RunTest("TestFullDataPath", TestFullDataPath);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

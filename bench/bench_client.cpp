@@ -31,27 +31,27 @@
 // ============================================================
 // 命令行参数
 // ============================================================
-static const char* g_mode      = "rpc";
-static uint16_t    g_port      = 8080;
-static int         g_threads   = 1;
-static int         g_requests  = 10000;   // 每线程请求数
-static int         g_warmup    = 1000;    // 每线程预热请求数
-static int         g_timeout_s = 5;       // 单请求超时秒数
+static const char* g_mode = "rpc";
+static uint16_t g_port = 8080;
+static int g_threads = 1;
+static int g_requests = 10000; // 每线程请求数
+static int g_warmup = 1000; // 每线程预热请求数
+static int g_timeout_s = 5; // 单请求超时秒数
 
 // ============================================================
 // Benchmark 统计结果
 // ============================================================
 struct BenchStats {
-    int    total_requests  = 0;
-    int    failed_requests = 0;
-    double total_time_sec  = 0.0;    // 墙上时钟总耗时
-    double avg_us  = 0.0;
-    double min_us  = 0.0;
-    double max_us  = 0.0;
-    double p50_us  = 0.0;
-    double p95_us  = 0.0;
-    double p99_us  = 0.0;
-    double qps     = 0.0;
+    int total_requests = 0;
+    int failed_requests = 0;
+    double total_time_sec = 0.0; // 墙上时钟总耗时
+    double avg_us = 0.0;
+    double min_us = 0.0;
+    double max_us = 0.0;
+    double p50_us = 0.0;
+    double p95_us = 0.0;
+    double p99_us = 0.0;
+    double qps = 0.0;
 };
 
 // ============================================================
@@ -61,13 +61,18 @@ struct BenchStats {
 // 从 HTTP 响应头中提取 Content-Length
 static int HttpResponseContentLength(const std::string& header) {
     auto pos = header.find("Content-Length:");
-    if (pos == std::string::npos) pos = header.find("content-length:");
-    if (pos == std::string::npos) return -1;
+    if (pos == std::string::npos)
+        pos = header.find("content-length:");
+    if (pos == std::string::npos)
+        return -1;
     pos += 15;
-    while (pos < header.size() && header[pos] == ' ') pos++;
+    while (pos < header.size() && header[pos] == ' ')
+        pos++;
     size_t end = pos;
-    while (end < header.size() && header[end] >= '0' && header[end] <= '9') end++;
-    if (end == pos) return -1;
+    while (end < header.size() && header[end] >= '0' && header[end] <= '9')
+        end++;
+    if (end == pos)
+        return -1;
     return std::stoi(header.substr(pos, end - pos));
 }
 
@@ -75,27 +80,31 @@ static int HttpResponseContentLength(const std::string& header) {
 static bool HttpSendRecv(int fd, const std::string& request, char* recv_buf, size_t buf_size) {
     // 发送请求
     ssize_t sent = send(fd, request.data(), request.size(), MSG_NOSIGNAL);
-    if (sent < 0) return false;
+    if (sent < 0)
+        return false;
 
     // 接收响应 — 读头部直到 \r\n\r\n
     std::string response;
     size_t header_end = std::string::npos;
     while (header_end == std::string::npos) {
         ssize_t n = recv(fd, recv_buf, buf_size, 0);
-        if (n <= 0) return false;
+        if (n <= 0)
+            return false;
         response.append(recv_buf, static_cast<size_t>(n));
         header_end = response.find("\r\n\r\n");
     }
 
     // 提取 Content-Length
     int body_len = HttpResponseContentLength(response);
-    if (body_len < 0) return false;
+    if (body_len < 0)
+        return false;
 
     // 确保 body 完整接收
     size_t needed = header_end + 4 + static_cast<size_t>(body_len);
     while (response.size() < needed) {
         ssize_t n = recv(fd, recv_buf, buf_size, 0);
-        if (n <= 0) return false;
+        if (n <= 0)
+            return false;
         response.append(recv_buf, static_cast<size_t>(n));
     }
     return true;
@@ -117,12 +126,8 @@ static std::string BuildHttpRequest(const std::string& method, const std::string
 // ============================================================
 // RPC 模式：单线程压测
 // ============================================================
-static void RunRpcThread(int thread_id,
-                         int num_warmup,
-                         int num_requests,
-                         std::vector<double>& out_latencies_us,
-                         int& out_failed)
-{
+static void RunRpcThread(int thread_id, int num_warmup, int num_requests,
+                         std::vector<double>& out_latencies_us, int& out_failed) {
     rpc::RpcClient client;
     if (!client.Connect("127.0.0.1", g_port)) {
         fprintf(stderr, "[线程 %d] 连接失败\n", thread_id);
@@ -175,12 +180,8 @@ static void RunRpcThread(int thread_id,
 // ============================================================
 // HTTP 模式：单线程压测
 // ============================================================
-static void RunHttpThread(int thread_id,
-                          int num_warmup,
-                          int num_requests,
-                          std::vector<double>& out_latencies_us,
-                          int& out_failed)
-{
+static void RunHttpThread(int thread_id, int num_warmup, int num_requests,
+                          std::vector<double>& out_latencies_us, int& out_failed) {
     // 建立 TCP 连接
     int fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd < 0) {
@@ -237,14 +238,14 @@ static void RunHttpThread(int thread_id,
 // ============================================================
 // 统计计算
 // ============================================================
-static BenchStats ComputeStats(const std::vector<double>& all_latencies,
-                               int total, int failed, double elapsed_sec)
-{
+static BenchStats ComputeStats(const std::vector<double>& all_latencies, int total, int failed,
+                               double elapsed_sec) {
     BenchStats s;
-    s.total_requests  = total;
+    s.total_requests = total;
     s.failed_requests = failed;
 
-    if (all_latencies.empty()) return s;
+    if (all_latencies.empty())
+        return s;
 
     // 排序以计算分位数
     auto sorted = all_latencies;
@@ -254,13 +255,15 @@ static BenchStats ComputeStats(const std::vector<double>& all_latencies,
     s.min_us = sorted.front();
     s.max_us = sorted.back();
     s.avg_us = 0.0;
-    for (double v : sorted) s.avg_us += v;
+    for (double v : sorted)
+        s.avg_us += v;
     s.avg_us /= static_cast<double>(n);
 
     // 分位数索引（使用最近秩方法）
     auto percentile = [&](double p) -> double {
         size_t idx = static_cast<size_t>(std::ceil(p * static_cast<double>(n))) - 1;
-        if (idx >= n) idx = n - 1;
+        if (idx >= n)
+            idx = n - 1;
         return sorted[idx];
     };
 
@@ -306,10 +309,8 @@ static void PrintReport(const BenchStats& s) {
 
     // 输出 Markdown 表格行（方便直接粘贴到报告）
     printf("\n--- Markdown 表格行 ---\n");
-    printf("| %s | %d | %d | %.0f | %.1f | %.1f | %.1f | %.1f |\n",
-           g_mode, g_threads, g_requests,
-           s.qps,
-           s.avg_us, s.p50_us, s.p95_us, s.p99_us);
+    printf("| %s | %d | %d | %.0f | %.1f | %.1f | %.1f | %.1f |\n", g_mode, g_threads, g_requests,
+           s.qps, s.avg_us, s.p50_us, s.p95_us, s.p99_us);
 }
 
 // ============================================================
@@ -343,8 +344,8 @@ int main(int argc, char* argv[]) {
     }
 
     printf("=== TinyRPC Benchmark Client ===\n");
-    printf("模式: %s | 端口: %u | 线程: %d | 请求/线程: %d | 预热: %d\n",
-           g_mode, g_port, g_threads, g_requests, g_warmup);
+    printf("模式: %s | 端口: %u | 线程: %d | 请求/线程: %d | 预热: %d\n", g_mode, g_port, g_threads,
+           g_requests, g_warmup);
     fflush(stdout);
 
     // ---- 启动所有线程 ----
@@ -357,12 +358,10 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < g_threads; i++) {
         threads.emplace_back([i, &all_latencies, &all_failed]() {
             if (strcmp(g_mode, "rpc") == 0) {
-                RunRpcThread(i, g_warmup, g_requests,
-                             all_latencies[static_cast<size_t>(i)],
+                RunRpcThread(i, g_warmup, g_requests, all_latencies[static_cast<size_t>(i)],
                              all_failed[static_cast<size_t>(i)]);
             } else if (strcmp(g_mode, "http") == 0) {
-                RunHttpThread(i, g_warmup, g_requests,
-                              all_latencies[static_cast<size_t>(i)],
+                RunHttpThread(i, g_warmup, g_requests, all_latencies[static_cast<size_t>(i)],
                               all_failed[static_cast<size_t>(i)]);
             }
         });
@@ -374,8 +373,10 @@ int main(int argc, char* argv[]) {
     }
 
     auto t_end = std::chrono::steady_clock::now();
-    double elapsed_sec = static_cast<double>(
-        std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count()) / 1e6;
+    double elapsed_sec =
+        static_cast<double>(
+            std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start).count()) /
+        1e6;
 
     // ---- 汇总统计 ----
     int total_req = 0, total_failed = 0;
@@ -385,8 +386,7 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < g_threads; i++) {
         total_req += g_requests;
         total_failed += all_failed[static_cast<size_t>(i)];
-        merged.insert(merged.end(),
-                      all_latencies[static_cast<size_t>(i)].begin(),
+        merged.insert(merged.end(), all_latencies[static_cast<size_t>(i)].begin(),
                       all_latencies[static_cast<size_t>(i)].end());
     }
 

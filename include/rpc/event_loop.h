@@ -21,8 +21,8 @@ class EventHandler;
 // ============================================================
 class EventLoop {
 public:
-    EventLoop();    // 构造时创建 epoll 实例
-    ~EventLoop();   // 析构时关闭 epoll 实例
+    EventLoop(); // 构造时创建 epoll 实例
+    ~EventLoop(); // 析构时关闭 epoll 实例
 
     // 禁止拷贝和移动（epoll fd 不可移动）
     EventLoop(const EventLoop&) = delete;
@@ -46,9 +46,9 @@ public:
     void UpdateEvents(int fd, uint32_t events);
 
 private:
-    int epfd_ = -1;         // epoll 实例 fd
-    int wakeup_fd_ = -1;    // eventfd，用于 Stop() 唤醒 epoll_wait
-    bool running_ = false;  // 事件循环状态
+    int epfd_ = -1; // epoll 实例 fd
+    int wakeup_fd_ = -1; // eventfd，用于 Stop() 唤醒 epoll_wait
+    bool running_ = false; // 事件循环状态
     std::unordered_map<int, std::unique_ptr<EventHandler>> handlers_;
 };
 

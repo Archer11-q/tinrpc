@@ -52,7 +52,7 @@ private:
     std::queue<std::function<void()>> tasks_;
     std::mutex mutex_;
     std::condition_variable cv_;
-    bool stop_ = false;     // Shutdown 标志：worker 看到后退出循环
+    bool stop_ = false; // Shutdown 标志：worker 看到后退出循环
 };
 
 } // namespace rpc

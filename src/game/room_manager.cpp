@@ -47,9 +47,8 @@ std::vector<std::string> RoomManager::GetAllRoomIds() const {
 // 房间 CRUD
 // ============================================================
 
-Result RoomManager::CreateRoom(const std::string& player_id,
-                                const GameRoom::Config& config,
-                                int64_t timeout_ms) {
+Result RoomManager::CreateRoom(const std::string& player_id, const GameRoom::Config& config,
+                               int64_t timeout_ms) {
     // 检查玩家是否已在其他房间
     auto it = player_room_.find(player_id);
     if (it != player_room_.end()) {
@@ -64,12 +63,13 @@ Result RoomManager::CreateRoom(const std::string& player_id,
 
     // 注册超时定时器
     if (timeout_ms > 0) {
-        GameRoom* raw_ptr = room.get();  // 在 move 之前取裸指针
+        GameRoom* raw_ptr = room.get(); // 在 move 之前取裸指针
         rooms_[room_id] = std::move(room);
 
         raw_ptr->timer().Schedule(timeout_ms, [raw_ptr]() {
             // 游戏中不超时销毁（游戏时长由游戏逻辑控制）
-            if (raw_ptr->state() == ROOM_STATE_PLAYING) return;
+            if (raw_ptr->state() == ROOM_STATE_PLAYING)
+                return;
             raw_ptr->SetState(ROOM_STATE_DESTROYED);
         });
     } else {
@@ -94,7 +94,7 @@ Result RoomManager::JoinRoom(const std::string& room_id, const std::string& play
     // 委托给 GameRoom（校验人数/状态/重复）
     Result r = room->AddPlayer(player_id);
     if (!r.ok) {
-        return r;  // 透传 GameRoom 的错误码
+        return r; // 透传 GameRoom 的错误码
     }
 
     // 注册玩家→房间映射
@@ -110,7 +110,7 @@ Result RoomManager::LeaveRoom(const std::string& room_id, const std::string& pla
 
     Result r = room->RemovePlayer(player_id);
     if (!r.ok) {
-        return r;  // 透传 GameRoom 的错误码
+        return r; // 透传 GameRoom 的错误码
     }
 
     // 清除玩家→房间映射
@@ -119,8 +119,7 @@ Result RoomManager::LeaveRoom(const std::string& room_id, const std::string& pla
     return Result::Success();
 }
 
-Result RoomManager::StartGame(const std::string& room_id,
-                               const std::string& requester_id) {
+Result RoomManager::StartGame(const std::string& room_id, const std::string& requester_id) {
     auto* room = GetRoom(room_id);
     if (!room) {
         return Result::Failure(ERR_ROOM_NOT_FOUND);
@@ -162,7 +161,7 @@ bool RoomManager::RemoveRoom(const std::string& room_id) {
 
 size_t RoomManager::CleanupDestroyed() {
     size_t removed = 0;
-    for (auto it = rooms_.begin(); it != rooms_.end(); ) {
+    for (auto it = rooms_.begin(); it != rooms_.end();) {
         if (it->second->state() == ROOM_STATE_DESTROYED) {
             ClearRoomPlayers(it->second.get());
             it = rooms_.erase(it);
@@ -187,9 +186,8 @@ size_t RoomManager::CheckRoomTimeout() {
 // 带通知的操作（成功后自动广播事件）
 // ============================================================
 
-Result RoomManager::JoinRoomAndNotify(const std::string& room_id,
-                                       const std::string& player_id,
-                                       Broadcast* broadcast) {
+Result RoomManager::JoinRoomAndNotify(const std::string& room_id, const std::string& player_id,
+                                      Broadcast* broadcast) {
     Result r = JoinRoom(room_id, player_id);
     if (!r.ok) {
         return r;
@@ -215,9 +213,8 @@ Result RoomManager::JoinRoomAndNotify(const std::string& room_id,
     return Result::Success();
 }
 
-Result RoomManager::LeaveRoomAndNotify(const std::string& room_id,
-                                        const std::string& player_id,
-                                        Broadcast* broadcast) {
+Result RoomManager::LeaveRoomAndNotify(const std::string& room_id, const std::string& player_id,
+                                       Broadcast* broadcast) {
     auto* room = GetRoom(room_id);
     if (!room) {
         return Result::Failure(ERR_ROOM_NOT_FOUND);
@@ -248,9 +245,8 @@ Result RoomManager::LeaveRoomAndNotify(const std::string& room_id,
     return Result::Success();
 }
 
-Result RoomManager::StartGameAndNotify(const std::string& room_id,
-                                        const std::string& requester_id,
-                                        Broadcast* broadcast) {
+Result RoomManager::StartGameAndNotify(const std::string& room_id, const std::string& requester_id,
+                                       Broadcast* broadcast) {
     Result r = StartGame(room_id, requester_id);
     if (!r.ok) {
         return r;
@@ -260,11 +256,9 @@ Result RoomManager::StartGameAndNotify(const std::string& room_id,
     if (broadcast) {
         GameStartNtf ntf;
         ntf.set_room_id(room_id);
-        ntf.set_timestamp(
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()
-            ).count()
-        );
+        ntf.set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::system_clock::now().time_since_epoch())
+                              .count());
 
         std::string buf;
         ntf.SerializeToString(&buf);

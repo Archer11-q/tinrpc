@@ -78,39 +78,47 @@ struct SimpleClient {
 
     bool Connect(uint16_t port) {
         fd = socket(AF_INET, SOCK_STREAM, 0);
-        if (fd < 0) { fprintf(stderr, "[SimpleClient] socket() failed\n"); return false; }
+        if (fd < 0) {
+            fprintf(stderr, "[SimpleClient] socket() failed\n");
+            return false;
+        }
 
         sockaddr_in addr{};
         addr.sin_family = AF_INET;
         addr.sin_port = htons(port);
         if (inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr) <= 0) {
-            close(fd); fd = -1; return false;
+            close(fd);
+            fd = -1;
+            return false;
         }
         if (connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
-            close(fd); fd = -1; return false;
+            close(fd);
+            fd = -1;
+            return false;
         }
         return true;
     }
 
     // 发送请求帧，返回响应 body
-    std::vector<uint8_t> Call(const std::string& method,
-                               const std::vector<uint8_t>& req_body) {
+    std::vector<uint8_t> Call(const std::string& method, const std::vector<uint8_t>& req_body) {
         static std::atomic<uint32_t> next_id{1};
         uint32_t id = next_id.fetch_add(1);
 
         // 发送
-        auto frame = rpc::ProtocolFrame::Encode(
-            id, rpc::MessageType::Request, method, req_body);
+        auto frame = rpc::ProtocolFrame::Encode(id, rpc::MessageType::Request, method, req_body);
         SendAll(frame);
 
         // 接收
         auto rsp = RecvFrame();
-        (void)rsp; // method_name is known
+        (void) rsp; // method_name is known
         return rsp.body;
     }
 
     void Disconnect() {
-        if (fd >= 0) { close(fd); fd = -1; }
+        if (fd >= 0) {
+            close(fd);
+            fd = -1;
+        }
     }
 
 private:
@@ -120,7 +128,8 @@ private:
             ssize_t n = send(fd, data.data() + offset, data.size() - offset, MSG_NOSIGNAL);
             if (n <= 0) {
                 fprintf(stderr, "[SimpleClient] send error, fd=%d, n=%zd, errno=%d\n", fd, n, errno);
-                fprintf(stderr, "FATAL: send failed\n"); abort();
+                fprintf(stderr, "FATAL: send failed\n");
+                abort();
             }
             offset += static_cast<size_t>(n);
         }
@@ -132,8 +141,10 @@ private:
         while (offset < n) {
             ssize_t nread = recv(fd, buf.data() + offset, n - offset, 0);
             if (nread <= 0) {
-                fprintf(stderr, "[SimpleClient] recv error, fd=%d, nread=%zd, errno=%d\n", fd, nread, errno);
-                fprintf(stderr, "FATAL: recv failed\n"); abort();
+                fprintf(stderr, "[SimpleClient] recv error, fd=%d, nread=%zd, errno=%d\n", fd,
+                        nread, errno);
+                fprintf(stderr, "FATAL: recv failed\n");
+                abort();
             }
             offset += static_cast<size_t>(nread);
         }
@@ -142,11 +153,10 @@ private:
 
     rpc::Frame RecvFrame() {
         auto header = RecvN(13);
-        uint32_t total_len =
-            (static_cast<uint32_t>(header[2]) << 24) |
-            (static_cast<uint32_t>(header[3]) << 16) |
-            (static_cast<uint32_t>(header[4]) << 8)  |
-            static_cast<uint32_t>(header[5]);
+        uint32_t total_len = (static_cast<uint32_t>(header[2]) << 24) |
+                             (static_cast<uint32_t>(header[3]) << 16) |
+                             (static_cast<uint32_t>(header[4]) << 8) |
+                             static_cast<uint32_t>(header[5]);
         assert(total_len >= 13 && total_len <= rpc::kMaxFrameSize);
 
         size_t remaining = total_len - 13;
@@ -169,68 +179,84 @@ private:
 struct SimpleStub {
     SimpleClient* client;
 
-    explicit SimpleStub(SimpleClient* c) : client(c) {}
+    explicit SimpleStub(SimpleClient* c) : client(c) {
+    }
 
     game::CreateRoomRes CreateRoom(const game::CreateRoomReq& req) {
-        std::string buf; req.SerializeToString(&buf);
+        std::string buf;
+        req.SerializeToString(&buf);
         auto rsp = client->Call("CreateRoom", std::vector<uint8_t>(buf.begin(), buf.end()));
         game::CreateRoomRes res;
-        if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
+        if (!rsp.empty())
+            res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
         return res;
     }
 
     game::JoinRoomRes JoinRoom(const game::JoinRoomReq& req) {
-        std::string buf; req.SerializeToString(&buf);
+        std::string buf;
+        req.SerializeToString(&buf);
         auto rsp = client->Call("JoinRoom", std::vector<uint8_t>(buf.begin(), buf.end()));
         game::JoinRoomRes res;
-        if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
+        if (!rsp.empty())
+            res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
         return res;
     }
 
     game::LeaveRoomRes LeaveRoom(const game::LeaveRoomReq& req) {
-        std::string buf; req.SerializeToString(&buf);
+        std::string buf;
+        req.SerializeToString(&buf);
         auto rsp = client->Call("LeaveRoom", std::vector<uint8_t>(buf.begin(), buf.end()));
         game::LeaveRoomRes res;
-        if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
+        if (!rsp.empty())
+            res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
         return res;
     }
 
     game::SendMessageRes SendMessage(const game::SendMessageReq& req) {
-        std::string buf; req.SerializeToString(&buf);
+        std::string buf;
+        req.SerializeToString(&buf);
         auto rsp = client->Call("SendMessage", std::vector<uint8_t>(buf.begin(), buf.end()));
         game::SendMessageRes res;
-        if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
+        if (!rsp.empty())
+            res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
         return res;
     }
 
     game::GetRoomListRes GetRoomList() {
         auto rsp = client->Call("GetRoomList", {});
         game::GetRoomListRes res;
-        if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
+        if (!rsp.empty())
+            res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
         return res;
     }
 
     game::StartGameRes StartGame(const game::StartGameReq& req) {
-        std::string buf; req.SerializeToString(&buf);
+        std::string buf;
+        req.SerializeToString(&buf);
         auto rsp = client->Call("StartGame", std::vector<uint8_t>(buf.begin(), buf.end()));
         game::StartGameRes res;
-        if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
+        if (!rsp.empty())
+            res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
         return res;
     }
 
     game::SendInputRes SendInput(const game::PlayerInputReq& req) {
-        std::string buf; req.SerializeToString(&buf);
+        std::string buf;
+        req.SerializeToString(&buf);
         auto rsp = client->Call("SendInput", std::vector<uint8_t>(buf.begin(), buf.end()));
         game::SendInputRes res;
-        if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
+        if (!rsp.empty())
+            res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
         return res;
     }
 
     game::StopGameRes StopGame(const game::StopGameReq& req) {
-        std::string buf; req.SerializeToString(&buf);
+        std::string buf;
+        req.SerializeToString(&buf);
         auto rsp = client->Call("StopGame", std::vector<uint8_t>(buf.begin(), buf.end()));
         game::StopGameRes res;
-        if (!rsp.empty()) res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
+        if (!rsp.empty())
+            res.ParseFromArray(rsp.data(), static_cast<int>(rsp.size()));
         return res;
     }
 };
@@ -242,7 +268,8 @@ struct SimpleStub {
 void ClientLogin(SimpleClient& client, const std::string& player_id) {
     game::LoginReq req;
     req.set_token(player_id);
-    std::string buf; req.SerializeToString(&buf);
+    std::string buf;
+    req.SerializeToString(&buf);
     auto rsp_body = client.Call("Login", std::vector<uint8_t>(buf.begin(), buf.end()));
     game::LoginRes res;
     res.ParseFromArray(rsp_body.data(), static_cast<int>(rsp_body.size()));
@@ -260,12 +287,10 @@ void TestStubCreateRoom() {
     rpc::Dispatch dispatch;
     std::unordered_map<std::string, rpc::Connection*> player_conns;
 
-    auto send_fn = [&player_conns](const std::string& player_id,
-                                    const std::vector<uint8_t>& data) {
+    auto send_fn = [&player_conns](const std::string& player_id, const std::vector<uint8_t>& data) {
         auto it = player_conns.find(player_id);
         if (it != player_conns.end() && it->second) {
-            auto frame = rpc::ProtocolFrame::Encode(
-                0, rpc::MessageType::Response, "RoomEvent", data);
+            auto frame = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "RoomEvent", data);
             it->second->Send(frame);
         }
     };
@@ -283,24 +308,23 @@ void TestStubCreateRoom() {
             game::LoginRes res;
             res.set_success(true);
             res.mutable_player_info()->set_player_id(req.token());
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response, "Login",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  "Login",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             conn->Send(rsp);
             return;
         }
 
         auto rsp_body = dispatch.Call(frame.method_name, frame.body);
         if (rsp_body) {
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response,
-                frame.method_name, *rsp_body);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  frame.method_name, *rsp_body);
             conn->Send(rsp);
         } else {
-            auto err = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Error,
-                frame.method_name, {});
+            auto err = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                  frame.method_name, {});
             conn->Send(err);
         }
     };
@@ -313,14 +337,18 @@ void TestStubCreateRoom() {
     uint16_t port = ntohs(addr.sin_port);
     server_loop.Register(std::move(acceptor), EPOLLIN | EPOLLET);
 
-    std::thread server_thread([&server_loop]() {
-        server_loop.Run();
-    });
+    std::thread server_thread([&server_loop]() { server_loop.Run(); });
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     // 2. 客户端
     SimpleClient client;
-    do { bool _ok = client.Connect(port); if (!_ok) { fprintf(stderr, "FATAL: Connect failed\n"); abort(); } } while(0);
+    do {
+        bool _ok = client.Connect(port);
+        if (!_ok) {
+            fprintf(stderr, "FATAL: Connect failed\n");
+            abort();
+        }
+    } while (0);
     ClientLogin(client, "player_a");
 
     SimpleStub stub(&client);
@@ -357,12 +385,10 @@ void TestStubCreateAndJoin() {
     rpc::Dispatch dispatch;
     std::unordered_map<std::string, rpc::Connection*> player_conns;
 
-    auto send_fn = [&player_conns](const std::string& player_id,
-                                    const std::vector<uint8_t>& data) {
+    auto send_fn = [&player_conns](const std::string& player_id, const std::vector<uint8_t>& data) {
         auto it = player_conns.find(player_id);
         if (it != player_conns.end() && it->second) {
-            auto frame = rpc::ProtocolFrame::Encode(
-                0, rpc::MessageType::Response, "RoomEvent", data);
+            auto frame = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "RoomEvent", data);
             it->second->Send(frame);
         }
     };
@@ -379,23 +405,22 @@ void TestStubCreateAndJoin() {
             game::LoginRes res;
             res.set_success(true);
             res.mutable_player_info()->set_player_id(req.token());
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response, "Login",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  "Login",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             conn->Send(rsp);
             return;
         }
         auto rsp_body = dispatch.Call(frame.method_name, frame.body);
         if (rsp_body) {
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response,
-                frame.method_name, *rsp_body);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  frame.method_name, *rsp_body);
             conn->Send(rsp);
         } else {
-            auto err = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Error,
-                frame.method_name, {});
+            auto err = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                  frame.method_name, {});
             conn->Send(err);
         }
     };
@@ -408,15 +433,25 @@ void TestStubCreateAndJoin() {
     uint16_t port = ntohs(addr.sin_port);
     server_loop.Register(std::move(acceptor), EPOLLIN | EPOLLET);
 
-    std::thread server_thread([&server_loop]() {
-        server_loop.Run();
-    });
+    std::thread server_thread([&server_loop]() { server_loop.Run(); });
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     // 两个客户端
     SimpleClient client_a, client_b;
-    do { bool _ok = client_a.Connect(port); if (!_ok) { fprintf(stderr, "FATAL: client_a Connect failed\n"); abort(); } } while(0);
-    do { bool _ok = client_b.Connect(port); if (!_ok) { fprintf(stderr, "FATAL: client_b Connect failed\n"); abort(); } } while(0);
+    do {
+        bool _ok = client_a.Connect(port);
+        if (!_ok) {
+            fprintf(stderr, "FATAL: client_a Connect failed\n");
+            abort();
+        }
+    } while (0);
+    do {
+        bool _ok = client_b.Connect(port);
+        if (!_ok) {
+            fprintf(stderr, "FATAL: client_b Connect failed\n");
+            abort();
+        }
+    } while (0);
     ClientLogin(client_a, "player_a");
     ClientLogin(client_b, "player_b");
 
@@ -447,8 +482,8 @@ void TestStubCreateAndJoin() {
     assert(room->HasPlayer("player_a"));
     assert(room->HasPlayer("player_b"));
 
-    printf("\n    room_id=%s, player_count=%d\n",
-           room_id.c_str(), join_res.room_info().player_count());
+    printf("\n    room_id=%s, player_count=%d\n", room_id.c_str(),
+           join_res.room_info().player_count());
 
     client_a.Disconnect();
     client_b.Disconnect();
@@ -466,12 +501,10 @@ void TestStubSendMessage() {
     rpc::Dispatch dispatch;
     std::unordered_map<std::string, rpc::Connection*> player_conns;
 
-    auto send_fn = [&player_conns](const std::string& player_id,
-                                    const std::vector<uint8_t>& data) {
+    auto send_fn = [&player_conns](const std::string& player_id, const std::vector<uint8_t>& data) {
         auto it = player_conns.find(player_id);
         if (it != player_conns.end() && it->second) {
-            auto frame = rpc::ProtocolFrame::Encode(
-                0, rpc::MessageType::Response, "RoomEvent", data);
+            auto frame = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "RoomEvent", data);
             it->second->Send(frame);
         }
     };
@@ -488,23 +521,22 @@ void TestStubSendMessage() {
             game::LoginRes res;
             res.set_success(true);
             res.mutable_player_info()->set_player_id(req.token());
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response, "Login",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  "Login",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             conn->Send(rsp);
             return;
         }
         auto rsp_body = dispatch.Call(frame.method_name, frame.body);
         if (rsp_body) {
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response,
-                frame.method_name, *rsp_body);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  frame.method_name, *rsp_body);
             conn->Send(rsp);
         } else {
-            auto err = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Error,
-                frame.method_name, {});
+            auto err = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                  frame.method_name, {});
             conn->Send(err);
         }
     };
@@ -517,13 +549,17 @@ void TestStubSendMessage() {
     uint16_t port = ntohs(addr.sin_port);
     server_loop.Register(std::move(acceptor), EPOLLIN | EPOLLET);
 
-    std::thread server_thread([&server_loop]() {
-        server_loop.Run();
-    });
+    std::thread server_thread([&server_loop]() { server_loop.Run(); });
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     SimpleClient client_a;
-    do { bool _ok = client_a.Connect(port); if (!_ok) { fprintf(stderr, "FATAL: client_a Connect failed\n"); abort(); } } while(0);
+    do {
+        bool _ok = client_a.Connect(port);
+        if (!_ok) {
+            fprintf(stderr, "FATAL: client_a Connect failed\n");
+            abort();
+        }
+    } while (0);
     ClientLogin(client_a, "player_a");
     SimpleStub stub_a(&client_a);
 
@@ -561,12 +597,10 @@ void TestStubGetRoomList() {
     rpc::Dispatch dispatch;
     std::unordered_map<std::string, rpc::Connection*> player_conns;
 
-    auto send_fn = [&player_conns](const std::string& player_id,
-                                    const std::vector<uint8_t>& data) {
+    auto send_fn = [&player_conns](const std::string& player_id, const std::vector<uint8_t>& data) {
         auto it = player_conns.find(player_id);
         if (it != player_conns.end() && it->second) {
-            auto frame = rpc::ProtocolFrame::Encode(
-                0, rpc::MessageType::Response, "RoomEvent", data);
+            auto frame = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "RoomEvent", data);
             it->second->Send(frame);
         }
     };
@@ -583,23 +617,22 @@ void TestStubGetRoomList() {
             game::LoginRes res;
             res.set_success(true);
             res.mutable_player_info()->set_player_id(req.token());
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response, "Login",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  "Login",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             conn->Send(rsp);
             return;
         }
         auto rsp_body = dispatch.Call(frame.method_name, frame.body);
         if (rsp_body) {
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response,
-                frame.method_name, *rsp_body);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  frame.method_name, *rsp_body);
             conn->Send(rsp);
         } else {
-            auto err = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Error,
-                frame.method_name, {});
+            auto err = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                  frame.method_name, {});
             conn->Send(err);
         }
     };
@@ -612,14 +645,18 @@ void TestStubGetRoomList() {
     uint16_t port = ntohs(addr.sin_port);
     server_loop.Register(std::move(acceptor), EPOLLIN | EPOLLET);
 
-    std::thread server_thread([&server_loop]() {
-        server_loop.Run();
-    });
+    std::thread server_thread([&server_loop]() { server_loop.Run(); });
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     // 客户端 A
     SimpleClient client_a;
-    do { bool _ok = client_a.Connect(port); if (!_ok) { fprintf(stderr, "FATAL: client_a Connect failed\n"); abort(); } } while(0);
+    do {
+        bool _ok = client_a.Connect(port);
+        if (!_ok) {
+            fprintf(stderr, "FATAL: client_a Connect failed\n");
+            abort();
+        }
+    } while (0);
     ClientLogin(client_a, "player_a");
     SimpleStub stub_a(&client_a);
 
@@ -633,7 +670,13 @@ void TestStubGetRoomList() {
 
     // 客户端 B 创建房间 2
     SimpleClient client_b;
-    do { bool _ok = client_b.Connect(port); if (!_ok) { fprintf(stderr, "FATAL: client_b Connect failed\n"); abort(); } } while(0);
+    do {
+        bool _ok = client_b.Connect(port);
+        if (!_ok) {
+            fprintf(stderr, "FATAL: client_b Connect failed\n");
+            abort();
+        }
+    } while (0);
     ClientLogin(client_b, "player_b");
     SimpleStub stub_b(&client_b);
 
@@ -650,8 +693,10 @@ void TestStubGetRoomList() {
 
     bool found1 = false, found2 = false;
     for (int i = 0; i < list_res.rooms_size(); i++) {
-        if (list_res.rooms(i).room_id() == id1) found1 = true;
-        if (list_res.rooms(i).room_id() == id2) found2 = true;
+        if (list_res.rooms(i).room_id() == id1)
+            found1 = true;
+        if (list_res.rooms(i).room_id() == id2)
+            found2 = true;
     }
     assert(found1 && found2);
 
@@ -680,12 +725,10 @@ void TestStubLeaveRoom() {
     rpc::Dispatch dispatch;
     std::unordered_map<std::string, rpc::Connection*> player_conns;
 
-    auto send_fn = [&player_conns](const std::string& player_id,
-                                    const std::vector<uint8_t>& data) {
+    auto send_fn = [&player_conns](const std::string& player_id, const std::vector<uint8_t>& data) {
         auto it = player_conns.find(player_id);
         if (it != player_conns.end() && it->second) {
-            auto frame = rpc::ProtocolFrame::Encode(
-                0, rpc::MessageType::Response, "RoomEvent", data);
+            auto frame = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "RoomEvent", data);
             it->second->Send(frame);
         }
     };
@@ -702,23 +745,22 @@ void TestStubLeaveRoom() {
             game::LoginRes res;
             res.set_success(true);
             res.mutable_player_info()->set_player_id(req.token());
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response, "Login",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  "Login",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             conn->Send(rsp);
             return;
         }
         auto rsp_body = dispatch.Call(frame.method_name, frame.body);
         if (rsp_body) {
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response,
-                frame.method_name, *rsp_body);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  frame.method_name, *rsp_body);
             conn->Send(rsp);
         } else {
-            auto err = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Error,
-                frame.method_name, {});
+            auto err = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                  frame.method_name, {});
             conn->Send(err);
         }
     };
@@ -731,14 +773,24 @@ void TestStubLeaveRoom() {
     uint16_t port = ntohs(addr.sin_port);
     server_loop.Register(std::move(acceptor), EPOLLIN | EPOLLET);
 
-    std::thread server_thread([&server_loop]() {
-        server_loop.Run();
-    });
+    std::thread server_thread([&server_loop]() { server_loop.Run(); });
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     SimpleClient client_a, client_b;
-    do { bool _ok = client_a.Connect(port); if (!_ok) { fprintf(stderr, "FATAL: client_a Connect failed\n"); abort(); } } while(0);
-    do { bool _ok = client_b.Connect(port); if (!_ok) { fprintf(stderr, "FATAL: client_b Connect failed\n"); abort(); } } while(0);
+    do {
+        bool _ok = client_a.Connect(port);
+        if (!_ok) {
+            fprintf(stderr, "FATAL: client_a Connect failed\n");
+            abort();
+        }
+    } while (0);
+    do {
+        bool _ok = client_b.Connect(port);
+        if (!_ok) {
+            fprintf(stderr, "FATAL: client_b Connect failed\n");
+            abort();
+        }
+    } while (0);
     ClientLogin(client_a, "player_a");
     ClientLogin(client_b, "player_b");
 
@@ -791,12 +843,10 @@ void TestStubCreateRoomFailDuplicate() {
     rpc::Dispatch dispatch;
     std::unordered_map<std::string, rpc::Connection*> player_conns;
 
-    auto send_fn = [&player_conns](const std::string& player_id,
-                                    const std::vector<uint8_t>& data) {
+    auto send_fn = [&player_conns](const std::string& player_id, const std::vector<uint8_t>& data) {
         auto it = player_conns.find(player_id);
         if (it != player_conns.end() && it->second) {
-            auto frame = rpc::ProtocolFrame::Encode(
-                0, rpc::MessageType::Response, "RoomEvent", data);
+            auto frame = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "RoomEvent", data);
             it->second->Send(frame);
         }
     };
@@ -813,23 +863,22 @@ void TestStubCreateRoomFailDuplicate() {
             game::LoginRes res;
             res.set_success(true);
             res.mutable_player_info()->set_player_id(req.token());
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response, "Login",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  "Login",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             conn->Send(rsp);
             return;
         }
         auto rsp_body = dispatch.Call(frame.method_name, frame.body);
         if (rsp_body) {
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response,
-                frame.method_name, *rsp_body);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  frame.method_name, *rsp_body);
             conn->Send(rsp);
         } else {
-            auto err = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Error,
-                frame.method_name, {});
+            auto err = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                  frame.method_name, {});
             conn->Send(err);
         }
     };
@@ -842,13 +891,17 @@ void TestStubCreateRoomFailDuplicate() {
     uint16_t port = ntohs(addr.sin_port);
     server_loop.Register(std::move(acceptor), EPOLLIN | EPOLLET);
 
-    std::thread server_thread([&server_loop]() {
-        server_loop.Run();
-    });
+    std::thread server_thread([&server_loop]() { server_loop.Run(); });
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     SimpleClient client;
-    do { bool _ok = client.Connect(port); if (!_ok) { fprintf(stderr, "FATAL: Connect failed\n"); abort(); } } while(0);
+    do {
+        bool _ok = client.Connect(port);
+        if (!_ok) {
+            fprintf(stderr, "FATAL: Connect failed\n");
+            abort();
+        }
+    } while (0);
     ClientLogin(client, "player_a");
     SimpleStub stub(&client);
 
@@ -890,21 +943,20 @@ struct QuickServer {
 
     SimpleClient client;
     SimpleStub stub;
-    uint16_t port = 0;  // 暴露给测试方，用于创建第二个客户端
+    uint16_t port = 0; // 暴露给测试方，用于创建第二个客户端
 
     QuickServer()
         : broadcast(&room_mgr,
-              [this](const std::string& pid, const std::vector<uint8_t>& data) {
-                  auto it = player_conns.find(pid);
-                  if (it != player_conns.end() && it->second) {
-                      auto frame = rpc::ProtocolFrame::Encode(
-                          0, rpc::MessageType::Response, "RoomEvent", data);
-                      it->second->Send(frame);
-                  }
-              })
+                    [this](const std::string& pid, const std::vector<uint8_t>& data) {
+                        auto it = player_conns.find(pid);
+                        if (it != player_conns.end() && it->second) {
+                            auto frame = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response,
+                                                                    "RoomEvent", data);
+                            it->second->Send(frame);
+                        }
+                    })
         , service(&room_mgr, &broadcast)
-        , stub(&client)
-    {
+        , stub(&client) {
         game::RegisterRoomService(&dispatch, &service);
 
         auto server_cb = [this](const rpc::Frame& frame, rpc::Connection* conn) {
@@ -915,23 +967,22 @@ struct QuickServer {
                 game::LoginRes res;
                 res.set_success(true);
                 res.mutable_player_info()->set_player_id(req.token());
-                std::string buf; res.SerializeToString(&buf);
-                auto rsp = rpc::ProtocolFrame::Encode(
-                    frame.request_id, rpc::MessageType::Response, "Login",
-                    std::vector<uint8_t>(buf.begin(), buf.end()));
+                std::string buf;
+                res.SerializeToString(&buf);
+                auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                      "Login",
+                                                      std::vector<uint8_t>(buf.begin(), buf.end()));
                 conn->Send(rsp);
                 return;
             }
             auto rsp_body = dispatch.Call(frame.method_name, frame.body);
             if (rsp_body) {
-                auto rsp = rpc::ProtocolFrame::Encode(
-                    frame.request_id, rpc::MessageType::Response,
-                    frame.method_name, *rsp_body);
+                auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                      frame.method_name, *rsp_body);
                 conn->Send(rsp);
             } else {
-                auto err = rpc::ProtocolFrame::Encode(
-                    frame.request_id, rpc::MessageType::Error,
-                    frame.method_name, {});
+                auto err = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                      frame.method_name, {});
                 conn->Send(err);
             }
         };
@@ -948,14 +999,18 @@ struct QuickServer {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         bool ok = client.Connect(port);
-        if (!ok) { fprintf(stderr, "FATAL: QuickServer Connect failed\n"); abort(); }
+        if (!ok) {
+            fprintf(stderr, "FATAL: QuickServer Connect failed\n");
+            abort();
+        }
         ClientLogin(client, "player_a");
     }
 
     void Shutdown() {
         client.Disconnect();
         loop.Stop();
-        if (server_thread.joinable()) server_thread.join();
+        if (server_thread.joinable())
+            server_thread.join();
     }
 };
 
@@ -974,7 +1029,7 @@ void TestErrorJoinRoomNotFound() {
     assert(!res.success());
     assert(res.error_code() == game::ERR_ROOM_NOT_FOUND);
 
-    printf("\n    error_code=%d (ERR_ROOM_NOT_FOUND)\n", (int)res.error_code());
+    printf("\n    error_code=%d (ERR_ROOM_NOT_FOUND)\n", (int) res.error_code());
     qs.Shutdown();
 }
 
@@ -995,7 +1050,10 @@ void TestErrorJoinRoomFull() {
     // 第二个客户端尝试加入 → 满员
     SimpleClient client_b;
     bool ok = client_b.Connect(qs.port);
-    if (!ok) { fprintf(stderr, "FATAL: client_b Connect failed\n"); abort(); }
+    if (!ok) {
+        fprintf(stderr, "FATAL: client_b Connect failed\n");
+        abort();
+    }
     ClientLogin(client_b, "player_b");
     SimpleStub stub_b(&client_b);
 
@@ -1007,7 +1065,7 @@ void TestErrorJoinRoomFull() {
     assert(!res.success());
     assert(res.error_code() == game::ERR_ROOM_FULL);
 
-    printf("\n    error_code=%d (ERR_ROOM_FULL)\n", (int)res.error_code());
+    printf("\n    error_code=%d (ERR_ROOM_FULL)\n", (int) res.error_code());
     client_b.Disconnect();
     qs.Shutdown();
 }
@@ -1032,7 +1090,10 @@ void TestErrorJoinRoomNotJoinable() {
     // 第二个客户端尝试加入
     SimpleClient client_b;
     bool ok = client_b.Connect(qs.port);
-    if (!ok) { fprintf(stderr, "FATAL: client_b Connect failed\n"); abort(); }
+    if (!ok) {
+        fprintf(stderr, "FATAL: client_b Connect failed\n");
+        abort();
+    }
     ClientLogin(client_b, "player_b");
     SimpleStub stub_b(&client_b);
 
@@ -1044,7 +1105,7 @@ void TestErrorJoinRoomNotJoinable() {
     assert(!res.success());
     assert(res.error_code() == game::ERR_ROOM_NOT_JOINABLE);
 
-    printf("\n    error_code=%d (ERR_ROOM_NOT_JOINABLE)\n", (int)res.error_code());
+    printf("\n    error_code=%d (ERR_ROOM_NOT_JOINABLE)\n", (int) res.error_code());
     client_b.Disconnect();
     qs.Shutdown();
 }
@@ -1064,7 +1125,7 @@ void TestErrorLeaveRoomNotFound() {
     assert(!res.success());
     assert(res.error_code() == game::ERR_ROOM_NOT_FOUND);
 
-    printf("\n    error_code=%d (ERR_ROOM_NOT_FOUND)\n", (int)res.error_code());
+    printf("\n    error_code=%d (ERR_ROOM_NOT_FOUND)\n", (int) res.error_code());
     qs.Shutdown();
 }
 
@@ -1094,7 +1155,7 @@ void TestErrorLeaveRoomPlayerNotInRoom() {
     assert(!res2.success());
     assert(res2.error_code() == game::ERR_PLAYER_NOT_IN_ROOM);
 
-    printf("\n    error_code=%d (ERR_PLAYER_NOT_IN_ROOM)\n", (int)res2.error_code());
+    printf("\n    error_code=%d (ERR_PLAYER_NOT_IN_ROOM)\n", (int) res2.error_code());
     qs.Shutdown();
 }
 
@@ -1114,7 +1175,7 @@ void TestErrorSendMessageRoomNotFound() {
     assert(!res.success());
     assert(res.error_code() == game::ERR_ROOM_NOT_FOUND);
 
-    printf("\n    error_code=%d (ERR_ROOM_NOT_FOUND)\n", (int)res.error_code());
+    printf("\n    error_code=%d (ERR_ROOM_NOT_FOUND)\n", (int) res.error_code());
     qs.Shutdown();
 }
 
@@ -1131,12 +1192,10 @@ void TestDisconnectAutoCleanup() {
     std::unordered_map<int, std::string> fd_to_player;
 
     // 发送回调
-    auto send_fn = [&player_conns](const std::string& player_id,
-                                    const std::vector<uint8_t>& data) {
+    auto send_fn = [&player_conns](const std::string& player_id, const std::vector<uint8_t>& data) {
         auto it = player_conns.find(player_id);
         if (it != player_conns.end() && it->second) {
-            auto frame = rpc::ProtocolFrame::Encode(
-                0, rpc::MessageType::Response, "RoomEvent", data);
+            auto frame = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "RoomEvent", data);
             it->second->Send(frame);
         }
     };
@@ -1146,53 +1205,54 @@ void TestDisconnectAutoCleanup() {
     game::RegisterRoomService(&dispatch, &service);
 
     // 断连回调：自动从房间移除 + 通知剩余玩家
-    rpc::DisconnectCallback on_disconnect =
-        [&room_mgr, &broadcast, &player_conns, &fd_to_player](int fd) {
-            auto it = fd_to_player.find(fd);
-            if (it == fd_to_player.end()) return;  // 未登录就断开，无需清理
+    rpc::DisconnectCallback on_disconnect = [&room_mgr, &broadcast, &player_conns,
+                                             &fd_to_player](int fd) {
+        auto it = fd_to_player.find(fd);
+        if (it == fd_to_player.end())
+            return; // 未登录就断开，无需清理
 
-            std::string player_id = it->second;
-            printf("[Disconnect] fd=%d, player=%s 断连，自动清理...\n", fd, player_id.c_str());
+        std::string player_id = it->second;
+        printf("[Disconnect] fd=%d, player=%s 断连，自动清理...\n", fd, player_id.c_str());
 
-            // 从所在房间移除（自动广播 PlayerLeaveNtf 给剩余玩家）
-            std::string room_id = room_mgr.GetPlayerRoom(player_id);
-            if (!room_id.empty()) {
-                room_mgr.LeaveRoomAndNotify(room_id, player_id, &broadcast);
-            }
+        // 从所在房间移除（自动广播 PlayerLeaveNtf 给剩余玩家）
+        std::string room_id = room_mgr.GetPlayerRoom(player_id);
+        if (!room_id.empty()) {
+            room_mgr.LeaveRoomAndNotify(room_id, player_id, &broadcast);
+        }
 
-            // 清理映射
-            player_conns.erase(player_id);
-            fd_to_player.erase(fd);
-        };
+        // 清理映射
+        player_conns.erase(player_id);
+        fd_to_player.erase(fd);
+    };
 
     // 服务端帧回调
-    auto server_cb = [&dispatch, &player_conns, &fd_to_player](const rpc::Frame& frame, rpc::Connection* conn) {
+    auto server_cb = [&dispatch, &player_conns, &fd_to_player](const rpc::Frame& frame,
+                                                               rpc::Connection* conn) {
         if (frame.method_name == "Login") {
             game::LoginReq req;
             req.ParseFromArray(frame.body.data(), static_cast<int>(frame.body.size()));
             player_conns[req.token()] = conn;
-            fd_to_player[conn->GetFd()] = req.token();  // 建立 fd→player 映射
+            fd_to_player[conn->GetFd()] = req.token(); // 建立 fd→player 映射
 
             game::LoginRes res;
             res.set_success(true);
             res.mutable_player_info()->set_player_id(req.token());
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response, "Login",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  "Login",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             conn->Send(rsp);
             return;
         }
         auto rsp_body = dispatch.Call(frame.method_name, frame.body);
         if (rsp_body) {
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response,
-                frame.method_name, *rsp_body);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  frame.method_name, *rsp_body);
             conn->Send(rsp);
         } else {
-            auto err = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Error,
-                frame.method_name, {});
+            auto err = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                  frame.method_name, {});
             conn->Send(err);
         }
     };
@@ -1212,7 +1272,10 @@ void TestDisconnectAutoCleanup() {
     // 客户端 A：连接、登录、创建房间
     SimpleClient client_a;
     bool ok = client_a.Connect(port);
-    if (!ok) { fprintf(stderr, "FATAL: client_a Connect failed\n"); abort(); }
+    if (!ok) {
+        fprintf(stderr, "FATAL: client_a Connect failed\n");
+        abort();
+    }
     ClientLogin(client_a, "player_a");
     SimpleStub stub_a(&client_a);
 
@@ -1226,7 +1289,10 @@ void TestDisconnectAutoCleanup() {
     // 客户端 B：连接、登录、加入房间
     SimpleClient client_b;
     ok = client_b.Connect(port);
-    if (!ok) { fprintf(stderr, "FATAL: client_b Connect failed\n"); abort(); }
+    if (!ok) {
+        fprintf(stderr, "FATAL: client_b Connect failed\n");
+        abort();
+    }
     ClientLogin(client_b, "player_b");
     SimpleStub stub_b(&client_b);
 
@@ -1243,7 +1309,7 @@ void TestDisconnectAutoCleanup() {
 
     // —— 模拟 client_b 异常断开（直接 close，不发送 LeaveRoom） ——
     printf("\n    [模拟] client_b 异常断开 (close fd=%d)...\n", client_b.fd);
-    client_b.Disconnect();  // close(fd)
+    client_b.Disconnect(); // close(fd)
 
     // 等待服务端处理 EPOLLRDHUP 事件
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -1260,8 +1326,7 @@ void TestDisconnectAutoCleanup() {
     assert(fd_to_player.size() == 1);
     assert(room_mgr.GetPlayerRoom("player_b") == "");
 
-    printf("    断连后房间人数=%d, 映射残留=%zu\n",
-           room->player_count(), player_conns.size());
+    printf("    断连后房间人数=%d, 映射残留=%zu\n", room->player_count(), player_conns.size());
 
     // A 可以正常继续操作（房间未被破坏）
     game::GetRoomListRes list = stub_a.GetRoomList();
@@ -1283,12 +1348,10 @@ void TestStubRoomCleanupAfterEmpty() {
     rpc::Dispatch dispatch;
     std::unordered_map<std::string, rpc::Connection*> player_conns;
 
-    auto send_fn = [&player_conns](const std::string& player_id,
-                                    const std::vector<uint8_t>& data) {
+    auto send_fn = [&player_conns](const std::string& player_id, const std::vector<uint8_t>& data) {
         auto it = player_conns.find(player_id);
         if (it != player_conns.end() && it->second) {
-            auto frame = rpc::ProtocolFrame::Encode(
-                0, rpc::MessageType::Response, "RoomEvent", data);
+            auto frame = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "RoomEvent", data);
             it->second->Send(frame);
         }
     };
@@ -1305,23 +1368,22 @@ void TestStubRoomCleanupAfterEmpty() {
             game::LoginRes res;
             res.set_success(true);
             res.mutable_player_info()->set_player_id(req.token());
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response, "Login",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  "Login",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             conn->Send(rsp);
             return;
         }
         auto rsp_body = dispatch.Call(frame.method_name, frame.body);
         if (rsp_body) {
-            auto rsp = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response,
-                frame.method_name, *rsp_body);
+            auto rsp = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                  frame.method_name, *rsp_body);
             conn->Send(rsp);
         } else {
-            auto err = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Error,
-                frame.method_name, {});
+            auto err = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                  frame.method_name, {});
             conn->Send(err);
         }
     };
@@ -1334,13 +1396,17 @@ void TestStubRoomCleanupAfterEmpty() {
     uint16_t port = ntohs(addr.sin_port);
     server_loop.Register(std::move(acceptor), EPOLLIN | EPOLLET);
 
-    std::thread server_thread([&server_loop]() {
-        server_loop.Run();
-    });
+    std::thread server_thread([&server_loop]() { server_loop.Run(); });
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     SimpleClient client;
-    do { bool _ok = client.Connect(port); if (!_ok) { fprintf(stderr, "FATAL: Connect failed\n"); abort(); } } while(0);
+    do {
+        bool _ok = client.Connect(port);
+        if (!_ok) {
+            fprintf(stderr, "FATAL: Connect failed\n");
+            abort();
+        }
+    } while (0);
     ClientLogin(client, "player_a");
     SimpleStub stub(&client);
 
@@ -1366,7 +1432,8 @@ void TestStubRoomCleanupAfterEmpty() {
     game::GetRoomListRes list_res = stub.GetRoomList();
     bool found = false;
     for (int i = 0; i < list_res.rooms_size(); i++) {
-        if (list_res.rooms(i).room_id() == room_id) found = true;
+        if (list_res.rooms(i).room_id() == room_id)
+            found = true;
     }
     assert(!found);
 
@@ -1390,47 +1457,75 @@ void TestStartGameInitiatesFrameSync() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
     auto result = room_mgr.CreateRoom("owner", cfg);
-    if (!result.ok) { printf("[FAIL] CreateRoom\n"); abort(); }
+    if (!result.ok) {
+        printf("[FAIL] CreateRoom\n");
+        abort();
+    }
     std::string room_id = result.room_id;
     auto* room = room_mgr.GetRoom(room_id);
-    if (!room) { printf("[FAIL] no room\n"); abort(); }
+    if (!room) {
+        printf("[FAIL] no room\n");
+        abort();
+    }
     room->SetState(game::ROOM_STATE_WAITING);
 
     // 游戏开始前无帧同步
-    if (room->HasFrameSync()) { printf("[FAIL] frame sync exists before start\n"); abort(); }
+    if (room->HasFrameSync()) {
+        printf("[FAIL] frame sync exists before start\n");
+        abort();
+    }
 
     // 2. 模拟 StartGame：改变状态 + 初始化帧同步
     auto start_result = room_mgr.StartGame(room_id, "owner");
-    if (!start_result.ok) { printf("[FAIL] StartGame\n"); abort(); }
+    if (!start_result.ok) {
+        printf("[FAIL] StartGame\n");
+        abort();
+    }
 
     room->InitFrameSync(20, 120, 60);
     room->StartFrameSync();
 
     // 验证帧同步组件已就绪
-    if (!room->HasFrameSync())       { printf("[FAIL] no frame sync\n"); abort(); }
-    if (!room->GetInputBuffer())     { printf("[FAIL] no input buffer\n"); abort(); }
-    if (!room->GetSnapshotManager()) { printf("[FAIL] no snapshot mgr\n"); abort(); }
-    if (!room->GetFrameSync()->IsRunning())
-        { printf("[FAIL] frame sync not running, frame=%u\n",
-                  room->GetFrameSync()->CurrentFrame()); abort(); }
+    if (!room->HasFrameSync()) {
+        printf("[FAIL] no frame sync\n");
+        abort();
+    }
+    if (!room->GetInputBuffer()) {
+        printf("[FAIL] no input buffer\n");
+        abort();
+    }
+    if (!room->GetSnapshotManager()) {
+        printf("[FAIL] no snapshot mgr\n");
+        abort();
+    }
+    if (!room->GetFrameSync()->IsRunning()) {
+        printf("[FAIL] frame sync not running, frame=%u\n", room->GetFrameSync()->CurrentFrame());
+        abort();
+    }
 
-    printf("\n    帧同步已初始化: fps=%d, frame=%u\n",
-           room->GetFrameSync()->Fps(), room->GetFrameSync()->CurrentFrame());
+    printf("\n    帧同步已初始化: fps=%d, frame=%u\n", room->GetFrameSync()->Fps(),
+           room->GetFrameSync()->CurrentFrame());
 
     // 3. 通过 OnPlayerFrameInput 添加输入
-    room->OnPlayerFrameInput(1, "owner", {0x04});  // RIGHT
-    if (room->GetInputBuffer()->FrameCount() != 1)
-        { printf("[FAIL] InputBuffer count=%zu\n", room->GetInputBuffer()->FrameCount()); abort(); }
+    room->OnPlayerFrameInput(1, "owner", {0x04}); // RIGHT
+    if (room->GetInputBuffer()->FrameCount() != 1) {
+        printf("[FAIL] InputBuffer count=%zu\n", room->GetInputBuffer()->FrameCount());
+        abort();
+    }
 
     // 4. 手动 Tick → 验证帧输入被收集并消费
-    room->StopFrameSync();  // 停止自动定时器
+    room->StopFrameSync(); // 停止自动定时器
     size_t n = room->GetFrameSync()->Tick();
-    if (n != 1) { printf("[FAIL] Tick players=%zu\n", n); abort(); }
-    if (room->GetFrameSync()->CurrentFrame() != 1)
-        { printf("[FAIL] frame=%u\n", room->GetFrameSync()->CurrentFrame()); abort(); }
+    if (n != 1) {
+        printf("[FAIL] Tick players=%zu\n", n);
+        abort();
+    }
+    if (room->GetFrameSync()->CurrentFrame() != 1) {
+        printf("[FAIL] frame=%u\n", room->GetFrameSync()->CurrentFrame());
+        abort();
+    }
 
-    printf("    Tick frame=%u, players=%zu\n",
-           room->GetFrameSync()->CurrentFrame(), n);
+    printf("    Tick frame=%u, players=%zu\n", room->GetFrameSync()->CurrentFrame(), n);
 }
 
 // ============================================================
@@ -1445,21 +1540,36 @@ void TestE2EFrameSyncFlow() {
     game::GameRoom::Config cfg;
     cfg.max_players = 4;
     auto cr = room_mgr.CreateRoom("player_a", cfg);
-    if (!cr.ok) { printf("[FAIL] CreateRoom\n"); abort(); }
+    if (!cr.ok) {
+        printf("[FAIL] CreateRoom\n");
+        abort();
+    }
     std::string room_id = cr.room_id;
     auto* room = room_mgr.GetRoom(room_id);
     room->SetState(game::ROOM_STATE_WAITING);
-    if (!room_mgr.JoinRoom(room_id, "player_b").ok) { printf("[FAIL] JoinRoom\n"); abort(); }
-    if (room->player_count() != 2) { printf("[FAIL] player count\n"); abort(); }
+    if (!room_mgr.JoinRoom(room_id, "player_b").ok) {
+        printf("[FAIL] JoinRoom\n");
+        abort();
+    }
+    if (room->player_count() != 2) {
+        printf("[FAIL] player count\n");
+        abort();
+    }
 
     printf("\n    [Step1] 房间=%s, 2人\n", room_id.c_str());
 
     // ---- Step 2: StartGame → 帧同步初始化 ----
     auto sg = room_mgr.StartGame(room_id, "player_a");
-    if (!sg.ok) { printf("[FAIL] StartGame: code=%d\n", (int)sg.code); abort(); }
+    if (!sg.ok) {
+        printf("[FAIL] StartGame: code=%d\n", (int) sg.code);
+        abort();
+    }
 
     room->InitFrameSync(20, 120, 60);
-    if (!room->HasFrameSync()) { printf("[FAIL] no frame sync\n"); abort(); }
+    if (!room->HasFrameSync()) {
+        printf("[FAIL] no frame sync\n");
+        abort();
+    }
 
     // 设置帧广播回调
     int broadcast_count = 0;
@@ -1474,21 +1584,31 @@ void TestE2EFrameSyncFlow() {
         room->OnPlayerFrameInput(static_cast<uint32_t>(f), "player_b", {0x02});
 
         size_t n = room->GetFrameSync()->Tick();
-        if (n != 2) { printf("[FAIL] f=%d players=%zu\n", f, n); abort(); }
+        if (n != 2) {
+            printf("[FAIL] f=%d players=%zu\n", f, n);
+            abort();
+        }
     }
 
-    if (broadcast_count != 3) { printf("[FAIL] broadcast=%d\n", broadcast_count); abort(); }
-    if (room->GetFrameSync()->CurrentFrame() != 3)
-        { printf("[FAIL] frame=%u\n", room->GetFrameSync()->CurrentFrame()); abort(); }
+    if (broadcast_count != 3) {
+        printf("[FAIL] broadcast=%d\n", broadcast_count);
+        abort();
+    }
+    if (room->GetFrameSync()->CurrentFrame() != 3) {
+        printf("[FAIL] frame=%u\n", room->GetFrameSync()->CurrentFrame());
+        abort();
+    }
 
-    printf("    [Step3] 3帧完成: frame=%u, broadcast=%d\n",
-           room->GetFrameSync()->CurrentFrame(), broadcast_count);
+    printf("    [Step3] 3帧完成: frame=%u, broadcast=%d\n", room->GetFrameSync()->CurrentFrame(),
+           broadcast_count);
 
     // ---- Step 4: StopGame → FINISHED ----
     room->StopFrameSync();
     room->SetState(game::ROOM_STATE_FINISHED);
-    if (room->state() != game::ROOM_STATE_FINISHED)
-        { printf("[FAIL] state not FINISHED\n"); abort(); }
+    if (room->state() != game::ROOM_STATE_FINISHED) {
+        printf("[FAIL] state not FINISHED\n");
+        abort();
+    }
 
     printf("    [Step4] 游戏结束, 状态=FINISHED\n");
 }
@@ -1503,40 +1623,40 @@ int main() {
     printf("=== RoomService RPC 端到端测试 ===\n\n");
 
     printf("[Stub] 创建房间\n");
-    RunTest("Stub::CreateRoom 创建房间",     TestStubCreateRoom);
+    RunTest("Stub::CreateRoom 创建房间", TestStubCreateRoom);
 
     printf("\n[Stub] 创建 + 加入\n");
-    RunTest("Stub::CreateRoom + JoinRoom",  TestStubCreateAndJoin);
+    RunTest("Stub::CreateRoom + JoinRoom", TestStubCreateAndJoin);
 
     printf("\n[Stub] 发送消息\n");
-    RunTest("Stub::SendMessage 房间消息",    TestStubSendMessage);
+    RunTest("Stub::SendMessage 房间消息", TestStubSendMessage);
 
     printf("\n[Stub] 房间列表\n");
-    RunTest("Stub::GetRoomList 获取列表",    TestStubGetRoomList);
+    RunTest("Stub::GetRoomList 获取列表", TestStubGetRoomList);
 
     printf("\n[Stub] 离开房间\n");
-    RunTest("Stub::LeaveRoom 离开房间",      TestStubLeaveRoom);
+    RunTest("Stub::LeaveRoom 离开房间", TestStubLeaveRoom);
 
     printf("\n[Stub] 边界用例\n");
-    RunTest("重复创建被拒绝",                TestStubCreateRoomFailDuplicate);
-    RunTest("清理后房间不出现在列表",         TestStubRoomCleanupAfterEmpty);
+    RunTest("重复创建被拒绝", TestStubCreateRoomFailDuplicate);
+    RunTest("清理后房间不出现在列表", TestStubRoomCleanupAfterEmpty);
 
     printf("\n[ErrorCode] 错误码链路验证\n");
-    RunTest("JoinRoom -> ERR_ROOM_NOT_FOUND",      TestErrorJoinRoomNotFound);
-    RunTest("JoinRoom -> ERR_ROOM_FULL",            TestErrorJoinRoomFull);
-    RunTest("JoinRoom -> ERR_ROOM_NOT_JOINABLE",    TestErrorJoinRoomNotJoinable);
-    RunTest("LeaveRoom -> ERR_ROOM_NOT_FOUND",      TestErrorLeaveRoomNotFound);
-    RunTest("LeaveRoom -> ERR_PLAYER_NOT_IN_ROOM",  TestErrorLeaveRoomPlayerNotInRoom);
-    RunTest("SendMessage -> ERR_ROOM_NOT_FOUND",    TestErrorSendMessageRoomNotFound);
+    RunTest("JoinRoom -> ERR_ROOM_NOT_FOUND", TestErrorJoinRoomNotFound);
+    RunTest("JoinRoom -> ERR_ROOM_FULL", TestErrorJoinRoomFull);
+    RunTest("JoinRoom -> ERR_ROOM_NOT_JOINABLE", TestErrorJoinRoomNotJoinable);
+    RunTest("LeaveRoom -> ERR_ROOM_NOT_FOUND", TestErrorLeaveRoomNotFound);
+    RunTest("LeaveRoom -> ERR_PLAYER_NOT_IN_ROOM", TestErrorLeaveRoomPlayerNotInRoom);
+    RunTest("SendMessage -> ERR_ROOM_NOT_FOUND", TestErrorSendMessageRoomNotFound);
 
     printf("\n[Disconnect] 断连检测与自动清理\n");
-    RunTest("客户端断开后自动移除房间",           TestDisconnectAutoCleanup);
+    RunTest("客户端断开后自动移除房间", TestDisconnectAutoCleanup);
 
     printf("\n[FrameSync集成] 房间状态机与帧同步衔接\n");
-    RunTest("StartGame启动帧同步+SendInput",     TestStartGameInitiatesFrameSync);
+    RunTest("StartGame启动帧同步+SendInput", TestStartGameInitiatesFrameSync);
 
     printf("\n[E2E] 房间→StartGame→帧同步→StopGame\n");
-    RunTest("匹配→房间→开始→帧同步→结束",  TestE2EFrameSyncFlow);
+    RunTest("匹配→房间→开始→帧同步→结束", TestE2EFrameSyncFlow);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

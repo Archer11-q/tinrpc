@@ -11,9 +11,7 @@ namespace game {
 // MatchQueue
 // ============================================================
 
-MatchQueue::MatchQueue(int max_wait_sec,
-                         double elo_range_init,
-                         double elo_range_expand_per_sec)
+MatchQueue::MatchQueue(int max_wait_sec, double elo_range_init, double elo_range_expand_per_sec)
     : max_wait_sec_(max_wait_sec)
     , elo_range_init_(elo_range_init)
     , elo_range_expand_per_sec_(elo_range_expand_per_sec) {
@@ -21,13 +19,14 @@ MatchQueue::MatchQueue(int max_wait_sec,
 
 int64_t MatchQueue::NowMs() {
     return std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()
-    ).count();
+               std::chrono::system_clock::now().time_since_epoch())
+        .count();
 }
 
 int MatchQueue::FindIndex(const std::string& player_id) const {
     for (size_t i = 0; i < queue_.size(); i++) {
-        if (queue_[i].player_id == player_id) return static_cast<int>(i);
+        if (queue_[i].player_id == player_id)
+            return static_cast<int>(i);
     }
     return -1;
 }
@@ -53,22 +52,20 @@ void MatchQueue::EnterQueue(const std::string& player_id, double elo_score) {
         queue_[static_cast<size_t>(idx)].elo_score = elo_score;
         // 重新排序
         std::sort(queue_.begin(), queue_.end(),
-                  [](const Entry& a, const Entry& b) {
-                      return a.elo_score < b.elo_score;
-                  });
+                  [](const Entry& a, const Entry& b) { return a.elo_score < b.elo_score; });
         return;
     }
 
     Entry e;
-    e.player_id        = player_id;
-    e.elo_score        = elo_score;
-    e.enqueue_time_ms  = NowMs();
+    e.player_id = player_id;
+    e.elo_score = elo_score;
+    e.enqueue_time_ms = NowMs();
 
     // 二分插入保持升序
     auto it = std::lower_bound(queue_.begin(), queue_.end(), e.elo_score,
-        [](const Entry& entry, double score) {
-            return entry.elo_score < score;
-        });
+                               [](const Entry& entry, double score) {
+                                   return entry.elo_score < score;
+                               });
     queue_.insert(it, std::move(e));
 }
 
@@ -81,30 +78,32 @@ void MatchQueue::CancelMatch(const std::string& player_id) {
 
 std::string MatchQueue::FindMatch(const std::string& player_id) {
     int idx = FindIndex(player_id);
-    if (idx < 0) return "";  // 不在队列中
+    if (idx < 0)
+        return ""; // 不在队列中
 
     double my_score = queue_[static_cast<size_t>(idx)].elo_score;
-    double my_range = CurrentEloRange(
-        queue_[static_cast<size_t>(idx)].enqueue_time_ms);
+    double my_range = CurrentEloRange(queue_[static_cast<size_t>(idx)].enqueue_time_ms);
 
     // 向两侧搜索最近 ELO 的对手（在分差范围内的）
-    int best_idx   = -1;
+    int best_idx = -1;
     double best_diff = std::numeric_limits<double>::max();
 
     for (size_t i = 0; i < queue_.size(); i++) {
-        if (static_cast<int>(i) == idx) continue;
+        if (static_cast<int>(i) == idx)
+            continue;
 
         double diff = std::abs(queue_[i].elo_score - my_score);
         if (diff <= my_range && diff < best_diff) {
             best_diff = diff;
-            best_idx  = static_cast<int>(i);
+            best_idx = static_cast<int>(i);
         }
     }
 
-    if (best_idx < 0) return "";  // 无合适对手
+    if (best_idx < 0)
+        return ""; // 无合适对手
 
     std::string opponent = queue_[static_cast<size_t>(best_idx)].player_id;
-    double my_score_saved       = queue_[static_cast<size_t>(idx)].elo_score;
+    double my_score_saved = queue_[static_cast<size_t>(idx)].elo_score;
     double opponent_score_saved = queue_[static_cast<size_t>(best_idx)].elo_score;
 
     // 双方离队（先移较大索引）
@@ -138,13 +137,15 @@ double MatchQueue::GetScore(const std::string& player_id) const {
 std::vector<std::pair<std::string, std::string>> MatchQueue::TryMatch() {
     std::vector<std::pair<std::string, std::string>> matched;
 
-    if (queue_.size() < 2) return matched;
+    if (queue_.size() < 2)
+        return matched;
 
     // 标记已配对的索引（避免重复消费）
     std::vector<bool> paired(queue_.size(), false);
 
     for (size_t i = 0; i + 1 < queue_.size(); i++) {
-        if (paired[i]) continue;
+        if (paired[i])
+            continue;
 
         const auto& a = queue_[i];
         const auto& b = queue_[i + 1];
@@ -156,9 +157,9 @@ std::vector<std::pair<std::string, std::string>> MatchQueue::TryMatch() {
         // 双方分差都在可接受范围内
         if (diff <= range_a && diff <= range_b) {
             matched.emplace_back(a.player_id, b.player_id);
-            paired[i]     = true;
+            paired[i] = true;
             paired[i + 1] = true;
-            i++;  // 跳过下一个
+            i++; // 跳过下一个
         }
     }
 
@@ -167,8 +168,10 @@ std::vector<std::pair<std::string, std::string>> MatchQueue::TryMatch() {
     for (auto& [p1, p2] : matched) {
         double s1 = 0, s2 = 0;
         for (auto& e : queue_) {
-            if (e.player_id == p1) s1 = e.elo_score;
-            if (e.player_id == p2) s2 = e.elo_score;
+            if (e.player_id == p1)
+                s1 = e.elo_score;
+            if (e.player_id == p2)
+                s2 = e.elo_score;
         }
         match_scores.emplace_back(p1, s1, p2, s2);
     }

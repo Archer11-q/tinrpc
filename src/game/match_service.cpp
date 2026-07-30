@@ -2,9 +2,8 @@
 
 namespace game {
 
-MatchService::MatchService(MatchQueue* mq, RoomManager* room_mgr,
-                             Broadcast* broadcast, TimerManager* timer,
-                             int64_t room_timeout_ms)
+MatchService::MatchService(MatchQueue* mq, RoomManager* room_mgr, Broadcast* broadcast,
+                           TimerManager* timer, int64_t room_timeout_ms)
     : mq_(mq)
     , room_mgr_(room_mgr)
     , broadcast_(broadcast)
@@ -12,10 +11,8 @@ MatchService::MatchService(MatchQueue* mq, RoomManager* room_mgr,
     , room_timeout_ms_(room_timeout_ms) {
 
     // 注册匹配成功回调：自动创建房间 + 通知双方 + 超时计时
-    mq_->SetMatchCallback([this](const std::string& p1, double s1,
-                                  const std::string& p2, double s2) {
-        OnMatchSuccess(p1, p2, s1, s2);
-    });
+    mq_->SetMatchCallback([this](const std::string& p1, double s1, const std::string& p2,
+                                 double s2) { OnMatchSuccess(p1, p2, s1, s2); });
 }
 
 void MatchService::EnterQueue(const std::string& player_id, double elo_score) {
@@ -40,13 +37,14 @@ size_t MatchService::QueueSize() const {
 
 // ---- 内部 ----
 
-void MatchService::OnMatchSuccess(const std::string& p1, const std::string& p2,
-                                   double score1, double score2) {
+void MatchService::OnMatchSuccess(const std::string& p1, const std::string& p2, double score1,
+                                  double score2) {
     // 1. 创建房间（p1 为房主）
     GameRoom::Config cfg;
     cfg.max_players = 2;
     auto result = room_mgr_->CreateRoom(p1, cfg);
-    if (!result.ok) return;
+    if (!result.ok)
+        return;
     std::string rid = result.room_id;
 
     auto* room = room_mgr_->GetRoom(rid);
@@ -55,7 +53,8 @@ void MatchService::OnMatchSuccess(const std::string& p1, const std::string& p2,
 
     // 2. 构造 MatchFoundNtf 并通知双方
     int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
+                      std::chrono::system_clock::now().time_since_epoch())
+                      .count();
 
     MatchFoundNtf ntf;
     ntf.set_room_id(rid);

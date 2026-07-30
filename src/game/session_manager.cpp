@@ -12,9 +12,8 @@ namespace game {
 // 以下为骨架代码 + 预期逻辑的 TODO 注释。
 // ============================================================
 
-SessionManager::SessionManager(size_t max_sessions,
-                                 int64_t heartbeat_timeout_ms,
-                                 int64_t grace_period_ms)
+SessionManager::SessionManager(size_t max_sessions, int64_t heartbeat_timeout_ms,
+                               int64_t grace_period_ms)
     : max_sessions_(max_sessions)
     , heartbeat_timeout_ms_(heartbeat_timeout_ms)
     , grace_period_ms_(grace_period_ms) {
@@ -44,8 +43,8 @@ std::string SessionManager::CreateSession(const std::string& player_id) {
     // 4. 建立 player_to_session_[player_id] = session_id
     // 5. 返回 session_id
 
-    (void)player_id;
-    return "";  // 占位
+    (void) player_id;
+    return ""; // 占位
 }
 
 std::string SessionManager::ValidateSession(const std::string& session_id) {
@@ -63,8 +62,8 @@ std::string SessionManager::ValidateSession(const std::string& session_id) {
     //    - 更新 last_heartbeat_ms = now()
     //    - 返回 player_id
 
-    (void)session_id;
-    return "";  // 占位
+    (void) session_id;
+    return ""; // 占位
 }
 
 bool SessionManager::Heartbeat(const std::string& session_id) {
@@ -78,8 +77,8 @@ bool SessionManager::Heartbeat(const std::string& session_id) {
     // 5. 如果 state == DISCONNECTED → 恢复为 ACTIVE（心跳期间重连）
     // 6. 返回 true
 
-    (void)session_id;
-    return false;  // 占位
+    (void) session_id;
+    return false; // 占位
 }
 
 void SessionManager::DestroySession(const std::string& session_id) {
@@ -91,7 +90,7 @@ void SessionManager::DestroySession(const std::string& session_id) {
     // 3. player_to_session_.erase(session.player_id)
     // 4. sessions_.erase(it)
 
-    (void)session_id;
+    (void) session_id;
     // 占位：不执行任何操作
 }
 
@@ -107,13 +106,14 @@ SessionManager::TickResult SessionManager::Tick() {
     //    b. DestroySession(session_id)
     // 5. 返回 TickResult{disconnected_count, expired_count}
 
-    return {0, 0};  // 占位
+    return {0, 0}; // 占位
 }
 
 size_t SessionManager::ActiveCount() const {
     size_t count = 0;
     for (auto& [id, s] : sessions_) {
-        if (s.state == SessionState::ACTIVE) count++;
+        if (s.state == SessionState::ACTIVE)
+            count++;
     }
     return count;
 }
@@ -121,7 +121,8 @@ size_t SessionManager::ActiveCount() const {
 size_t SessionManager::DisconnectedCount() const {
     size_t count = 0;
     for (auto& [id, s] : sessions_) {
-        if (s.state == SessionState::DISCONNECTED) count++;
+        if (s.state == SessionState::DISCONNECTED)
+            count++;
     }
     return count;
 }

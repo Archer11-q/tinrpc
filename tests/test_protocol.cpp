@@ -47,8 +47,7 @@ std::vector<uint8_t> MakeBody(int32_t a, int32_t b) {
 
 void TestEncodeDecodeRoundTrip() {
     auto body = MakeBody(3, 5);
-    auto frame_bytes = rpc::ProtocolFrame::Encode(
-        1, rpc::MessageType::Request, "Add", body);
+    auto frame_bytes = rpc::ProtocolFrame::Encode(1, rpc::MessageType::Request, "Add", body);
 
     auto frame = rpc::ProtocolFrame::Decode(frame_bytes);
     assert(frame.has_value());
@@ -61,8 +60,7 @@ void TestEncodeDecodeRoundTrip() {
 
 void TestEncodeDecodeEmptyMethodName() {
     std::vector<uint8_t> empty_body;
-    auto frame_bytes = rpc::ProtocolFrame::Encode(
-        0, rpc::MessageType::Response, "", empty_body);
+    auto frame_bytes = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "", empty_body);
 
     auto frame = rpc::ProtocolFrame::Decode(frame_bytes);
     assert(frame.has_value());
@@ -73,8 +71,8 @@ void TestEncodeDecodeEmptyMethodName() {
 void TestEncodeDecodeLargeBody() {
     // 构造一个 1KB 的 body
     std::vector<uint8_t> large_body(1024, 0xAB);
-    auto frame_bytes = rpc::ProtocolFrame::Encode(
-        42, rpc::MessageType::Request, "BatchProcess", large_body);
+    auto frame_bytes = rpc::ProtocolFrame::Encode(42, rpc::MessageType::Request, "BatchProcess",
+                                                  large_body);
 
     auto frame = rpc::ProtocolFrame::Decode(frame_bytes);
     assert(frame.has_value());
@@ -85,18 +83,18 @@ void TestEncodeDecodeLargeBody() {
 
 void TestDecodeInvalidMagic() {
     std::vector<uint8_t> corrupted = {
-        0xBA, 0xBF,                                     // 错误魔数
-        0x00, 0x00, 0x00, 0x0D,                         // 总长度 = 13
-        0x00, 0x00, 0x00, 0x01,                         // req id = 1
-        0x01,                                           // msg type
-        0x00, 0x00                                      // 方法名长度 = 0
+        0xBA, 0xBF, // 错误魔数
+        0x00, 0x00, 0x00, 0x0D, // 总长度 = 13
+        0x00, 0x00, 0x00, 0x01, // req id = 1
+        0x01, // msg type
+        0x00, 0x00 // 方法名长度 = 0
     };
     auto frame = rpc::ProtocolFrame::Decode(corrupted);
     assert(!frame.has_value());
 }
 
 void TestDecodeTooSmall() {
-    std::vector<uint8_t> small = {0xBA, 0xBE, 0x00};  // 只有 3 字节
+    std::vector<uint8_t> small = {0xBA, 0xBE, 0x00}; // 只有 3 字节
     auto frame = rpc::ProtocolFrame::Decode(small);
     assert(!frame.has_value());
 }
@@ -104,11 +102,11 @@ void TestDecodeTooSmall() {
 void TestDecodeTotalLenTooSmall() {
     // total_len < 13
     std::vector<uint8_t> data = {
-        0xBA, 0xBE,                                     // 魔数正确
-        0x00, 0x00, 0x00, 0x0A,                         // 总长度 = 10（小于帧头 13）
-        0x00, 0x00, 0x00, 0x01,                         // req id
-        0x01,                                           // msg type
-        0x00, 0x00                                      // 方法名长度
+        0xBA, 0xBE, // 魔数正确
+        0x00, 0x00, 0x00, 0x0A, // 总长度 = 10（小于帧头 13）
+        0x00, 0x00, 0x00, 0x01, // req id
+        0x01, // msg type
+        0x00, 0x00 // 方法名长度
     };
     auto frame = rpc::ProtocolFrame::Decode(data);
     assert(!frame.has_value());
@@ -117,7 +115,8 @@ void TestDecodeTotalLenTooSmall() {
 void TestDecodeLengthExceedsData() {
     // total_len 声称 100 但实际数据只有 20 字节
     std::vector<uint8_t> data(20, 0x00);
-    data[0] = 0xBA; data[1] = 0xBE;
+    data[0] = 0xBA;
+    data[1] = 0xBE;
     uint32_t fake_len = rpc::HostToNetwork32(100);
     std::memcpy(&data[2], &fake_len, 4);
 
@@ -126,24 +125,20 @@ void TestDecodeLengthExceedsData() {
 }
 
 void TestDecodeInvalidMessageType() {
-    std::vector<uint8_t> data = {
-        0xBA, 0xBE,
-        0x00, 0x00, 0x00, 0x0D,                         // total_len = 13
-        0x00, 0x00, 0x00, 0x01,
-        0xFF,                                           // 非法消息类型
-        0x00, 0x00
-    };
+    std::vector<uint8_t> data = {0xBA, 0xBE, 0x00, 0x00, 0x00, 0x0D, // total_len = 13
+                                 0x00, 0x00, 0x00, 0x01,
+                                 0xFF, // 非法消息类型
+                                 0x00, 0x00};
     auto frame = rpc::ProtocolFrame::Decode(data);
     assert(!frame.has_value());
 }
 
 void TestDecodeMethodNameLenExceedsRemaining() {
     std::vector<uint8_t> data = {
-        0xBA, 0xBE,
-        0x00, 0x00, 0x00, 0x0F,                         // total_len = 15
+        0xBA, 0xBE, 0x00, 0x00, 0x00, 0x0F, // total_len = 15
         0x00, 0x00, 0x00, 0x01,
-        0x01,                                           // Request
-        0x00, 0x0A                                      // 方法名长度 = 10，但只剩 2 字节
+        0x01, // Request
+        0x00, 0x0A // 方法名长度 = 10，但只剩 2 字节
     };
     auto frame = rpc::ProtocolFrame::Decode(data);
     assert(!frame.has_value());
@@ -155,8 +150,7 @@ void TestDecodeMethodNameLenExceedsRemaining() {
 
 void TestBufferSingleCompleteFrame() {
     auto body = MakeBody(1, 2);
-    auto frame_bytes = rpc::ProtocolFrame::Encode(
-        1, rpc::MessageType::Request, "Add", body);
+    auto frame_bytes = rpc::ProtocolFrame::Encode(1, rpc::MessageType::Request, "Add", body);
 
     rpc::Buffer buf;
     buf.Append(frame_bytes.data(), frame_bytes.size());
@@ -176,7 +170,7 @@ void TestBufferStickyPackets() {
 
     rpc::Buffer buf;
     buf.Append(f1.data(), f1.size());
-    buf.Append(f2.data(), f2.size());  // 粘包
+    buf.Append(f2.data(), f2.size()); // 粘包
 
     auto p1 = buf.TryPopFrame();
     assert(p1.has_value());
@@ -192,8 +186,7 @@ void TestBufferStickyPackets() {
 void TestBufferSplitPacket() {
     // 一帧分三次到达
     auto body = MakeBody(100, 200);
-    auto frame = rpc::ProtocolFrame::Encode(
-        5, rpc::MessageType::Response, "Result", body);
+    auto frame = rpc::ProtocolFrame::Encode(5, rpc::MessageType::Response, "Result", body);
 
     rpc::Buffer buf;
 
@@ -251,7 +244,7 @@ void TestBufferInvalidMagic() {
     buf.Append(garbage.data(), garbage.size());
 
     auto popped = buf.TryPopFrame();
-    assert(!popped.has_value());  // 魔数不对，拒绝
+    assert(!popped.has_value()); // 魔数不对，拒绝
 }
 
 void TestBufferEmpty() {
@@ -265,9 +258,8 @@ void TestBufferMultiplePops() {
     auto body = MakeBody(0, 0);
     rpc::Buffer buf;
     for (int i = 0; i < 3; i++) {
-        auto f = rpc::ProtocolFrame::Encode(
-            static_cast<uint32_t>(i), rpc::MessageType::Request,
-            "Test", body);
+        auto f = rpc::ProtocolFrame::Encode(static_cast<uint32_t>(i), rpc::MessageType::Request,
+                                            "Test", body);
         buf.Append(f.data(), f.size());
     }
 
@@ -290,26 +282,26 @@ int main() {
     printf("=== Protocol Frame Tests ===\n\n");
 
     // ProtocolFrame 编解码
-    RunTest("TestEncodeDecodeRoundTrip",       TestEncodeDecodeRoundTrip);
+    RunTest("TestEncodeDecodeRoundTrip", TestEncodeDecodeRoundTrip);
     RunTest("TestEncodeDecodeEmptyMethodName", TestEncodeDecodeEmptyMethodName);
-    RunTest("TestEncodeDecodeLargeBody",        TestEncodeDecodeLargeBody);
-    RunTest("TestDecodeInvalidMagic",           TestDecodeInvalidMagic);
-    RunTest("TestDecodeTooSmall",               TestDecodeTooSmall);
-    RunTest("TestDecodeTotalLenTooSmall",       TestDecodeTotalLenTooSmall);
-    RunTest("TestDecodeLengthExceedsData",      TestDecodeLengthExceedsData);
-    RunTest("TestDecodeInvalidMessageType",     TestDecodeInvalidMessageType);
+    RunTest("TestEncodeDecodeLargeBody", TestEncodeDecodeLargeBody);
+    RunTest("TestDecodeInvalidMagic", TestDecodeInvalidMagic);
+    RunTest("TestDecodeTooSmall", TestDecodeTooSmall);
+    RunTest("TestDecodeTotalLenTooSmall", TestDecodeTotalLenTooSmall);
+    RunTest("TestDecodeLengthExceedsData", TestDecodeLengthExceedsData);
+    RunTest("TestDecodeInvalidMessageType", TestDecodeInvalidMessageType);
     RunTest("TestDecodeMethodNameLenExceedsRemaining", TestDecodeMethodNameLenExceedsRemaining);
 
     printf("\n--- Buffer Tests ---\n\n");
 
     // Buffer 粘包/拆包
-    RunTest("TestBufferSingleCompleteFrame",    TestBufferSingleCompleteFrame);
-    RunTest("TestBufferStickyPackets",           TestBufferStickyPackets);
-    RunTest("TestBufferSplitPacket",             TestBufferSplitPacket);
-    RunTest("TestBufferStickyAndSplitCombo",     TestBufferStickyAndSplitCombo);
-    RunTest("TestBufferInvalidMagic",            TestBufferInvalidMagic);
-    RunTest("TestBufferEmpty",                   TestBufferEmpty);
-    RunTest("TestBufferMultiplePops",            TestBufferMultiplePops);
+    RunTest("TestBufferSingleCompleteFrame", TestBufferSingleCompleteFrame);
+    RunTest("TestBufferStickyPackets", TestBufferStickyPackets);
+    RunTest("TestBufferSplitPacket", TestBufferSplitPacket);
+    RunTest("TestBufferStickyAndSplitCombo", TestBufferStickyAndSplitCombo);
+    RunTest("TestBufferInvalidMagic", TestBufferInvalidMagic);
+    RunTest("TestBufferEmpty", TestBufferEmpty);
+    RunTest("TestBufferMultiplePops", TestBufferMultiplePops);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

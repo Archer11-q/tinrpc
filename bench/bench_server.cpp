@@ -43,8 +43,12 @@ static void SignalHandler(int) {
 // ============================================================
 // 共享业务逻辑 — 与 RPC 服务端完全相同的实现
 // ============================================================
-static int Add(int a, int b) { return a + b; }
-static int Sub(int a, int b) { return a - b; }
+static int Add(int a, int b) {
+    return a + b;
+}
+static int Sub(int a, int b) {
+    return a - b;
+}
 
 // ============================================================
 // 最小化 JSON 工具（仅支持 int 单层对象）
@@ -56,13 +60,18 @@ namespace json {
 static std::optional<int> ExtractInt(const std::string& json, const std::string& key) {
     std::string search = "\"" + key + "\":";
     size_t pos = json.find(search);
-    if (pos == std::string::npos) return std::nullopt;
+    if (pos == std::string::npos)
+        return std::nullopt;
     pos += search.size();
-    while (pos < json.size() && json[pos] == ' ') pos++;
+    while (pos < json.size() && json[pos] == ' ')
+        pos++;
     size_t end = pos;
-    if (end < json.size() && json[end] == '-') end++;
-    while (end < json.size() && json[end] >= '0' && json[end] <= '9') end++;
-    if (end == pos) return std::nullopt;
+    if (end < json.size() && json[end] == '-')
+        end++;
+    while (end < json.size() && json[end] >= '0' && json[end] <= '9')
+        end++;
+    if (end == pos)
+        return std::nullopt;
     return std::stoi(json.substr(pos, end - pos));
 }
 
@@ -86,15 +95,20 @@ static std::string FormatError(const std::string& msg) {
 static int ParseContentLength(const std::string& header) {
     // 查找 "Content-Length:" 或 "content-length:"
     auto pos = header.find("Content-Length:");
-    if (pos == std::string::npos) pos = header.find("content-length:");
-    if (pos == std::string::npos) return -1;
+    if (pos == std::string::npos)
+        pos = header.find("content-length:");
+    if (pos == std::string::npos)
+        return -1;
 
-    pos += 15;  // strlen("Content-Length:")
-    while (pos < header.size() && header[pos] == ' ') pos++;
+    pos += 15; // strlen("Content-Length:")
+    while (pos < header.size() && header[pos] == ' ')
+        pos++;
 
     size_t end = pos;
-    while (end < header.size() && header[end] >= '0' && header[end] <= '9') end++;
-    if (end == pos) return -1;
+    while (end < header.size() && header[end] >= '0' && header[end] <= '9')
+        end++;
+    if (end == pos)
+        return -1;
 
     return std::stoi(header.substr(pos, end - pos));
 }
@@ -102,9 +116,11 @@ static int ParseContentLength(const std::string& header) {
 // 从请求行 "POST /rpc/MethodName HTTP/1.1" 中提取路径
 static std::string ParsePath(const std::string& header) {
     size_t first = header.find(' ');
-    if (first == std::string::npos) return "";
+    if (first == std::string::npos)
+        return "";
     size_t second = header.find(' ', first + 1);
-    if (second == std::string::npos) return "";
+    if (second == std::string::npos)
+        return "";
     return header.substr(first + 1, second - first - 1);
 }
 
@@ -113,10 +129,8 @@ static std::string ParsePath(const std::string& header) {
 // ============================================================
 class HttpConnection : public rpc::EventHandler {
 public:
-    HttpConnection(int client_fd, rpc::EventLoop* loop)
-        : loop_(loop)
-    {
-        fd_ = client_fd;  // 设置基类 fd_
+    HttpConnection(int client_fd, rpc::EventLoop* loop) : loop_(loop) {
+        fd_ = client_fd; // 设置基类 fd_
     }
 
     void OnRead() override {
@@ -131,8 +145,10 @@ public:
                 OnClose();
                 return;
             } else {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) break;
-                if (errno == EINTR) continue;
+                if (errno == EAGAIN || errno == EWOULDBLOCK)
+                    break;
+                if (errno == EINTR)
+                    continue;
                 // 其他错误 — 退出
                 OnClose();
                 return;
@@ -160,7 +176,8 @@ private:
     bool ProcessOneRequest() {
         // 查找请求头结束位置 \r\n\r\n
         auto header_end = read_buf_.find("\r\n\r\n");
-        if (header_end == std::string::npos) return false;
+        if (header_end == std::string::npos)
+            return false;
 
         // 提取 Content-Length
         int content_length = ParseContentLength(read_buf_);
@@ -173,7 +190,8 @@ private:
 
         // 检查 body 是否完整接收
         size_t total = header_end + 4 + static_cast<size_t>(content_length);
-        if (read_buf_.size() < total) return false;
+        if (read_buf_.size() < total)
+            return false;
 
         // 提取请求的头+体（header + body）
         std::string request_data = read_buf_.substr(0, total);
@@ -217,19 +235,22 @@ private:
 
     void SendResponse(int code, const std::string& body) {
         std::string status_line;
-        if (code == 200) status_line = "200 OK";
-        else if (code == 400) status_line = "400 Bad Request";
-        else status_line = std::to_string(code) + " Error";
+        if (code == 200)
+            status_line = "200 OK";
+        else if (code == 400)
+            status_line = "400 Bad Request";
+        else
+            status_line = std::to_string(code) + " Error";
 
         char buf[4096];
         int len = snprintf(buf, sizeof(buf),
-            "HTTP/1.1 %s\r\n"
-            "Content-Type: application/json\r\n"
-            "Content-Length: %zu\r\n"
-            "Connection: keep-alive\r\n"
-            "\r\n"
-            "%s",
-            status_line.c_str(), body.size(), body.c_str());
+                           "HTTP/1.1 %s\r\n"
+                           "Content-Type: application/json\r\n"
+                           "Content-Length: %zu\r\n"
+                           "Connection: keep-alive\r\n"
+                           "\r\n"
+                           "%s",
+                           status_line.c_str(), body.size(), body.c_str());
         send(fd_, buf, static_cast<size_t>(len), MSG_NOSIGNAL);
     }
 
@@ -246,23 +267,23 @@ private:
 // ============================================================
 class HttpAcceptor : public rpc::EventHandler {
 public:
-    HttpAcceptor(uint16_t port, rpc::EventLoop* loop)
-        : loop_(loop)
-    {
+    HttpAcceptor(uint16_t port, rpc::EventLoop* loop) : loop_(loop) {
         int opt = 1;
         setsockopt(listen_sock_.Fd(), SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
         listen_sock_.Bind(port);
         listen_sock_.Listen();
         listen_sock_.SetNonBlocking();
-        fd_ = listen_sock_.Fd();  // 设置基类 fd_
+        fd_ = listen_sock_.Fd(); // 设置基类 fd_
     }
 
     void OnRead() override {
         while (true) {
             int client_fd = listen_sock_.Accept();
             if (client_fd < 0) {
-                if (errno == EAGAIN || errno == EWOULDBLOCK) break;
-                if (errno == EINTR) continue;
+                if (errno == EAGAIN || errno == EWOULDBLOCK)
+                    break;
+                if (errno == EINTR)
+                    continue;
                 break;
             }
             rpc::Socket::SetNonBlocking(client_fd);
@@ -285,36 +306,40 @@ static void RunRpcServer(uint16_t port) {
 
     // 注册业务方法
     rpc::Dispatch dispatch;
-    dispatch.RegisterMethod("Add", [](const std::vector<uint8_t>& body) -> std::optional<std::vector<uint8_t>> {
-        rpc::Serializer reader(body);
-        auto a = reader.ReadInt32();
-        auto b = reader.ReadInt32();
-        if (!a || !b) return std::nullopt;
-        rpc::Serializer writer;
-        writer.WriteInt32(Add(*a, *b));
-        return writer.GetBuffer();
-    });
+    dispatch.RegisterMethod(
+        "Add", [](const std::vector<uint8_t>& body) -> std::optional<std::vector<uint8_t>> {
+            rpc::Serializer reader(body);
+            auto a = reader.ReadInt32();
+            auto b = reader.ReadInt32();
+            if (!a || !b)
+                return std::nullopt;
+            rpc::Serializer writer;
+            writer.WriteInt32(Add(*a, *b));
+            return writer.GetBuffer();
+        });
 
-    dispatch.RegisterMethod("Sub", [](const std::vector<uint8_t>& body) -> std::optional<std::vector<uint8_t>> {
-        rpc::Serializer reader(body);
-        auto a = reader.ReadInt32();
-        auto b = reader.ReadInt32();
-        if (!a || !b) return std::nullopt;
-        rpc::Serializer writer;
-        writer.WriteInt32(Sub(*a, *b));
-        return writer.GetBuffer();
-    });
+    dispatch.RegisterMethod(
+        "Sub", [](const std::vector<uint8_t>& body) -> std::optional<std::vector<uint8_t>> {
+            rpc::Serializer reader(body);
+            auto a = reader.ReadInt32();
+            auto b = reader.ReadInt32();
+            if (!a || !b)
+                return std::nullopt;
+            rpc::Serializer writer;
+            writer.WriteInt32(Sub(*a, *b));
+            return writer.GetBuffer();
+        });
 
     // 帧回调：Dispatch 分发 → 编码响应 → 发送
     auto server_cb = [&dispatch](const rpc::Frame& frame, rpc::Connection* conn) {
         auto rsp_body = dispatch.Call(frame.method_name, frame.body);
         if (rsp_body) {
-            auto rsp_bytes = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response, frame.method_name, *rsp_body);
+            auto rsp_bytes = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                        frame.method_name, *rsp_body);
             conn->Send(rsp_bytes);
         } else {
-            auto err_bytes = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Error, frame.method_name, {});
+            auto err_bytes = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                        frame.method_name, {});
             conn->Send(err_bytes);
         }
     };

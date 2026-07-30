@@ -51,16 +51,18 @@ void TestDispatchBasic() {
     rpc::Dispatch dispatch;
 
     // 注册 Add 方法
-    dispatch.RegisterMethod("Add", [](const std::vector<uint8_t>& body) -> std::optional<std::vector<uint8_t>> {
-        rpc::Serializer reader(body);
-        auto a = reader.ReadInt32();
-        auto b = reader.ReadInt32();
-        if (!a || !b) return std::nullopt;
+    dispatch.RegisterMethod(
+        "Add", [](const std::vector<uint8_t>& body) -> std::optional<std::vector<uint8_t>> {
+            rpc::Serializer reader(body);
+            auto a = reader.ReadInt32();
+            auto b = reader.ReadInt32();
+            if (!a || !b)
+                return std::nullopt;
 
-        rpc::Serializer writer;
-        writer.WriteInt32(*a + *b);
-        return writer.GetBuffer();
-    });
+            rpc::Serializer writer;
+            writer.WriteInt32(*a + *b);
+            return writer.GetBuffer();
+        });
 
     // 正常调用
     rpc::Serializer req_ser;
@@ -88,43 +90,47 @@ void TestRpcEndToEnd() {
     rpc::Dispatch dispatch;
 
     // 注册方法
-    dispatch.RegisterMethod("Add", [](const std::vector<uint8_t>& body) -> std::optional<std::vector<uint8_t>> {
-        rpc::Serializer reader(body);
-        auto a = reader.ReadInt32();
-        auto b = reader.ReadInt32();
-        if (!a || !b) return std::nullopt;
-        rpc::Serializer writer;
-        writer.WriteInt32(*a + *b);
-        return writer.GetBuffer();
-    });
+    dispatch.RegisterMethod(
+        "Add", [](const std::vector<uint8_t>& body) -> std::optional<std::vector<uint8_t>> {
+            rpc::Serializer reader(body);
+            auto a = reader.ReadInt32();
+            auto b = reader.ReadInt32();
+            if (!a || !b)
+                return std::nullopt;
+            rpc::Serializer writer;
+            writer.WriteInt32(*a + *b);
+            return writer.GetBuffer();
+        });
 
-    dispatch.RegisterMethod("Sub", [](const std::vector<uint8_t>& body) -> std::optional<std::vector<uint8_t>> {
-        rpc::Serializer reader(body);
-        auto a = reader.ReadInt32();
-        auto b = reader.ReadInt32();
-        if (!a || !b) return std::nullopt;
-        rpc::Serializer writer;
-        writer.WriteInt32(*a - *b);
-        return writer.GetBuffer();
-    });
+    dispatch.RegisterMethod(
+        "Sub", [](const std::vector<uint8_t>& body) -> std::optional<std::vector<uint8_t>> {
+            rpc::Serializer reader(body);
+            auto a = reader.ReadInt32();
+            auto b = reader.ReadInt32();
+            if (!a || !b)
+                return std::nullopt;
+            rpc::Serializer writer;
+            writer.WriteInt32(*a - *b);
+            return writer.GetBuffer();
+        });
 
     // 2. 服务端回调：Dispatch 分发 + 发送响应
     auto server_cb = [&dispatch](const rpc::Frame& frame, rpc::Connection* conn) {
         auto rsp_body = dispatch.Call(frame.method_name, frame.body);
         if (rsp_body) {
-            auto rsp_bytes = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response, frame.method_name, *rsp_body);
+            auto rsp_bytes = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                        frame.method_name, *rsp_body);
             conn->Send(rsp_bytes);
         } else {
-            auto err_bytes = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Error, frame.method_name, {});
+            auto err_bytes = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                        frame.method_name, {});
             conn->Send(err_bytes);
         }
     };
 
     // 3. 创建 Acceptor（端口 0 = 内核分配），获取实际端口
     auto acceptor = std::make_unique<rpc::Acceptor>(0, &server_loop, server_cb);
-    int listen_fd = acceptor->GetFd();  // 必须在 Register 前获取
+    int listen_fd = acceptor->GetFd(); // 必须在 Register 前获取
 
     sockaddr_in addr{};
     socklen_t addr_len = sizeof(addr);
@@ -242,12 +248,12 @@ void TestRpcUnknownMethod() {
     auto server_cb = [&dispatch](const rpc::Frame& frame, rpc::Connection* conn) {
         auto rsp_body = dispatch.Call(frame.method_name, frame.body);
         if (rsp_body) {
-            auto rsp_bytes = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Response, frame.method_name, *rsp_body);
+            auto rsp_bytes = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Response,
+                                                        frame.method_name, *rsp_body);
             conn->Send(rsp_bytes);
         } else {
-            auto err_bytes = rpc::ProtocolFrame::Encode(
-                frame.request_id, rpc::MessageType::Error, frame.method_name, {});
+            auto err_bytes = rpc::ProtocolFrame::Encode(frame.request_id, rpc::MessageType::Error,
+                                                        frame.method_name, {});
             conn->Send(err_bytes);
         }
     };
@@ -296,9 +302,9 @@ void TestRpcUnknownMethod() {
 int main() {
     printf("=== RPC Integration Tests ===\n\n");
 
-    RunTest("TestDispatchBasic",    TestDispatchBasic);
-    RunTest("TestRpcEndToEnd",     TestRpcEndToEnd);
-    RunTest("TestConnectionSend",  TestConnectionSend);
+    RunTest("TestDispatchBasic", TestDispatchBasic);
+    RunTest("TestRpcEndToEnd", TestRpcEndToEnd);
+    RunTest("TestConnectionSend", TestConnectionSend);
     RunTest("TestRpcUnknownMethod", TestRpcUnknownMethod);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);

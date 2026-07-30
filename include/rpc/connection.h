@@ -52,14 +52,14 @@ public:
     void Send(const std::vector<uint8_t>& data);
 
 private:
-    EventLoop* loop_;               // 所属事件循环，OnClose 时需要调用 loop_->Unregister(fd_)
-    Buffer read_buffer_;            // 读缓冲区，处理粘包/拆包
-    FrameCallback frame_callback_;  // 收到完整帧后的回调
+    EventLoop* loop_; // 所属事件循环，OnClose 时需要调用 loop_->Unregister(fd_)
+    Buffer read_buffer_; // 读缓冲区，处理粘包/拆包
+    FrameCallback frame_callback_; // 收到完整帧后的回调
     DisconnectCallback on_disconnect_; // 连接断开回调（v0.8 新增）
 
     // 发送路径
-    std::vector<uint8_t> write_buffer_;  // 发送缓冲区
-    size_t write_offset_ = 0;            // 缓冲区中已发送的偏移量
+    std::vector<uint8_t> write_buffer_; // 发送缓冲区
+    size_t write_offset_ = 0; // 缓冲区中已发送的偏移量
 };
 
 } // namespace rpc

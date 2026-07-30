@@ -11,7 +11,8 @@ void Buffer::Append(const uint8_t* data, size_t len) {
 
 std::optional<std::vector<uint8_t>> Buffer::TryPopFrame() {
     // 至少需要 6 字节才能读魔数（2）+ 总长度（4）
-    if (buf_.size() < 6) return std::nullopt;
+    if (buf_.size() < 6)
+        return std::nullopt;
 
     // 1. 校验魔数
     uint16_t magic;
@@ -28,11 +29,12 @@ std::optional<std::vector<uint8_t>> Buffer::TryPopFrame() {
 
     // 3. 合法性校验
     if (total_len < kFrameHeaderSize || total_len > kMaxFrameSize) {
-        return std::nullopt;  // 数据异常
+        return std::nullopt; // 数据异常
     }
 
     // 4. 缓冲区字节数不够一帧 → 等待更多数据
-    if (buf_.size() < total_len) return std::nullopt;
+    if (buf_.size() < total_len)
+        return std::nullopt;
 
     // 5. 切出一帧
     std::vector<uint8_t> frame(buf_.begin(), buf_.begin() + total_len);

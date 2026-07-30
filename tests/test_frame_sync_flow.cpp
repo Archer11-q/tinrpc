@@ -31,7 +31,9 @@ struct Timer {
         return Ms(Clock::now() - start).count();
     }
 
-    void Reset() { start = Clock::now(); }
+    void Reset() {
+        start = Clock::now();
+    }
 };
 
 // ============================================================
@@ -40,7 +42,7 @@ struct Timer {
 
 struct SimClient {
     std::string player_id;
-    uint8_t move_dir;       // MoveDir 编码
+    uint8_t move_dir; // MoveDir 编码
     uint32_t last_frame = 0; // 客户端本地帧号
 };
 
@@ -53,14 +55,14 @@ int main() {
     printf("=== 帧同步全流程模拟测试 ===\n\n");
 
     const int kPlayerCount = 3;
-    const int kTotalFrames = 60;   // 60 帧 ≈ 3 秒 @20fps
+    const int kTotalFrames = 60; // 60 帧 ≈ 3 秒 @20fps
     const int kFps = 20;
 
     // ---- 配置模拟客户端 ----
     std::vector<SimClient> clients;
-    clients.push_back({"player_a", 0x04});  // 一直向右
-    clients.push_back({"player_b", 0x02});  // 一直向下
-    clients.push_back({"player_c", 0x01});  // 一直向上
+    clients.push_back({"player_a", 0x04}); // 一直向右
+    clients.push_back({"player_b", 0x02}); // 一直向下
+    clients.push_back({"player_c", 0x01}); // 一直向上
 
     // ============================================================
     // Phase 1: 匹配/房间创建
@@ -73,7 +75,10 @@ int main() {
 
     // 创建房间
     auto cr = room_mgr.CreateRoom("player_a", cfg);
-    if (!cr.ok) { printf("[FAIL] CreateRoom\n"); return 1; }
+    if (!cr.ok) {
+        printf("[FAIL] CreateRoom\n");
+        return 1;
+    }
     std::string room_id = cr.room_id;
     auto* room = room_mgr.GetRoom(room_id);
     room->SetState(game::ROOM_STATE_WAITING);
@@ -88,7 +93,8 @@ int main() {
 
     // 开始游戏
     if (!room_mgr.StartGame(room_id, "player_a").ok) {
-        printf("[FAIL] StartGame\n"); return 1;
+        printf("[FAIL] StartGame\n");
+        return 1;
     }
 
     double create_join_ms = phase1.ElapsedMs();
@@ -99,7 +105,10 @@ int main() {
     Timer phase2;
 
     room->InitFrameSync(kFps, 120, 60);
-    if (!room->HasFrameSync()) { printf("[FAIL] InitFrameSync\n"); return 1; }
+    if (!room->HasFrameSync()) {
+        printf("[FAIL] InitFrameSync\n");
+        return 1;
+    }
 
     auto* fsm = room->GetFrameSync();
 
@@ -119,10 +128,9 @@ int main() {
         // ---- 输入阶段 ----
         Timer input_timer;
         for (auto& c : clients) {
-            room->OnPlayerFrameInput(static_cast<uint32_t>(f),
-                                      c.player_id, {c.move_dir});
+            room->OnPlayerFrameInput(static_cast<uint32_t>(f), c.player_id, {c.move_dir});
         }
-        double input_us = input_timer.ElapsedMs() * 1000.0;  // ms → μs
+        double input_us = input_timer.ElapsedMs() * 1000.0; // ms → μs
 
         // ---- Tick 阶段 ----
         Timer tick_timer;
@@ -130,14 +138,17 @@ int main() {
         double tick_us = tick_timer.ElapsedMs() * 1000.0;
 
         if (n != static_cast<size_t>(kPlayerCount)) {
-            printf("[FAIL] f=%d input=%zu\n", f, n); return 1;
+            printf("[FAIL] f=%d input=%zu\n", f, n);
+            return 1;
         }
 
         // 统计
-        if (input_us > max_input_us) max_input_us = input_us;
-        if (tick_us > max_tick_us)   max_tick_us = tick_us;
+        if (input_us > max_input_us)
+            max_input_us = input_us;
+        if (tick_us > max_tick_us)
+            max_tick_us = tick_us;
         total_input_us += input_us;
-        total_tick_us  += tick_us;
+        total_tick_us += tick_us;
     }
 
     double sync_time_ms = phase3.ElapsedMs();
@@ -183,16 +194,15 @@ int main() {
     printf("\n");
     printf("  输入收集耗时:\n");
     printf("    总计: %.1f μs (%.1f ms)\n", total_input_us, total_input_us / 1000.0);
-    printf("    平均: %.1f μs/帧 (%d玩家)\n",
-           total_input_us / kTotalFrames, kPlayerCount);
+    printf("    平均: %.1f μs/帧 (%d玩家)\n", total_input_us / kTotalFrames, kPlayerCount);
     printf("    最大: %.1f μs\n", max_input_us);
     printf("\n");
     printf("  帧同步运行总时间: %.3f ms\n", sync_time_ms);
-    printf("  理论最小时间: %.1f ms (%d帧 × %dms)\n",
-           kTotalFrames * (1000.0 / kFps), kTotalFrames, 1000 / kFps);
+    printf("  理论最小时间: %.1f ms (%d帧 × %dms)\n", kTotalFrames * (1000.0 / kFps), kTotalFrames,
+           1000 / kFps);
     printf("  实际/理论比: %.1fx (%.3f ms / %.1f ms)\n",
-           sync_time_ms / (kTotalFrames * (1000.0 / kFps)),
-           sync_time_ms, kTotalFrames * (1000.0 / kFps));
+           sync_time_ms / (kTotalFrames * (1000.0 / kFps)), sync_time_ms,
+           kTotalFrames * (1000.0 / kFps));
 
     printf("\n========================================\n");
 

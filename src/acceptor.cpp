@@ -9,11 +9,8 @@
 
 namespace rpc {
 
-Acceptor::Acceptor(uint16_t port, EventLoop* loop, FrameCallback cb,
-                   DisconnectCallback on_disconnect)
-    : loop_(loop), cb_(std::move(cb))
-    , on_disconnect_(std::move(on_disconnect))
-{
+Acceptor::Acceptor(uint16_t port, EventLoop* loop, FrameCallback cb, DisconnectCallback on_disconnect)
+    : loop_(loop), cb_(std::move(cb)), on_disconnect_(std::move(on_disconnect)) {
     // 设置 socket 重用地址，避免重启时 "Address already in use"
     int opt = 1;
     setsockopt(listen_sock_.Fd(), SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
@@ -30,10 +27,11 @@ void Acceptor::OnRead() {
         int client_fd = listen_sock_.Accept();
         if (client_fd < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                break;  // 所有新连接已 accept
+                break; // 所有新连接已 accept
             }
             // 其他错误，继续尝试（EINTR 等）
-            if (errno == EINTR) continue;
+            if (errno == EINTR)
+                continue;
             break;
         }
 
@@ -42,7 +40,8 @@ void Acceptor::OnRead() {
 
         // 创建 Connection 并注册到 EventLoop
         auto conn = std::make_unique<Connection>(client_fd, loop_, cb_, on_disconnect_);
-        loop_->Register(std::move(conn), EPOLLIN | EPOLLRDHUP | EPOLLET);  // 注册可读事件，边缘触发到Evenloop
+        loop_->Register(std::move(conn),
+                        EPOLLIN | EPOLLRDHUP | EPOLLET); // 注册可读事件，边缘触发到Evenloop
     }
 }
 

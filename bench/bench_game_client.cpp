@@ -36,27 +36,27 @@
 #include <iomanip>
 #include <numeric>
 
-using namespace game;  // Protobuf 消息类型都在 game:: 命名空间中
+using namespace game; // Protobuf 消息类型都在 game:: 命名空间中
 
 // ============================================================
 // 命令行参数
 // ============================================================
-static const char*  g_mode          = "single";   // single | ramp | steady | chaos
-static const char*  g_server_ip     = "127.0.0.1";
-static uint16_t     g_server_port   = 8080;
-static int          g_connections   = 1;           // 总连接数
-static int          g_duration_sec  = 60;          // 稳态持续时间
-static int          g_ramp_rate     = 10;          // 每秒新建连接数（ramp 模式）
-static double       g_think_mean_ms = 200.0;       // think time 泊松均值（ms）
-static int          g_warmup_sec    = 10;          // 预热时间（秒）
-static int          g_timeout_ms    = 5000;        // 单请求超时（ms）
-static int          g_repeat        = 1;           // 重复次数（single 模式）
-static bool         g_verbose       = false;       // 详细输出
+static const char* g_mode = "single"; // single | ramp | steady | chaos
+static const char* g_server_ip = "127.0.0.1";
+static uint16_t g_server_port = 8080;
+static int g_connections = 1; // 总连接数
+static int g_duration_sec = 60; // 稳态持续时间
+static int g_ramp_rate = 10; // 每秒新建连接数（ramp 模式）
+static double g_think_mean_ms = 200.0; // think time 泊松均值（ms）
+static int g_warmup_sec = 10; // 预热时间（秒）
+static int g_timeout_ms = 5000; // 单请求超时（ms）
+static int g_repeat = 1; // 重复次数（single 模式）
+static bool g_verbose = false; // 详细输出
 
 // chaos 模式参数
-static int          g_chaos_disconnect_pct = 50;   // 断连百分比
-static int          g_chaos_bad_msg_count  = 100;  // 恶意消息数量
-static int          g_chaos_oversize_bytes = 65536;// 超大包字节数
+static int g_chaos_disconnect_pct = 50; // 断连百分比
+static int g_chaos_bad_msg_count = 100; // 恶意消息数量
+static int g_chaos_oversize_bytes = 65536; // 超大包字节数
 
 // ============================================================
 // Poisson 分布 think time 生成器
@@ -65,13 +65,13 @@ class PoissonTimer {
 public:
     explicit PoissonTimer(double mean_ms)
         : mean_ms_(mean_ms)
-        , dist_(mean_ms > 0 ? 1.0 / mean_ms : 1000.0)  // lambda = 1/mean for exponential
-        , rng_(std::random_device{}())
-    {}
+        , dist_(mean_ms > 0 ? 1.0 / mean_ms : 1000.0) // lambda = 1/mean for exponential
+        , rng_(std::random_device{}()) {
+    }
 
     // 返回下一次等待的毫秒数（指数分布 = Poisson 过程的间隔时间）
     double NextMs() {
-        return std::max(1.0, dist_(rng_));  // 至少 1ms
+        return std::max(1.0, dist_(rng_)); // 至少 1ms
     }
 
 private:
@@ -83,12 +83,12 @@ private:
 // ============================================================
 // 全局统计和同步
 // ============================================================
-static rpc::LatencyHistogram g_latency_hist;   // 全局延迟直方图
-static rpc::QpsCounter       g_qps_counter(5); // 5秒滑动窗口
-static rpc::ErrorCounter     g_error_counter;  // 错误分类计数
-static rpc::StageTimer       g_stage_timer;    // 阶段耗时
-static std::atomic<bool>     g_stop_flag{false};
-static std::atomic<int>      g_active_connections{0};
+static rpc::LatencyHistogram g_latency_hist; // 全局延迟直方图
+static rpc::QpsCounter g_qps_counter(5); // 5秒滑动窗口
+static rpc::ErrorCounter g_error_counter; // 错误分类计数
+static rpc::StageTimer g_stage_timer; // 阶段耗时
+static std::atomic<bool> g_stop_flag{false};
+static std::atomic<int> g_active_connections{0};
 
 // ============================================================
 // 辅助函数
@@ -97,12 +97,12 @@ static std::atomic<int>      g_active_connections{0};
 // 当前时间戳（微秒）
 static int64_t NowUs() {
     return std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+               std::chrono::steady_clock::now().time_since_epoch())
+        .count();
 }
 
 // 将 Protobuf 消息序列化为 vector<uint8_t>
-template<typename ProtoMsg>
-static std::vector<uint8_t> SerializeProto(const ProtoMsg& msg) {
+template <typename ProtoMsg> static std::vector<uint8_t> SerializeProto(const ProtoMsg& msg) {
     std::string buf;
     msg.SerializeToString(&buf);
     return std::vector<uint8_t>(buf.begin(), buf.end());
@@ -131,8 +131,8 @@ public:
         , server_ip_(server_ip)
         , server_port_(server_port)
         , client_(new rpc::RpcClient())
-        , think_timer_(g_think_mean_ms)
-    {}
+        , think_timer_(g_think_mean_ms) {
+    }
 
     ~GameClient() {
         Disconnect();
@@ -145,7 +145,8 @@ public:
     // ---- 完整流程 ----
 
     bool RunFullFlow(int duration_sec, bool record_stages = true) {
-        if (g_stop_flag.load()) return false;
+        if (g_stop_flag.load())
+            return false;
 
         // 1. 连接
         if (record_stages) {
@@ -153,9 +154,11 @@ public:
             bool ok = Connect();
             int64_t t1 = NowUs();
             g_stage_timer.Record("connect", (t1 - t0), ok);
-            if (!ok) return false;
+            if (!ok)
+                return false;
         } else {
-            if (!Connect()) return false;
+            if (!Connect())
+                return false;
         }
 
         // 2. 登录
@@ -164,9 +167,11 @@ public:
             bool ok = Login();
             int64_t t1 = NowUs();
             g_stage_timer.Record("login", (t1 - t0), ok);
-            if (!ok) return false;
+            if (!ok)
+                return false;
         } else {
-            if (!Login()) return false;
+            if (!Login())
+                return false;
         }
 
         // 3. 创建房间
@@ -175,9 +180,11 @@ public:
             bool ok = CreateGameRoom();
             int64_t t1 = NowUs();
             g_stage_timer.Record("create_room", (t1 - t0), ok);
-            if (!ok) return false;
+            if (!ok)
+                return false;
         } else {
-            if (!CreateGameRoom()) return false;
+            if (!CreateGameRoom())
+                return false;
         }
 
         // 4. 开始游戏
@@ -192,8 +199,8 @@ public:
         }
 
         // 5. 发消息循环（持续 duration_sec 或直到 stop）
-        printf("[client %d] 开始发消息循环 (%d 秒，think time %.0f ms)...\n",
-               id_, duration_sec, g_think_mean_ms);
+        printf("[client %d] 开始发消息循环 (%d 秒，think time %.0f ms)...\n", id_, duration_sec,
+               g_think_mean_ms);
         fflush(stdout);
         if (record_stages) {
             int64_t t0 = NowUs();
@@ -224,7 +231,8 @@ public:
     bool Connect() {
         if (!client_->Connect(server_ip_, server_port_)) {
             g_error_counter.Record("connect_failed");
-            if (g_verbose) fprintf(stderr, "[client %d] connect failed\n", id_);
+            if (g_verbose)
+                fprintf(stderr, "[client %d] connect failed\n", id_);
             return false;
         }
         connected_ = true;
@@ -233,11 +241,9 @@ public:
     }
 
     // 带超时的 RPC 调用辅助模板
-    template<typename ResProto>
-    bool TimedCall(const std::string& method_name,
-                   const std::vector<uint8_t>& req_body,
-                   ResProto& res,
-                   const char* err_label) {
+    template <typename ResProto>
+    bool TimedCall(const std::string& method_name, const std::vector<uint8_t>& req_body,
+                   ResProto& res, const char* err_label) {
         auto future = client_->Call(method_name, req_body);
         auto status = future.wait_for(std::chrono::milliseconds(g_timeout_ms));
         if (status != std::future_status::ready) {
@@ -268,7 +274,8 @@ public:
         g_latency_hist.Record(static_cast<double>(t1 - t0));
         g_qps_counter.RecordRequest();
 
-        if (!ok) return false;
+        if (!ok)
+            return false;
         logged_in_ = true;
         return true;
     }
@@ -289,7 +296,8 @@ public:
         g_qps_counter.RecordRequest();
 
         if (!ok) {
-            if (g_verbose) fprintf(stderr, "[client %d] create room failed\n", id_);
+            if (g_verbose)
+                fprintf(stderr, "[client %d] create room failed\n", id_);
             return false;
         }
 
@@ -333,7 +341,8 @@ public:
         g_latency_hist.Record(latency_us);
         g_qps_counter.RecordRequest();
 
-        if (!ok) return false;
+        if (!ok)
+            return false;
         return true;
     }
 
@@ -354,7 +363,8 @@ public:
         g_latency_hist.Record(latency_us);
         g_qps_counter.RecordRequest();
 
-        if (!ok) return false;
+        if (!ok)
+            return false;
         return true;
     }
 
@@ -374,7 +384,8 @@ public:
         g_latency_hist.Record(latency_us);
         g_qps_counter.RecordRequest();
 
-        if (!ok) return false;
+        if (!ok)
+            return false;
         return true;
     }
 
@@ -391,7 +402,8 @@ public:
         g_latency_hist.Record(latency_us);
         g_qps_counter.RecordRequest();
 
-        if (!ok) return false;
+        if (!ok)
+            return false;
         return true;
     }
 
@@ -411,7 +423,8 @@ public:
         g_latency_hist.Record(latency_us);
         g_qps_counter.RecordRequest();
 
-        if (!ok) return false;
+        if (!ok)
+            return false;
         room_id_ = target_room_id;
         return true;
     }
@@ -430,7 +443,8 @@ public:
         g_latency_hist.Record(latency_us);
         g_qps_counter.RecordRequest();
 
-        if (!ok) return false;
+        if (!ok)
+            return false;
         return true;
     }
 
@@ -483,32 +497,38 @@ public:
         if (ok) {
             printf("[metrics] 服务端: 运行%lds | 连接=%d | 房间=%d | QPS≈%.0f | "
                    "延迟(us): avg=%.0f p50=%.0f p99=%.0f | 匹配队列=%d | 错误=%ld\n",
-                   res.uptime_sec(), res.active_connections(), res.total_rooms(),
-                   res.current_qps(), res.avg_latency_us(), res.p50_latency_us(),
-                   res.p99_latency_us(), res.match_queue_size(), res.error_count());
+                   res.uptime_sec(), res.active_connections(), res.total_rooms(), res.current_qps(),
+                   res.avg_latency_us(), res.p50_latency_us(), res.p99_latency_us(),
+                   res.match_queue_size(), res.error_count());
             fflush(stdout);
         }
         return ok;
     }
 
-    const std::string& player_id() const { return player_id_; }
-    const std::string& room_id() const { return room_id_; }
-    int id() const { return id_; }
+    const std::string& player_id() const {
+        return player_id_;
+    }
+    const std::string& room_id() const {
+        return room_id_;
+    }
+    int id() const {
+        return id_;
+    }
 
 private:
     void MessageLoop(int duration_sec) {
         auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(duration_sec);
         auto last_report = std::chrono::steady_clock::now();
 
-        while (!g_stop_flag.load() &&
-               std::chrono::steady_clock::now() < deadline) {
-            if (!SendOneMessage()) break;
+        while (!g_stop_flag.load() && std::chrono::steady_clock::now() < deadline) {
+            if (!SendOneMessage())
+                break;
 
             // 每 5 秒输出一次进度（仅 single 模式且 verbose 时）
             auto now = std::chrono::steady_clock::now();
             if (g_verbose && now - last_report > std::chrono::seconds(5)) {
-                auto remaining = std::chrono::duration_cast<std::chrono::seconds>(
-                    deadline - now).count();
+                auto remaining =
+                    std::chrono::duration_cast<std::chrono::seconds>(deadline - now).count();
                 printf("  [进度] 已发送 %d 条消息 | 剩余 %ld 秒\n", msg_seq_, remaining);
                 fflush(stdout);
                 last_report = now;
@@ -516,7 +536,8 @@ private:
 
             // think time（泊松间隔）
             double wait_ms = think_timer_.NextMs();
-            if (wait_ms > 1000.0) wait_ms = 1000.0;
+            if (wait_ms > 1000.0)
+                wait_ms = 1000.0;
 
             std::this_thread::sleep_for(
                 std::chrono::microseconds(static_cast<int64_t>(wait_ms * 1000.0)));
@@ -529,14 +550,14 @@ private:
         // 帧同步 tick 间隔 = 50ms (20 tick/s)，匹配服务端帧率
         constexpr int kTickIntervalUs = 50'000;
 
-        while (!g_stop_flag.load() &&
-               std::chrono::steady_clock::now() < deadline) {
+        while (!g_stop_flag.load() && std::chrono::steady_clock::now() < deadline) {
             // 构造模拟输入数据（方向 + 按键，每次随机变化）
             std::ostringstream oss;
             oss << "input_" << frame_no << "_" << (rand() % 256);
             std::string input = oss.str();
 
-            if (!SendInput(frame_no, input)) break;
+            if (!SendInput(frame_no, input))
+                break;
 
             frame_no++;
             std::this_thread::sleep_for(std::chrono::microseconds(kTickIntervalUs));
@@ -550,13 +571,13 @@ private:
         std::uniform_real_distribution<double> elo_dist(800.0, 2200.0);
 
         int cycle = 0;
-        while (!g_stop_flag.load() &&
-               std::chrono::steady_clock::now() < deadline) {
+        while (!g_stop_flag.load() && std::chrono::steady_clock::now() < deadline) {
             double elo = elo_dist(rng);
             cycle++;
 
             // 入队
-            if (!EnterMatch(elo)) break;
+            if (!EnterMatch(elo))
+                break;
             // 短暂等待让服务端 TryMatch 有机会配对
             std::this_thread::sleep_for(std::chrono::milliseconds(100 + (rand() % 200)));
             // 取消匹配（清理队列状态，准备下一轮）
@@ -589,14 +610,16 @@ static std::unique_ptr<GameClient> g_metrics_client;
 static void StatsReporterLoop(int interval_sec) {
     while (!g_stop_flag.load()) {
         std::this_thread::sleep_for(std::chrono::seconds(interval_sec));
-        if (g_stop_flag.load()) break;
+        if (g_stop_flag.load())
+            break;
 
-        g_qps_counter.Tick();  // 推进滑动窗口，否则 CurrentQps() 始终返回 0
+        g_qps_counter.Tick(); // 推进滑动窗口，否则 CurrentQps() 始终返回 0
         auto p = g_latency_hist.Compute();
         double qps = g_qps_counter.CurrentQps();
         int active = g_active_connections.load();
 
-        printf("[stats] conn=%d | QPS≈%.0f | lat(us): avg=%.0f p50=%.0f p95=%.0f p99=%.0f | errors=%d\n",
+        printf("[stats] conn=%d | QPS≈%.0f | lat(us): avg=%.0f p50=%.0f p95=%.0f p99=%.0f | "
+               "errors=%d\n",
                active, qps, p.avg, p.p50, p.p95, p.p99, g_error_counter.Total());
         fflush(stdout);
 
@@ -612,8 +635,8 @@ static void StatsReporterLoop(int interval_sec) {
 // ============================================================
 static void RunSingleMode() {
     printf("\n=== MODE: single — 单连接基线 ===\n");
-    printf("重复次数: %d | think time 均值: %.0f ms | 超时: %d ms\n",
-           g_repeat, g_think_mean_ms, g_timeout_ms);
+    printf("重复次数: %d | think time 均值: %.0f ms | 超时: %d ms\n", g_repeat, g_think_mean_ms,
+           g_timeout_ms);
     printf("----------------------------------------\n");
 
     for (int round = 0; round < g_repeat; round++) {
@@ -622,8 +645,7 @@ static void RunSingleMode() {
         GameClient client(round, g_server_ip, g_server_port);
         bool ok = client.RunFullFlow(g_duration_sec, /*record_stages=*/true);
 
-        printf("  结果: %s | 活跃连接: %d\n",
-               ok ? "成功" : "失败", g_active_connections.load());
+        printf("  结果: %s | 活跃连接: %d\n", ok ? "成功" : "失败", g_active_connections.load());
     }
 
     // 输出阶段耗时汇总
@@ -638,8 +660,8 @@ static void RunSingleMode() {
     printf("\n--- Markdown ---\n");
     printf("| 场景 | 连接数 | 时长 | QPS | avg(us) | p50(us) | p95(us) | p99(us) |\n");
     printf("|------|--------|------|-----|---------|---------|---------|----------|\n");
-    rpc::BenchReport::PrintMarkdownRow("single-baseline", g_connections,
-                                        g_duration_sec, g_qps_counter.CurrentQps(), p);
+    rpc::BenchReport::PrintMarkdownRow("single-baseline", g_connections, g_duration_sec,
+                                       g_qps_counter.CurrentQps(), p);
 }
 
 // ============================================================
@@ -647,8 +669,8 @@ static void RunSingleMode() {
 // ============================================================
 static void RunRampMode() {
     printf("\n=== MODE: ramp — 渐进加压 ===\n");
-    printf("目标连接数: %d | ramp 速率: %d conn/s | 每连接持续: %d s\n",
-           g_connections, g_ramp_rate, g_duration_sec);
+    printf("目标连接数: %d | ramp 速率: %d conn/s | 每连接持续: %d s\n", g_connections, g_ramp_rate,
+           g_duration_sec);
     printf("think time 均值: %.0f ms\n", g_think_mean_ms);
     printf("----------------------------------------\n");
 
@@ -662,7 +684,8 @@ static void RunRampMode() {
     auto ramp_start = std::chrono::steady_clock::now();
 
     for (int i = 0; i < g_connections; i++) {
-        if (g_stop_flag.load()) break;
+        if (g_stop_flag.load())
+            break;
 
         client_threads.emplace_back([i]() {
             GameClient client(i, g_server_ip, g_server_port);
@@ -677,10 +700,10 @@ static void RunRampMode() {
         // 每 50 个连接报告一次进度
         if ((i + 1) % 50 == 0) {
             auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(
-                std::chrono::steady_clock::now() - ramp_start).count();
-            printf("[ramp] %d/%d 连接已创建 (%.0fs) | 活跃: %d\n",
-                   i + 1, g_connections, static_cast<double>(elapsed),
-                   g_active_connections.load());
+                               std::chrono::steady_clock::now() - ramp_start)
+                               .count();
+            printf("[ramp] %d/%d 连接已创建 (%.0fs) | 活跃: %d\n", i + 1, g_connections,
+                   static_cast<double>(elapsed), g_active_connections.load());
             fflush(stdout);
         }
     }
@@ -697,9 +720,9 @@ static void RunRampMode() {
 
     // 输出报告
     auto p = g_latency_hist.Compute();
-    rpc::BenchReport::PrintFullReport("ramp-up", g_connections,
-                                       g_duration_sec, g_qps_counter.CurrentQps(),
-                                       p, g_error_counter, g_stage_timer.Results());
+    rpc::BenchReport::PrintFullReport("ramp-up", g_connections, g_duration_sec,
+                                      g_qps_counter.CurrentQps(), p, g_error_counter,
+                                      g_stage_timer.Results());
 }
 
 // ============================================================
@@ -707,8 +730,8 @@ static void RunRampMode() {
 // ============================================================
 static void RunSteadyMode() {
     printf("\n=== MODE: steady — 稳态压测 ===\n");
-    printf("并发连接数: %d | 持续时间: %d s | 预热: %d s\n",
-           g_connections, g_duration_sec, g_warmup_sec);
+    printf("并发连接数: %d | 持续时间: %d s | 预热: %d s\n", g_connections, g_duration_sec,
+           g_warmup_sec);
     printf("think time 均值: %.0f ms\n", g_think_mean_ms);
     printf("----------------------------------------\n");
 
@@ -762,12 +785,10 @@ static void RunSteadyMode() {
     // 第二步：预热
     if (g_warmup_sec > 0 && connected > 0) {
         printf("[steady] 预热 %d 秒...\n", g_warmup_sec);
-        auto warmup_deadline = std::chrono::steady_clock::now() +
-                               std::chrono::seconds(g_warmup_sec);
+        auto warmup_deadline = std::chrono::steady_clock::now() + std::chrono::seconds(g_warmup_sec);
 
         // 用第一个客户端发送预热消息
-        while (std::chrono::steady_clock::now() < warmup_deadline &&
-               !g_stop_flag.load()) {
+        while (std::chrono::steady_clock::now() < warmup_deadline && !g_stop_flag.load()) {
             clients[0]->SendOneMessage();
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
@@ -786,15 +807,14 @@ static void RunSteadyMode() {
     for (int i = 0; i < connected; i++) {
         threads.emplace_back([&clients, i, steady_deadline]() {
             auto& client = clients[i];
-            while (!g_stop_flag.load() &&
-                   std::chrono::steady_clock::now() < steady_deadline) {
-                if (!client->SendOneMessage()) break;
+            while (!g_stop_flag.load() && std::chrono::steady_clock::now() < steady_deadline) {
+                if (!client->SendOneMessage())
+                    break;
 
                 // think time
-                double wait_ms = g_think_mean_ms > 0
-                    ? PoissonTimer(g_think_mean_ms).NextMs()
-                    : 0;
-                if (wait_ms > 1000.0) wait_ms = 1000.0;
+                double wait_ms = g_think_mean_ms > 0 ? PoissonTimer(g_think_mean_ms).NextMs() : 0;
+                if (wait_ms > 1000.0)
+                    wait_ms = 1000.0;
                 if (wait_ms > 0) {
                     std::this_thread::sleep_for(
                         std::chrono::microseconds(static_cast<int64_t>(wait_ms * 1000.0)));
@@ -809,9 +829,10 @@ static void RunSteadyMode() {
     }
 
     auto steady_end = std::chrono::steady_clock::now();
-    double elapsed = static_cast<double>(
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            steady_end - steady_start).count()) / 1e6;
+    double elapsed =
+        static_cast<double>(
+            std::chrono::duration_cast<std::chrono::microseconds>(steady_end - steady_start).count()) /
+        1e6;
 
     g_stop_flag.store(true);
     reporter.join();
@@ -846,9 +867,8 @@ static void RunSteadyMode() {
     // 错误分类
     if (g_error_counter.Total() > 0) {
         printf("\n  错误分类:\n");
-        g_error_counter.ForEach([](const std::string& cat, int count) {
-            printf("    %s: %d\n", cat.c_str(), count);
-        });
+        g_error_counter.ForEach(
+            [](const std::string& cat, int count) { printf("    %s: %d\n", cat.c_str(), count); });
     }
 
     // Markdown
@@ -856,9 +876,8 @@ static void RunSteadyMode() {
     printf("| 场景 | 连接数 | 时长 | QPS | avg(us) | p50(us) | p95(us) | p99(us) | 成功率 |\n");
     printf("|------|--------|------|-----|---------|---------|---------|----------|--------|\n");
     printf("| steady-%d | %d | %.0fs | %.0f | %.1f | %.1f | %.1f | %.1f | %.1f%% |\n",
-           g_connections, connected, elapsed,
-           g_qps_counter.CurrentQps(), p.avg, p.p50, p.p95, p.p99,
-           100.0 * connected / g_connections);
+           g_connections, connected, elapsed, g_qps_counter.CurrentQps(), p.avg, p.p50, p.p95,
+           p.p99, 100.0 * connected / g_connections);
     printf("========================================\n");
 }
 
@@ -867,9 +886,8 @@ static void RunSteadyMode() {
 // ============================================================
 static void RunChaosMode() {
     printf("\n=== MODE: chaos — 异常测试 ===\n");
-    printf("连接数: %d | 断连%%: %d | 恶意消息数: %d | 超大包: %d B\n",
-           g_connections, g_chaos_disconnect_pct,
-           g_chaos_bad_msg_count, g_chaos_oversize_bytes);
+    printf("连接数: %d | 断连%%: %d | 恶意消息数: %d | 超大包: %d B\n", g_connections,
+           g_chaos_disconnect_pct, g_chaos_bad_msg_count, g_chaos_oversize_bytes);
     printf("----------------------------------------\n");
 
     g_stop_flag.store(false);
@@ -914,9 +932,10 @@ static void RunChaosMode() {
         clients[indices[i]].reset();
     }
     auto disco_end = std::chrono::steady_clock::now();
-    double disco_elapsed_ms = static_cast<double>(
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            disco_end - disco_start).count()) / 1000.0;
+    double disco_elapsed_ms =
+        static_cast<double>(
+            std::chrono::duration_cast<std::chrono::microseconds>(disco_end - disco_start).count()) /
+        1000.0;
 
     printf("[chaos] 断开完成: %d 个连接 / %.1f ms\n", disconnect_count, disco_elapsed_ms);
     printf("[chaos] 剩余活跃: %d\n", g_active_connections.load());
@@ -930,7 +949,10 @@ static void RunChaosMode() {
     // 找一个还活着的客户端发送恶意消息
     GameClient* survivor = nullptr;
     for (auto& c : clients) {
-        if (c) { survivor = c.get(); break; }
+        if (c) {
+            survivor = c.get();
+            break;
+        }
     }
     if (!survivor) {
         printf("[chaos] 所有客户端已断开，跳过恶意消息测试\n");
@@ -939,8 +961,7 @@ static void RunChaosMode() {
     }
 
     // 超大包
-    printf("[chaos]   发送 %d 个超大包 (%d B)...\n",
-           g_chaos_bad_msg_count, g_chaos_oversize_bytes);
+    printf("[chaos]   发送 %d 个超大包 (%d B)...\n", g_chaos_bad_msg_count, g_chaos_oversize_bytes);
     for (int i = 0; i < g_chaos_bad_msg_count; i++) {
         survivor->SendOversizedPacket();
     }
@@ -990,8 +1011,8 @@ static void RunChaosMode() {
 // ============================================================
 static void RunFramesyncMode() {
     printf("\n=== MODE: framesync — 帧同步压测 ===\n");
-    printf("客户端总数: %d | 房间数: %d (2人/房) | 持续: %d s | ramp: %d conn/s\n",
-           g_connections, g_connections / 2, g_duration_sec, g_ramp_rate);
+    printf("客户端总数: %d | 房间数: %d (2人/房) | 持续: %d s | ramp: %d conn/s\n", g_connections,
+           g_connections / 2, g_duration_sec, g_ramp_rate);
     printf("帧同步 tick: 20 fps (50ms 间隔)\n");
     printf("----------------------------------------\n");
 
@@ -1032,11 +1053,13 @@ static void RunFramesyncMode() {
         }
     }
 
-    for (auto& t : phase1_threads) t.join();
+    for (auto& t : phase1_threads)
+        t.join();
 
     int rooms_created = 0;
     for (int i = 0; i < g_connections; i += 2) {
-        if (clients[i]) rooms_created++;
+        if (clients[i])
+            rooms_created++;
     }
     printf("[framesync] 房间创建完成: %d/%d\n", rooms_created, g_connections / 2);
 
@@ -1054,7 +1077,8 @@ static void RunFramesyncMode() {
                     std::lock_guard<std::mutex> lock(room_ids_mutex);
                     target_room = room_ids[partner];
                 }
-                if (!target_room.empty()) break;
+                if (!target_room.empty())
+                    break;
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
             if (target_room.empty()) {
@@ -1080,7 +1104,8 @@ static void RunFramesyncMode() {
         }
     }
 
-    for (auto& t : phase2_threads) t.join();
+    for (auto& t : phase2_threads)
+        t.join();
 
     // ---- 阶段 3: 房主启动游戏（只有偶数号客户端是房主） ----
     printf("[framesync] 阶段3: 房主启动游戏...\n");
@@ -1101,28 +1126,31 @@ static void RunFramesyncMode() {
     for (int i = 0; i < g_connections; i++) {
         input_threads.emplace_back([i, &clients, sync_deadline]() {
             auto& client = clients[i];
-            if (!client) return;
+            if (!client)
+                return;
 
             uint32_t frame_no = 0;
-            constexpr int kTickUs = 50'000;  // 20 fps
+            constexpr int kTickUs = 50'000; // 20 fps
 
-            while (!g_stop_flag.load() &&
-                   std::chrono::steady_clock::now() < sync_deadline) {
+            while (!g_stop_flag.load() && std::chrono::steady_clock::now() < sync_deadline) {
                 // 构造模拟输入
                 std::string input = "f" + std::to_string(frame_no) + "_p" + std::to_string(i);
-                if (!client->SendInput(frame_no, input)) break;
+                if (!client->SendInput(frame_no, input))
+                    break;
                 frame_no++;
                 std::this_thread::sleep_for(std::chrono::microseconds(kTickUs));
             }
         });
     }
 
-    for (auto& t : input_threads) t.join();
+    for (auto& t : input_threads)
+        t.join();
 
     auto sync_end = std::chrono::steady_clock::now();
-    double elapsed = static_cast<double>(
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            sync_end - sync_start).count()) / 1e6;
+    double elapsed =
+        static_cast<double>(
+            std::chrono::duration_cast<std::chrono::microseconds>(sync_end - sync_start).count()) /
+        1e6;
 
     g_stop_flag.store(true);
     reporter.join();
@@ -1154,17 +1182,15 @@ static void RunFramesyncMode() {
 
     if (g_error_counter.Total() > 0) {
         printf("\n  错误分类:\n");
-        g_error_counter.ForEach([](const std::string& cat, int count) {
-            printf("    %s: %d\n", cat.c_str(), count);
-        });
+        g_error_counter.ForEach(
+            [](const std::string& cat, int count) { printf("    %s: %d\n", cat.c_str(), count); });
     }
 
     printf("\n--- Markdown ---\n");
     printf("| 场景 | 连接数 | 时长 | QPS | avg(us) | p50(us) | p95(us) | p99(us) | 错误数 |\n");
     printf("|------|--------|------|-----|---------|---------|---------|----------|--------|\n");
-    printf("| framesync-%d | %d | %.0fs | %.0f | %.1f | %.1f | %.1f | %.1f | %d |\n",
-           g_connections, g_connections, elapsed,
-           g_qps_counter.CurrentQps(), p.avg, p.p50, p.p95, p.p99,
+    printf("| framesync-%d | %d | %.0fs | %.0f | %.1f | %.1f | %.1f | %.1f | %d |\n", g_connections,
+           g_connections, elapsed, g_qps_counter.CurrentQps(), p.avg, p.p50, p.p95, p.p99,
            g_error_counter.Total());
     printf("========================================\n");
 }
@@ -1174,8 +1200,8 @@ static void RunFramesyncMode() {
 // ============================================================
 static void RunMatchMode() {
     printf("\n=== MODE: match — 匹配系统压测 ===\n");
-    printf("客户端总数: %d | 持续: %d s | ramp: %d conn/s\n",
-           g_connections, g_duration_sec, g_ramp_rate);
+    printf("客户端总数: %d | 持续: %d s | ramp: %d conn/s\n", g_connections, g_duration_sec,
+           g_ramp_rate);
     printf("流程: 连接→登录→EnterMatch→等待→CancelMatch→循环\n");
     printf("----------------------------------------\n");
 
@@ -1217,13 +1243,13 @@ static void RunMatchMode() {
             std::uniform_real_distribution<double> elo_dist(800.0, 2200.0);
 
             int cycle = 0;
-            while (!g_stop_flag.load() &&
-                   std::chrono::steady_clock::now() < match_deadline) {
+            while (!g_stop_flag.load() && std::chrono::steady_clock::now() < match_deadline) {
                 double elo = elo_dist(rng);
                 cycle++;
 
                 // EnterMatch → 服务端 EnterQueue + TryMatch
-                if (!client->EnterMatch(elo)) break;
+                if (!client->EnterMatch(elo))
+                    break;
                 // 短暂等待让服务端有机会配对其他客户端
                 std::this_thread::sleep_for(std::chrono::milliseconds(100 + (rand() % 200)));
                 // CancelMatch 清理队列状态
@@ -1234,12 +1260,14 @@ static void RunMatchMode() {
         });
     }
 
-    for (auto& t : match_threads) t.join();
+    for (auto& t : match_threads)
+        t.join();
 
     auto match_end = std::chrono::steady_clock::now();
-    double elapsed = static_cast<double>(
-        std::chrono::duration_cast<std::chrono::microseconds>(
-            match_end - match_start).count()) / 1e6;
+    double elapsed =
+        static_cast<double>(
+            std::chrono::duration_cast<std::chrono::microseconds>(match_end - match_start).count()) /
+        1e6;
 
     g_stop_flag.store(true);
     reporter.join();
@@ -1267,17 +1295,15 @@ static void RunMatchMode() {
 
     if (g_error_counter.Total() > 0) {
         printf("\n  错误分类:\n");
-        g_error_counter.ForEach([](const std::string& cat, int count) {
-            printf("    %s: %d\n", cat.c_str(), count);
-        });
+        g_error_counter.ForEach(
+            [](const std::string& cat, int count) { printf("    %s: %d\n", cat.c_str(), count); });
     }
 
     printf("\n--- Markdown ---\n");
     printf("| 场景 | 连接数 | 时长 | QPS | avg(us) | p50(us) | p95(us) | p99(us) | 错误数 |\n");
     printf("|------|--------|------|-----|---------|---------|---------|----------|--------|\n");
-    printf("| match-%d | %d | %.0fs | %.0f | %.1f | %.1f | %.1f | %.1f | %d |\n",
-           g_connections, connected, elapsed,
-           g_qps_counter.CurrentQps(), p.avg, p.p50, p.p95, p.p99,
+    printf("| match-%d | %d | %.0fs | %.0f | %.1f | %.1f | %.1f | %.1f | %d |\n", g_connections,
+           connected, elapsed, g_qps_counter.CurrentQps(), p.avg, p.p50, p.p95, p.p99,
            g_error_counter.Total());
     printf("========================================\n");
 }

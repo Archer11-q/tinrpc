@@ -40,9 +40,7 @@ void TestBasicEnqueue() {
     rpc::ThreadPool pool(2);
 
     std::atomic<bool> executed{false};
-    pool.Enqueue([&executed]() {
-        executed = true;
-    });
+    pool.Enqueue([&executed]() { executed = true; });
 
     // 等待任务执行（给 worker 一点时间）
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -59,7 +57,7 @@ void TestMultipleWorkers() {
 
     std::atomic<int> counter{0};
     std::mutex thread_ids_mtx;
-    std::set<std::thread::id> thread_ids;   // 记录执行任务的线程 ID
+    std::set<std::thread::id> thread_ids; // 记录执行任务的线程 ID
 
     for (int i = 0; i < kTasks; i++) {
         pool.Enqueue([&counter, &thread_ids, &thread_ids_mtx]() {
@@ -122,9 +120,7 @@ void TestTaskCapturesValueCorrectly() {
     {
         int local_value = 42;
         // 按值捕获 local_value，任务执行时 local_value 可能已销毁
-        pool.Enqueue([&result, local_value]() {
-            result = local_value;
-        });
+        pool.Enqueue([&result, local_value]() { result = local_value; });
         // local_value 在这里销毁
     }
 
@@ -140,9 +136,7 @@ void TestEnqueueAfterShutdown() {
     pool.Shutdown();
 
     std::atomic<bool> executed{false};
-    pool.Enqueue([&executed]() {
-        executed = true;
-    });
+    pool.Enqueue([&executed]() { executed = true; });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     // Shutdown 后入队的任务不应执行
@@ -156,12 +150,12 @@ void TestEnqueueAfterShutdown() {
 int main() {
     printf("=== ThreadPool Tests ===\n\n");
 
-    RunTest("TestBasicEnqueue",               TestBasicEnqueue);
-    RunTest("TestMultipleWorkers",            TestMultipleWorkers);
+    RunTest("TestBasicEnqueue", TestBasicEnqueue);
+    RunTest("TestMultipleWorkers", TestMultipleWorkers);
     RunTest("TestShutdownWaitsForPendingTasks", TestShutdownWaitsForPendingTasks);
-    RunTest("TestShutdownEmptyPool",          TestShutdownEmptyPool);
+    RunTest("TestShutdownEmptyPool", TestShutdownEmptyPool);
     RunTest("TestTaskCapturesValueCorrectly", TestTaskCapturesValueCorrectly);
-    RunTest("TestEnqueueAfterShutdown",       TestEnqueueAfterShutdown);
+    RunTest("TestEnqueueAfterShutdown", TestEnqueueAfterShutdown);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

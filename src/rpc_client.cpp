@@ -14,9 +14,7 @@ namespace rpc {
 
 RpcClient::RpcClient() {
     // 启动 EventLoop 后台线程
-    loop_thread_ = std::thread([this]() {
-        loop_.Run();
-    });
+    loop_thread_ = std::thread([this]() { loop_.Run(); });
 }
 
 RpcClient::~RpcClient() {
@@ -89,7 +87,7 @@ bool RpcClient::Connect(const std::string& ip, uint16_t port) {
 }
 
 std::future<std::vector<uint8_t>> RpcClient::Call(const std::string& method_name,
-                                                    const std::vector<uint8_t>& body) {
+                                                  const std::vector<uint8_t>& body) {
     // 分配 request_id
     uint32_t id = next_request_id_.fetch_add(1);
 

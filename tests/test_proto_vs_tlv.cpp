@@ -47,8 +47,7 @@ using Clock = std::chrono::high_resolution_clock;
 using ns = std::chrono::nanoseconds;
 
 // 返回平均每次操作的纳秒数
-template <typename F>
-double Benchmark(int iterations, F&& fn) {
+template <typename F> double Benchmark(int iterations, F&& fn) {
     auto start = Clock::now();
     for (int i = 0; i < iterations; ++i) {
         fn();
@@ -112,27 +111,36 @@ game::RoomInfo DecodeRoomWithTLV(const std::vector<uint8_t>& data) {
     game::RoomInfo room;
 
     auto room_id = reader.ReadString();
-    auto count   = reader.ReadInt32();
-    auto state   = reader.ReadInt32();
+    auto count = reader.ReadInt32();
+    auto state = reader.ReadInt32();
     auto n_players = reader.ReadInt32();
 
     // 检查所有字段都读成功
-    (void)room_id; (void)count; (void)state; (void)n_players;
+    (void) room_id;
+    (void) count;
+    (void) state;
+    (void) n_players;
 
-    if (room_id) room.set_room_id(*room_id);
-    if (count) room.set_player_count(*count);
-    if (state) room.set_room_state(static_cast<game::RoomStatus>(*state));
+    if (room_id)
+        room.set_room_id(*room_id);
+    if (count)
+        room.set_player_count(*count);
+    if (state)
+        room.set_room_state(static_cast<game::RoomStatus>(*state));
 
     if (n_players) {
         for (int i = 0; i < *n_players; ++i) {
-            auto pid  = reader.ReadString();
+            auto pid = reader.ReadString();
             auto pname = reader.ReadString();
             auto prank = reader.ReadInt32();
 
             auto* p = room.add_players();
-            if (pid) p->set_player_id(*pid);
-            if (pname) p->set_player_name(*pname);
-            if (prank) p->set_rank(static_cast<game::PlayerRank>(*prank));
+            if (pid)
+                p->set_player_id(*pid);
+            if (pname)
+                p->set_player_name(*pname);
+            if (prank)
+                p->set_rank(static_cast<game::PlayerRank>(*prank));
         }
     }
     return room;
@@ -224,7 +232,7 @@ void TestRoomTLVRoundtrip() {
 // ============================================================
 
 void TestCompareSimpleSizeAndSpeed() {
-    const int ITER = 500000;    // 循环次数
+    const int ITER = 500000; // 循环次数
 
     // ---- TLV ----
     auto tlv_data = []() -> std::vector<uint8_t> {
@@ -240,7 +248,8 @@ void TestCompareSimpleSizeAndSpeed() {
     size_t tlv_size = tlv_buf.size();
 
     double tlv_encode_ns = Benchmark(ITER, [&]() {
-        volatile auto v = tlv_data(); (void)v;
+        volatile auto v = tlv_data();
+        (void) v;
     });
 
     double tlv_decode_ns = Benchmark(ITER, [&]() {
@@ -249,7 +258,10 @@ void TestCompareSimpleSizeAndSpeed() {
         volatile auto b = reader.ReadString();
         volatile auto c = reader.ReadDouble();
         volatile auto d = reader.ReadBool();
-        (void)a; (void)b; (void)c; (void)d;
+        (void) a;
+        (void) b;
+        (void) c;
+        (void) d;
     });
 
     // ---- Protobuf ----
@@ -268,7 +280,8 @@ void TestCompareSimpleSizeAndSpeed() {
     size_t proto_size = proto_buf.size();
 
     double proto_encode_ns = Benchmark(ITER, [&]() {
-        volatile auto v = proto_data(); (void)v;
+        volatile auto v = proto_data();
+        (void) v;
     });
 
     double proto_decode_ns = Benchmark(ITER, [&]() {
@@ -278,7 +291,10 @@ void TestCompareSimpleSizeAndSpeed() {
         volatile auto b = req.str_val();
         volatile auto c = req.dbl_val();
         volatile auto d = req.bool_val();
-        (void)a; (void)b; (void)c; (void)d;
+        (void) a;
+        (void) b;
+        (void) c;
+        (void) d;
     });
 
     // ---- 输出对比 ----
@@ -288,17 +304,15 @@ void TestCompareSimpleSizeAndSpeed() {
     printf("  %-20s %10zu %14.1f %14.1f\n", "TLV", tlv_size, tlv_encode_ns, tlv_decode_ns);
     printf("  %-20s %10zu %14.1f %14.1f\n", "Protobuf", proto_size, proto_encode_ns, proto_decode_ns);
 
-    double size_ratio = (double)proto_size / tlv_size * 100.0;
+    double size_ratio = (double) proto_size / tlv_size * 100.0;
     printf("  %-20s %10s %14s %14s\n", "Proto/TLV", "", "", "");
-    printf("  %-20s %9.1f%% %13.1f%% %13.1f%%\n",
-           "", size_ratio,
-           proto_encode_ns / tlv_encode_ns * 100.0,
-           proto_decode_ns / tlv_decode_ns * 100.0);
+    printf("  %-20s %9.1f%% %13.1f%% %13.1f%%\n", "", size_ratio,
+           proto_encode_ns / tlv_encode_ns * 100.0, proto_decode_ns / tlv_decode_ns * 100.0);
     printf("\n");
 }
 
 void TestCompareRoomSizeAndSpeed() {
-    const int ITER = 100000;    // 循环次数
+    const int ITER = 100000; // 循环次数
 
     game::RoomInfo room = BuildRoomInfo();
 
@@ -307,11 +321,13 @@ void TestCompareRoomSizeAndSpeed() {
     size_t tlv_size = tlv_buf.size();
 
     double tlv_encode_ns = Benchmark(ITER, [&]() {
-        volatile auto v = EncodeRoomWithTLV(room); (void)v;
+        volatile auto v = EncodeRoomWithTLV(room);
+        (void) v;
     });
 
     double tlv_decode_ns = Benchmark(ITER, [&]() {
-        volatile auto v = DecodeRoomWithTLV(tlv_buf); (void)v;
+        volatile auto v = DecodeRoomWithTLV(tlv_buf);
+        (void) v;
     });
 
     // ---- Protobuf ----
@@ -322,13 +338,15 @@ void TestCompareRoomSizeAndSpeed() {
     double proto_encode_ns = Benchmark(ITER, [&]() {
         std::string buf;
         room.SerializeToString(&buf);
-        volatile size_t s = buf.size(); (void)s;    // 避免SerializeToString被编译器优化掉
+        volatile size_t s = buf.size();
+        (void) s; // 避免SerializeToString被编译器优化掉
     });
 
     double proto_decode_ns = Benchmark(ITER, [&]() {
         game::RoomInfo r;
         r.ParseFromString(proto_buf);
-        volatile auto s = r.room_id(); (void)s;
+        volatile auto s = r.room_id();
+        (void) s;
     });
 
     // ---- 输出对比 ----
@@ -338,12 +356,10 @@ void TestCompareRoomSizeAndSpeed() {
     printf("  %-20s %10zu %14.1f %14.1f\n", "TLV", tlv_size, tlv_encode_ns, tlv_decode_ns);
     printf("  %-20s %10zu %14.1f %14.1f\n", "Protobuf", proto_size, proto_encode_ns, proto_decode_ns);
 
-    double size_ratio = (double)proto_size / tlv_size * 100.0;
+    double size_ratio = (double) proto_size / tlv_size * 100.0;
     printf("  %-20s %10s %14s %14s\n", "Proto/TLV", "", "", "");
-    printf("  %-20s %9.1f%% %13.1f%% %13.1f%%\n",
-           "", size_ratio,
-           proto_encode_ns / tlv_encode_ns * 100.0,
-           proto_decode_ns / tlv_decode_ns * 100.0);
+    printf("  %-20s %9.1f%% %13.1f%% %13.1f%%\n", "", size_ratio,
+           proto_encode_ns / tlv_encode_ns * 100.0, proto_decode_ns / tlv_decode_ns * 100.0);
     printf("\n");
 }
 
@@ -355,10 +371,10 @@ int main() {
     printf("=== TLV vs Protobuf 序列化对比测试 ===\n\n");
 
     // 正确性测试
-    RunTest("Echo Protobuf 往返",       TestEchoProtobufRoundtrip);
-    RunTest("Echo TLV 往返",            TestEchoTLVRoundtrip);
-    RunTest("RoomInfo Protobuf 往返",   TestRoomProtobufRoundtrip);
-    RunTest("RoomInfo TLV 往返",        TestRoomTLVRoundtrip);
+    RunTest("Echo Protobuf 往返", TestEchoProtobufRoundtrip);
+    RunTest("Echo TLV 往返", TestEchoTLVRoundtrip);
+    RunTest("RoomInfo Protobuf 往返", TestRoomProtobufRoundtrip);
+    RunTest("RoomInfo TLV 往返", TestRoomTLVRoundtrip);
 
     // 性能对比
     printf("\n--- 性能对比（50 万次循环）---\n");

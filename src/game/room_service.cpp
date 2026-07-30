@@ -10,8 +10,7 @@ namespace game {
 // ============================================================
 
 RoomServiceImpl::RoomServiceImpl(RoomManager* room_mgr, Broadcast* broadcast)
-    : room_mgr_(room_mgr)
-    , broadcast_(broadcast) {
+    : room_mgr_(room_mgr), broadcast_(broadcast) {
 }
 
 // ---- CreateRoom ----
@@ -88,11 +87,21 @@ std::optional<std::vector<uint8_t>> RoomServiceImpl::JoinRoom(const std::vector<
         res.set_error_code(result.code);
         // 根据错误码设置错误信息
         switch (result.code) {
-            case ERR_ROOM_NOT_FOUND:         res.set_error_msg("房间不存在"); break;
-            case ERR_ROOM_FULL:              res.set_error_msg("房间已满"); break;
-            case ERR_ROOM_NOT_JOINABLE:      res.set_error_msg("房间状态不允许加入"); break;
-            case ERR_PLAYER_ALREADY_IN_ROOM: res.set_error_msg("玩家已在房间中"); break;
-            default:                          res.set_error_msg("加入失败"); break;
+        case ERR_ROOM_NOT_FOUND:
+            res.set_error_msg("房间不存在");
+            break;
+        case ERR_ROOM_FULL:
+            res.set_error_msg("房间已满");
+            break;
+        case ERR_ROOM_NOT_JOINABLE:
+            res.set_error_msg("房间状态不允许加入");
+            break;
+        case ERR_PLAYER_ALREADY_IN_ROOM:
+            res.set_error_msg("玩家已在房间中");
+            break;
+        default:
+            res.set_error_msg("加入失败");
+            break;
         }
     }
 
@@ -126,9 +135,15 @@ std::optional<std::vector<uint8_t>> RoomServiceImpl::LeaveRoom(const std::vector
     if (!result.ok) {
         res.set_error_code(result.code);
         switch (result.code) {
-            case ERR_ROOM_NOT_FOUND:     res.set_error_msg("房间不存在"); break;
-            case ERR_PLAYER_NOT_IN_ROOM: res.set_error_msg("玩家不在房间中"); break;
-            default:                      res.set_error_msg("离开失败"); break;
+        case ERR_ROOM_NOT_FOUND:
+            res.set_error_msg("房间不存在");
+            break;
+        case ERR_PLAYER_NOT_IN_ROOM:
+            res.set_error_msg("玩家不在房间中");
+            break;
+        default:
+            res.set_error_msg("离开失败");
+            break;
         }
     }
 
@@ -166,11 +181,9 @@ std::optional<std::vector<uint8_t>> RoomServiceImpl::SendMessage(const std::vect
         msg.set_room_id(req.room_id());
         msg.set_sender_id(req.sender_id());
         msg.set_content(req.content());
-        msg.set_timestamp(
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch()
-            ).count()
-        );
+        msg.set_timestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::system_clock::now().time_since_epoch())
+                              .count());
 
         std::string mbuf;
         msg.SerializeToString(&mbuf);
@@ -241,10 +254,18 @@ std::optional<std::vector<uint8_t>> RoomServiceImpl::StartGame(const std::vector
     if (!result.ok) {
         res.set_error_code(result.code);
         switch (result.code) {
-            case ERR_ROOM_NOT_FOUND:   res.set_error_msg("房间不存在"); break;
-            case ERR_NOT_OWNER:        res.set_error_msg("不是房主，无权开始游戏"); break;
-            case ERR_WRONG_ROOM_STATE: res.set_error_msg("房间状态不允许开始游戏"); break;
-            default:                    res.set_error_msg("开始游戏失败"); break;
+        case ERR_ROOM_NOT_FOUND:
+            res.set_error_msg("房间不存在");
+            break;
+        case ERR_NOT_OWNER:
+            res.set_error_msg("不是房主，无权开始游戏");
+            break;
+        case ERR_WRONG_ROOM_STATE:
+            res.set_error_msg("房间状态不允许开始游戏");
+            break;
+        default:
+            res.set_error_msg("开始游戏失败");
+            break;
         }
     } else {
         // 游戏开始成功 → 初始化 + 启动帧同步 + 设置广播回调
@@ -259,8 +280,7 @@ std::optional<std::vector<uint8_t>> RoomServiceImpl::StartGame(const std::vector
             RoomManager* mgr = room_mgr_;
             Broadcast* bcast = broadcast_;
             room->GetFrameSync()->SetFrameCallback(
-                [rid, mgr, bcast](uint32_t frame_no,
-                                   const FrameSyncManager::FrameInputs& inputs) {
+                [rid, mgr, bcast](uint32_t frame_no, const FrameSyncManager::FrameInputs& inputs) {
                     FrameData frame_data;
                     frame_data.set_frame_no(frame_no);
                     for (auto& [pid, data] : inputs) {
@@ -349,7 +369,8 @@ std::optional<std::vector<uint8_t>> RoomServiceImpl::StopGame(const std::vector<
         res.set_success(false);
         res.set_error_code(ERR_ROOM_NOT_FOUND);
         res.set_error_msg("房间不存在");
-        std::string buf; res.SerializeToString(&buf);
+        std::string buf;
+        res.SerializeToString(&buf);
         return std::vector<uint8_t>(buf.begin(), buf.end());
     }
 

@@ -94,20 +94,20 @@ void TestGetNonExistent() {
     game::SnapshotManager sm;
     sm.SaveSnapshot(1, MakeState(1, 0, 0));
 
-    assert(sm.GetSnapshot(0) == nullptr);     // 不存在的帧
-    assert(sm.GetSnapshot(2) == nullptr);     // 未来帧
-    assert(sm.GetSnapshot(999) == nullptr);   // 远未来
+    assert(sm.GetSnapshot(0) == nullptr); // 不存在的帧
+    assert(sm.GetSnapshot(2) == nullptr); // 未来帧
+    assert(sm.GetSnapshot(999) == nullptr); // 远未来
 }
 
 void TestOverwriteSnapshot() {
     game::SnapshotManager sm;
     sm.SaveSnapshot(5, MakeState(5, 0, 0));
-    sm.SaveSnapshot(5, MakeState(5, 10, 20));  // 覆盖
+    sm.SaveSnapshot(5, MakeState(5, 10, 20)); // 覆盖
 
     auto* s = sm.GetSnapshot(5);
     assert(s != nullptr);
-    assert(s->players[0].x == 10);  // 新值
-    assert(sm.Count() == 1);        // 不增加
+    assert(s->players[0].x == 10); // 新值
+    assert(sm.Count() == 1); // 不增加
 }
 
 // ============================================================
@@ -115,17 +115,17 @@ void TestOverwriteSnapshot() {
 // ============================================================
 
 void TestRingBufferAutoEvict() {
-    game::SnapshotManager sm(3);  // 仅保留 3 帧
+    game::SnapshotManager sm(3); // 仅保留 3 帧
 
     sm.SaveSnapshot(1, MakeState(1, 0, 0));
     sm.SaveSnapshot(2, MakeState(2, 0, 0));
     sm.SaveSnapshot(3, MakeState(3, 0, 0));
     assert(sm.Count() == 3);
 
-    sm.SaveSnapshot(4, MakeState(4, 0, 0));  // 淘汰帧 1
+    sm.SaveSnapshot(4, MakeState(4, 0, 0)); // 淘汰帧 1
     assert(sm.Count() == 3);
 
-    assert(sm.GetSnapshot(1) == nullptr);  // 已淘汰
+    assert(sm.GetSnapshot(1) == nullptr); // 已淘汰
     assert(sm.GetSnapshot(2) != nullptr);
     assert(sm.GetSnapshot(3) != nullptr);
     assert(sm.GetSnapshot(4) != nullptr);
@@ -155,7 +155,7 @@ void TestRingBufferSizeOne() {
     sm.SaveSnapshot(1, MakeState(1, 0, 0));
     assert(sm.Count() == 1);
 
-    sm.SaveSnapshot(2, MakeState(2, 0, 0));  // 淘汰帧 1
+    sm.SaveSnapshot(2, MakeState(2, 0, 0)); // 淘汰帧 1
     assert(sm.Count() == 1);
     assert(sm.GetSnapshot(1) == nullptr);
     assert(sm.GetSnapshot(2) != nullptr);
@@ -190,7 +190,7 @@ void TestRestoreEvictedSnapshot() {
     sm.SaveSnapshot(1, MakeState(1, 0, 0));
     sm.SaveSnapshot(2, MakeState(2, 1, 1));
     sm.SaveSnapshot(3, MakeState(3, 2, 2));
-    sm.SaveSnapshot(4, MakeState(4, 3, 3));  // 淘汰帧 1
+    sm.SaveSnapshot(4, MakeState(4, 3, 3)); // 淘汰帧 1
 
     // 帧 1 已被淘汰 → 返回空状态
     game::GameState restored = sm.RestoreFromSnapshot(1);
@@ -208,12 +208,12 @@ void TestRestoreSnapshotIsCopy() {
     sm.SaveSnapshot(1, MakeState(1, 0, 0));
 
     game::GameState restored = sm.RestoreFromSnapshot(1);
-    restored.players[0].x = 999;  // 修改副本
+    restored.players[0].x = 999; // 修改副本
 
     // 缓冲区中的快照不变
     auto* orig = sm.GetSnapshot(1);
     assert(orig != nullptr);
-    assert(orig->players[0].x == 0);  // 原值不变
+    assert(orig->players[0].x == 0); // 原值不变
 }
 
 // ============================================================
@@ -283,33 +283,33 @@ int main() {
     printf("=== SnapshotManager 单元测试 ===\n\n");
 
     printf("[构造]\n");
-    RunTest("构造 + 默认 max=60",          TestConstruct);
-    RunTest("自定义 max=30",               TestCustomMaxSnapshots);
+    RunTest("构造 + 默认 max=60", TestConstruct);
+    RunTest("自定义 max=30", TestCustomMaxSnapshots);
 
     printf("\n[SaveSnapshot + GetSnapshot]\n");
-    RunTest("保存并获取单帧快照",          TestSaveAndGet);
-    RunTest("多帧快照保存获取",            TestSaveAndGetMultiple);
-    RunTest("不存在的帧返回 nullptr",       TestGetNonExistent);
-    RunTest("覆盖同帧号快照",              TestOverwriteSnapshot);
+    RunTest("保存并获取单帧快照", TestSaveAndGet);
+    RunTest("多帧快照保存获取", TestSaveAndGetMultiple);
+    RunTest("不存在的帧返回 nullptr", TestGetNonExistent);
+    RunTest("覆盖同帧号快照", TestOverwriteSnapshot);
 
     printf("\n[环形缓冲区]\n");
-    RunTest("容量满自动淘汰最旧帧",        TestRingBufferAutoEvict);
-    RunTest("20帧淘汰保留最后5帧",          TestRingBufferManyFrames);
-    RunTest("max=1 边界",                  TestRingBufferSizeOne);
+    RunTest("容量满自动淘汰最旧帧", TestRingBufferAutoEvict);
+    RunTest("20帧淘汰保留最后5帧", TestRingBufferManyFrames);
+    RunTest("max=1 边界", TestRingBufferSizeOne);
 
     printf("\n[RestoreFromSnapshot]\n");
-    RunTest("从快照恢复状态",              TestRestoreFromSnapshot);
-    RunTest("不存在返回空状态",            TestRestoreNonExistentReturnsEmpty);
-    RunTest("已淘汰快照返回空状态",        TestRestoreEvictedSnapshot);
-    RunTest("恢复的是副本不污染缓冲区",    TestRestoreSnapshotIsCopy);
+    RunTest("从快照恢复状态", TestRestoreFromSnapshot);
+    RunTest("不存在返回空状态", TestRestoreNonExistentReturnsEmpty);
+    RunTest("已淘汰快照返回空状态", TestRestoreEvictedSnapshot);
+    RunTest("恢复的是副本不污染缓冲区", TestRestoreSnapshotIsCopy);
 
     printf("\n[Clear]\n");
-    RunTest("Clear 清空所有快照",          TestClear);
+    RunTest("Clear 清空所有快照", TestClear);
 
     printf("\n[边界用例]\n");
-    RunTest("大帧号 0xFFFFFFF0",           TestLargeFrameNumbers);
-    RunTest("空状态快照",                  TestEmptyStateSnapshot);
-    RunTest("多玩家快照",                  TestMultiPlayerSnapshot);
+    RunTest("大帧号 0xFFFFFFF0", TestLargeFrameNumbers);
+    RunTest("空状态快照", TestEmptyStateSnapshot);
+    RunTest("多玩家快照", TestMultiPlayerSnapshot);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

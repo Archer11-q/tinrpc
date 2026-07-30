@@ -94,15 +94,15 @@ void TestPartialFires() {
 
     int a = 0, b = 0;
     tm.Schedule(10, [&a]() { a = 1; });
-    tm.Schedule(5000, [&b]() { b = 2; });  // 5 秒后才到
+    tm.Schedule(5000, [&b]() { b = 2; }); // 5 秒后才到
 
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
     size_t fired = tm.Tick();
 
     assert(fired == 1);
     assert(a == 1);
-    assert(b == 0);  // 没到期
-    assert(tm.PendingCount() == 1);  // 还有一个在堆里
+    assert(b == 0); // 没到期
+    assert(tm.PendingCount() == 1); // 还有一个在堆里
 }
 
 // 5. Cancel（惰性删除）
@@ -114,21 +114,21 @@ void TestCancel() {
     tm.Schedule(20, [&counter]() { counter++; });
 
     tm.Cancel(id);
-    assert(tm.PendingCount() == 2);  // 惰性删除，还在堆里
+    assert(tm.PendingCount() == 2); // 惰性删除，还在堆里
 
     std::this_thread::sleep_for(std::chrono::milliseconds(30));
     size_t fired = tm.Tick();
 
-    assert(fired == 1);       // 只有没 cancel 的那个触发了
+    assert(fired == 1); // 只有没 cancel 的那个触发了
     assert(counter == 1);
-    assert(tm.PendingCount() == 0);  // Tick 清理了 cancelled 的
+    assert(tm.PendingCount() == 0); // Tick 清理了 cancelled 的
 }
 
 // 6. Cancel 不存在的 ID（不应崩溃）
 void TestCancelNonExistent() {
     game::TimerManager tm;
     tm.Schedule(10, []() {});
-    tm.Cancel(999);  // 不存在
+    tm.Cancel(999); // 不存在
     assert(tm.PendingCount() == 1);
 }
 
@@ -137,9 +137,9 @@ void TestTickBeforeDue() {
     game::TimerManager tm;
 
     int counter = 0;
-    tm.Schedule(5000, [&counter]() { counter++; });  // 5 秒
+    tm.Schedule(5000, [&counter]() { counter++; }); // 5 秒
 
-    size_t fired = tm.Tick();  // 立即 Tick
+    size_t fired = tm.Tick(); // 立即 Tick
 
     assert(fired == 0);
     assert(counter == 0);
@@ -157,13 +157,13 @@ void TestScheduleInCallback() {
     });
 
     std::this_thread::sleep_for(std::chrono::milliseconds(15));
-    tm.Tick();  // 触发第一个回调 → phase=1，并注册第二个
+    tm.Tick(); // 触发第一个回调 → phase=1，并注册第二个
 
     assert(phase == 1);
-    assert(tm.PendingCount() == 1);  // 第二个 timer 在堆里
+    assert(tm.PendingCount() == 1); // 第二个 timer 在堆里
 
     std::this_thread::sleep_for(std::chrono::milliseconds(15));
-    tm.Tick();  // 触发第二个
+    tm.Tick(); // 触发第二个
 
     assert(phase == 2);
     assert(tm.PendingCount() == 0);
@@ -176,14 +176,14 @@ void TestScheduleInCallback() {
 int main() {
     printf("=== TimerManager 小顶堆定时器单元测试 ===\n\n");
 
-    RunTest("空堆 Tick 安全",              TestEmptyTick);
-    RunTest("单次到期触发",                 TestSingleFire);
-    RunTest("同次 Tick 触发多个",           TestMultipleFires);
-    RunTest("部分到期",                    TestPartialFires);
-    RunTest("Cancel 惰性删除",             TestCancel);
-    RunTest("Cancel 不存在的 ID",           TestCancelNonExistent);
-    RunTest("未到期不触发",                 TestTickBeforeDue);
-    RunTest("回调中注册新定时器",           TestScheduleInCallback);
+    RunTest("空堆 Tick 安全", TestEmptyTick);
+    RunTest("单次到期触发", TestSingleFire);
+    RunTest("同次 Tick 触发多个", TestMultipleFires);
+    RunTest("部分到期", TestPartialFires);
+    RunTest("Cancel 惰性删除", TestCancel);
+    RunTest("Cancel 不存在的 ID", TestCancelNonExistent);
+    RunTest("未到期不触发", TestTickBeforeDue);
+    RunTest("回调中注册新定时器", TestScheduleInCallback);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

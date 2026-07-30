@@ -38,7 +38,7 @@ void TestWriteReadInt32() {
     ser.WriteInt32(0);
     ser.WriteInt32(42);
     ser.WriteInt32(-1);
-    ser.WriteInt32(2147483647);  // INT32_MAX
+    ser.WriteInt32(2147483647); // INT32_MAX
 
     rpc::Serializer reader(ser.GetBuffer());
     auto v0 = reader.ReadInt32();
@@ -55,7 +55,7 @@ void TestWriteReadInt32() {
 void TestWriteReadInt64() {
     rpc::Serializer ser;
     ser.WriteInt64(0);
-    ser.WriteInt64(9223372036854775807LL);  // INT64_MAX
+    ser.WriteInt64(9223372036854775807LL); // INT64_MAX
 
     rpc::Serializer reader(ser.GetBuffer());
     auto v0 = reader.ReadInt64();
@@ -179,9 +179,9 @@ void TestLengthMismatch() {
     // Frame: Type=int32(0x01) | Length=8(0x00000008) | Value=0x00000000(4 bytes)
     // 注意：值字段是大端的
     std::vector<uint8_t> malicious = {
-        0x01,                           // Type = Int32
-        0x00, 0x00, 0x00, 0x08,         // Length = 8 (声称 8 字节！)
-        0x00, 0x00, 0x00, 0x2A          // Value = 42 但只有 4 字节
+        0x01, // Type = Int32
+        0x00, 0x00, 0x00, 0x08, // Length = 8 (声称 8 字节！)
+        0x00, 0x00, 0x00, 0x2A // Value = 42 但只有 4 字节
     };
     rpc::Serializer reader(malicious);
     // 读 Type 和 Length 成功，读 Value 时 Length 声明了 8 字节但 Value 实际只有 4 字节在 buffer 里
@@ -197,17 +197,17 @@ void TestLengthMismatch() {
 int main() {
     printf("=== Serializer Unit Tests ===\n\n");
 
-    RunTest("TestWriteReadInt32",    TestWriteReadInt32);
-    RunTest("TestWriteReadInt64",    TestWriteReadInt64);
-    RunTest("TestWriteReadFloat",    TestWriteReadFloat);
-    RunTest("TestWriteReadDouble",   TestWriteReadDouble);
-    RunTest("TestWriteReadString",   TestWriteReadString);
-    RunTest("TestWriteReadBool",     TestWriteReadBool);
-    RunTest("TestMultipleTypes",     TestMultipleTypes);
-    RunTest("TestTypeMismatch",      TestTypeMismatch);
-    RunTest("TestReadPastEnd",       TestReadPastEnd);
-    RunTest("TestEmptyBuffer",       TestEmptyBuffer);
-    RunTest("TestLengthMismatch",    TestLengthMismatch);
+    RunTest("TestWriteReadInt32", TestWriteReadInt32);
+    RunTest("TestWriteReadInt64", TestWriteReadInt64);
+    RunTest("TestWriteReadFloat", TestWriteReadFloat);
+    RunTest("TestWriteReadDouble", TestWriteReadDouble);
+    RunTest("TestWriteReadString", TestWriteReadString);
+    RunTest("TestWriteReadBool", TestWriteReadBool);
+    RunTest("TestMultipleTypes", TestMultipleTypes);
+    RunTest("TestTypeMismatch", TestTypeMismatch);
+    RunTest("TestReadPastEnd", TestReadPastEnd);
+    RunTest("TestEmptyBuffer", TestEmptyBuffer);
+    RunTest("TestLengthMismatch", TestLengthMismatch);
 
     printf("\nResults: %d passed, %d failed\n", g_passed, g_failed);
     return g_failed > 0 ? 1 : 0;

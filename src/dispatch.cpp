@@ -10,7 +10,7 @@ void Dispatch::RegisterMethod(const std::string& method_name, Handler handler) {
 }
 
 std::optional<std::vector<uint8_t>> Dispatch::Call(const std::string& method_name,
-                                                    const std::vector<uint8_t>& body) {
+                                                   const std::vector<uint8_t>& body) {
     auto it = handlers_.find(method_name);
     if (it == handlers_.end()) {
         printf("[Dispatch] Method not found: %s\n", method_name.c_str());

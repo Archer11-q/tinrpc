@@ -4,14 +4,11 @@
 
 namespace game {
 
-GameRoom::GameRoom(const std::string& room_id,
-                   const std::string& owner_id,
-                   const Config& config)
+GameRoom::GameRoom(const std::string& room_id, const std::string& owner_id, const Config& config)
     : room_id_(room_id)
     , owner_id_(owner_id)
     , state_(ROOM_STATE_IDLE)
-    , max_players_(config.max_players)
-{
+    , max_players_(config.max_players) {
     // 创建房间时，房主自动加入
     players_.push_back(owner_id);
 }
@@ -69,13 +66,12 @@ RoomInfo GameRoom::ToProto() const {
 
 // ---- 帧同步 ----
 
-void GameRoom::InitFrameSync(int fps, size_t history_size,
-                               size_t snapshot_max) {
+void GameRoom::InitFrameSync(int fps, size_t history_size, size_t snapshot_max) {
     int interval_ms = 1000 / fps;
     input_buffer_ = std::make_unique<InputBuffer>(history_size);
     snapshot_mgr_ = std::make_unique<SnapshotManager>(snapshot_max);
-    frame_sync_   = std::make_unique<FrameSyncManager>(
-        &timer_, input_buffer_.get(), interval_ms, history_size);
+    frame_sync_ = std::make_unique<FrameSyncManager>(&timer_, input_buffer_.get(), interval_ms,
+                                                     history_size);
 }
 
 void GameRoom::StartFrameSync() {
@@ -90,9 +86,8 @@ void GameRoom::StopFrameSync() {
     }
 }
 
-void GameRoom::OnPlayerFrameInput(uint32_t frame_no,
-                                    const std::string& player_id,
-                                    const std::vector<uint8_t>& input) {
+void GameRoom::OnPlayerFrameInput(uint32_t frame_no, const std::string& player_id,
+                                  const std::vector<uint8_t>& input) {
     if (frame_sync_) {
         frame_sync_->OnPlayerInput(frame_no, player_id, input);
     }

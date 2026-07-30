@@ -65,7 +65,7 @@ static int ConnectClient(uint16_t port) {
     assert(fd >= 0);
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_port   = htons(port);
+    addr.sin_port = htons(port);
     assert(inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr) == 1);
     int ret = connect(fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr));
     assert(ret == 0);
@@ -92,20 +92,17 @@ static std::vector<uint8_t> RecvN(int fd, size_t n) {
     return buf;
 }
 
-static void ClientSendReq(int fd, uint32_t req_id,
-                           const std::string& method,
-                           const std::vector<uint8_t>& body) {
+static void ClientSendReq(int fd, uint32_t req_id, const std::string& method,
+                          const std::vector<uint8_t>& body) {
     auto raw = rpc::ProtocolFrame::Encode(req_id, rpc::MessageType::Request, method, body);
     SendAll(fd, raw);
 }
 
 static rpc::Frame ClientRecvFrame(int fd) {
     auto header = RecvN(fd, 13);
-    uint32_t total_len =
-        (static_cast<uint32_t>(header[2]) << 24) |
-        (static_cast<uint32_t>(header[3]) << 16) |
-        (static_cast<uint32_t>(header[4]) << 8)  |
-        static_cast<uint32_t>(header[5]);
+    uint32_t total_len = (static_cast<uint32_t>(header[2]) << 24) |
+                         (static_cast<uint32_t>(header[3]) << 16) |
+                         (static_cast<uint32_t>(header[4]) << 8) | static_cast<uint32_t>(header[5]);
     assert(total_len >= 13 && total_len <= rpc::kMaxFrameSize);
 
     size_t remaining = total_len - 13;
@@ -127,15 +124,16 @@ void TestBasicRoundTrip() {
     rpc::EventLoop loop;
     auto cb = [](const rpc::Frame& f, rpc::Connection* c) {
         if (f.method_name == "Echo") {
-            auto rsp = rpc::ProtocolFrame::Encode(
-                f.request_id, rpc::MessageType::Response, "Echo", f.body);
+            auto rsp = rpc::ProtocolFrame::Encode(f.request_id, rpc::MessageType::Response, "Echo",
+                                                  f.body);
             c->Send(rsp);
         }
     };
 
     auto acc = std::make_unique<rpc::Acceptor>(0, &loop, cb);
     int lfd = acc->GetFd();
-    sockaddr_in addr{}; socklen_t alen = sizeof(addr);
+    sockaddr_in addr{};
+    socklen_t alen = sizeof(addr);
     getsockname(lfd, reinterpret_cast<sockaddr*>(&addr), &alen);
     uint16_t port = ntohs(addr.sin_port);
     loop.Register(std::move(acc), EPOLLIN | EPOLLET);
@@ -175,15 +173,16 @@ void TestMultiRoundTrip() {
         if (f.method_name == "Ping") {
             counter++;
             std::vector<uint8_t> rsp_body = {static_cast<uint8_t>(counter)};
-            auto rsp = rpc::ProtocolFrame::Encode(
-                f.request_id, rpc::MessageType::Response, "Ping", rsp_body);
+            auto rsp = rpc::ProtocolFrame::Encode(f.request_id, rpc::MessageType::Response, "Ping",
+                                                  rsp_body);
             c->Send(rsp);
         }
     };
 
     auto acc = std::make_unique<rpc::Acceptor>(0, &loop, cb);
     int lfd = acc->GetFd();
-    sockaddr_in addr{}; socklen_t alen = sizeof(addr);
+    sockaddr_in addr{};
+    socklen_t alen = sizeof(addr);
     getsockname(lfd, reinterpret_cast<sockaddr*>(&addr), &alen);
     uint16_t port = ntohs(addr.sin_port);
     loop.Register(std::move(acc), EPOLLIN | EPOLLET);
@@ -231,17 +230,18 @@ void TestTwoClients() {
             game::LoginRes res;
             res.set_success(true);
             res.mutable_player_info()->set_player_id(req.token());
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                f.request_id, rpc::MessageType::Response, "Login",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(f.request_id, rpc::MessageType::Response, "Login",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             c->Send(rsp);
         }
     };
 
     auto acc = std::make_unique<rpc::Acceptor>(0, &loop, cb);
     int lfd = acc->GetFd();
-    sockaddr_in addr{}; socklen_t alen = sizeof(addr);
+    sockaddr_in addr{};
+    socklen_t alen = sizeof(addr);
     getsockname(lfd, reinterpret_cast<sockaddr*>(&addr), &alen);
     uint16_t port = ntohs(addr.sin_port);
     loop.Register(std::move(acc), EPOLLIN | EPOLLET);
@@ -263,7 +263,8 @@ void TestTwoClients() {
     {
         game::LoginReq req;
         req.set_token("player_a");
-        std::string buf; req.SerializeToString(&buf);
+        std::string buf;
+        req.SerializeToString(&buf);
         ClientSendReq(fdA, 1, "Login", std::vector<uint8_t>(buf.begin(), buf.end()));
         auto f = ClientRecvFrame(fdA);
         assert(f.method_name == "Login");
@@ -276,7 +277,8 @@ void TestTwoClients() {
     {
         game::LoginReq req;
         req.set_token("player_b");
-        std::string buf; req.SerializeToString(&buf);
+        std::string buf;
+        req.SerializeToString(&buf);
         ClientSendReq(fdB, 2, "Login", std::vector<uint8_t>(buf.begin(), buf.end()));
         auto f = ClientRecvFrame(fdB);
         assert(f.method_name == "Login");
@@ -316,10 +318,10 @@ void TestE2ERoomLifecycle() {
             game::LoginRes res;
             res.set_success(true);
             res.mutable_player_info()->set_player_id(req.token());
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                f.request_id, rpc::MessageType::Response, "Login",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(f.request_id, rpc::MessageType::Response, "Login",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             c->Send(rsp);
         }
         // --- CreateRoom ---
@@ -336,10 +338,11 @@ void TestE2ERoomLifecycle() {
                 room_mgr.GetRoom(result.room_id)->SetState(game::ROOM_STATE_WAITING);
                 *res.mutable_room_info() = room_mgr.GetRoom(result.room_id)->ToProto();
             }
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                f.request_id, rpc::MessageType::Response, "CreateRoom",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(f.request_id, rpc::MessageType::Response,
+                                                  "CreateRoom",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             c->Send(rsp);
         }
         // --- JoinRoom ---
@@ -357,12 +360,14 @@ void TestE2ERoomLifecycle() {
                 ntf.set_room_id(req.room_id());
                 ntf.set_player_id(req.player_id());
                 ntf.set_player_count(room->player_count());
-                std::string nbuf; ntf.SerializeToString(&nbuf);
-                auto nframe = rpc::ProtocolFrame::Encode(
-                    0, rpc::MessageType::Response, "RoomEvent",
-                    std::vector<uint8_t>(nbuf.begin(), nbuf.end()));
+                std::string nbuf;
+                ntf.SerializeToString(&nbuf);
+                auto nframe = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "RoomEvent",
+                                                         std::vector<uint8_t>(nbuf.begin(),
+                                                                              nbuf.end()));
                 for (const auto& pid : room->players()) {
-                    if (pid == req.player_id()) continue;  // 排除加入者自己
+                    if (pid == req.player_id())
+                        continue; // 排除加入者自己
                     auto it = conns.find(pid);
                     if (it != conns.end() && it->second)
                         it->second->Send(nframe);
@@ -373,12 +378,14 @@ void TestE2ERoomLifecycle() {
             res.set_success(result.ok);
             if (result.ok) {
                 auto* room = room_mgr.GetRoom(req.room_id());
-                if (room) *res.mutable_room_info() = room->ToProto();
+                if (room)
+                    *res.mutable_room_info() = room->ToProto();
             }
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                f.request_id, rpc::MessageType::Response, "JoinRoom",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(f.request_id, rpc::MessageType::Response,
+                                                  "JoinRoom",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             c->Send(rsp);
         }
         // --- BroadcastMsg ---
@@ -387,10 +394,11 @@ void TestE2ERoomLifecycle() {
             msg.ParseFromArray(f.body.data(), static_cast<int>(f.body.size()));
             auto* room = room_mgr.GetRoom(msg.room_id());
             if (room) {
-                std::string mbuf; msg.SerializeToString(&mbuf);
-                auto mframe = rpc::ProtocolFrame::Encode(
-                    0, rpc::MessageType::Response, "RoomEvent",
-                    std::vector<uint8_t>(mbuf.begin(), mbuf.end()));
+                std::string mbuf;
+                msg.SerializeToString(&mbuf);
+                auto mframe = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "RoomEvent",
+                                                         std::vector<uint8_t>(mbuf.begin(),
+                                                                              mbuf.end()));
                 for (const auto& pid : room->players()) {
                     auto it = conns.find(pid);
                     if (it != conns.end() && it->second)
@@ -398,9 +406,8 @@ void TestE2ERoomLifecycle() {
                 }
             }
             // ACK
-            auto ack = rpc::ProtocolFrame::Encode(
-                f.request_id, rpc::MessageType::Response, "BroadcastMsg",
-                std::vector<uint8_t>{0x01});
+            auto ack = rpc::ProtocolFrame::Encode(f.request_id, rpc::MessageType::Response,
+                                                  "BroadcastMsg", std::vector<uint8_t>{0x01});
             c->Send(ack);
         }
         // --- LeaveRoom ---
@@ -417,10 +424,11 @@ void TestE2ERoomLifecycle() {
                 ntf.set_room_id(req.room_id());
                 ntf.set_player_id(req.player_id());
                 ntf.set_player_count(room->player_count());
-                std::string nbuf; ntf.SerializeToString(&nbuf);
-                auto nframe = rpc::ProtocolFrame::Encode(
-                    0, rpc::MessageType::Response, "RoomEvent",
-                    std::vector<uint8_t>(nbuf.begin(), nbuf.end()));
+                std::string nbuf;
+                ntf.SerializeToString(&nbuf);
+                auto nframe = rpc::ProtocolFrame::Encode(0, rpc::MessageType::Response, "RoomEvent",
+                                                         std::vector<uint8_t>(nbuf.begin(),
+                                                                              nbuf.end()));
                 for (const auto& pid : room->players()) {
                     auto it = conns.find(pid);
                     if (it != conns.end() && it->second)
@@ -430,11 +438,13 @@ void TestE2ERoomLifecycle() {
 
             game::LeaveRoomRes res;
             res.set_success(result.ok);
-            if (!result.ok) res.set_error_msg("leave failed");
-            std::string buf; res.SerializeToString(&buf);
-            auto rsp = rpc::ProtocolFrame::Encode(
-                f.request_id, rpc::MessageType::Response, "LeaveRoom",
-                std::vector<uint8_t>(buf.begin(), buf.end()));
+            if (!result.ok)
+                res.set_error_msg("leave failed");
+            std::string buf;
+            res.SerializeToString(&buf);
+            auto rsp = rpc::ProtocolFrame::Encode(f.request_id, rpc::MessageType::Response,
+                                                  "LeaveRoom",
+                                                  std::vector<uint8_t>(buf.begin(), buf.end()));
             c->Send(rsp);
         }
     };
@@ -442,7 +452,8 @@ void TestE2ERoomLifecycle() {
     // 启动服务端
     auto acc = std::make_unique<rpc::Acceptor>(0, &loop, cb);
     int lfd = acc->GetFd();
-    sockaddr_in addr{}; socklen_t alen = sizeof(addr);
+    sockaddr_in addr{};
+    socklen_t alen = sizeof(addr);
     getsockname(lfd, reinterpret_cast<sockaddr*>(&addr), &alen);
     uint16_t port = ntohs(addr.sin_port);
     loop.Register(std::move(acc), EPOLLIN | EPOLLET);
@@ -463,8 +474,10 @@ void TestE2ERoomLifecycle() {
 
     // Step 1: A 登录
     {
-        game::LoginReq req; req.set_token("player_a");
-        std::string buf; req.SerializeToString(&buf);
+        game::LoginReq req;
+        req.set_token("player_a");
+        std::string buf;
+        req.SerializeToString(&buf);
         ClientSendReq(fdA, 1, "Login", std::vector<uint8_t>(buf.begin(), buf.end()));
         auto f = ClientRecvFrame(fdA);
         assert(f.method_name == "Login");
@@ -472,8 +485,10 @@ void TestE2ERoomLifecycle() {
 
     // Step 2: B 登录
     {
-        game::LoginReq req; req.set_token("player_b");
-        std::string buf; req.SerializeToString(&buf);
+        game::LoginReq req;
+        req.set_token("player_b");
+        std::string buf;
+        req.SerializeToString(&buf);
         ClientSendReq(fdB, 2, "Login", std::vector<uint8_t>(buf.begin(), buf.end()));
         auto f = ClientRecvFrame(fdB);
         assert(f.method_name == "Login");
@@ -483,8 +498,10 @@ void TestE2ERoomLifecycle() {
     std::string room_id;
     {
         game::CreateRoomReq req;
-        req.set_player_id("player_a"); req.set_max_players(4);
-        std::string buf; req.SerializeToString(&buf);
+        req.set_player_id("player_a");
+        req.set_max_players(4);
+        std::string buf;
+        req.SerializeToString(&buf);
         ClientSendReq(fdA, 3, "CreateRoom", std::vector<uint8_t>(buf.begin(), buf.end()));
         auto f = ClientRecvFrame(fdA);
         assert(f.method_name == "CreateRoom");
@@ -498,8 +515,10 @@ void TestE2ERoomLifecycle() {
     // Step 4: B 加入房间
     {
         game::JoinRoomReq req;
-        req.set_player_id("player_b"); req.set_room_id(room_id);
-        std::string buf; req.SerializeToString(&buf);
+        req.set_player_id("player_b");
+        req.set_room_id(room_id);
+        std::string buf;
+        req.SerializeToString(&buf);
         ClientSendReq(fdB, 4, "JoinRoom", std::vector<uint8_t>(buf.begin(), buf.end()));
 
         // B 收到 JoinRoomRes
@@ -520,9 +539,12 @@ void TestE2ERoomLifecycle() {
     // Step 5: A 发送广播 → B 收到
     {
         game::RoomBroadcastMsg msg;
-        msg.set_room_id(room_id); msg.set_sender_id("player_a");
-        msg.set_content("hello!"); msg.set_timestamp(1000);
-        std::string buf; msg.SerializeToString(&buf);
+        msg.set_room_id(room_id);
+        msg.set_sender_id("player_a");
+        msg.set_content("hello!");
+        msg.set_timestamp(1000);
+        std::string buf;
+        msg.SerializeToString(&buf);
         ClientSendReq(fdA, 5, "BroadcastMsg", std::vector<uint8_t>(buf.begin(), buf.end()));
 
         // 服务器先发 RoomEvent（给所有玩家含发送者），后发 ACK
@@ -542,8 +564,10 @@ void TestE2ERoomLifecycle() {
     // Step 6: B 离开
     {
         game::LeaveRoomReq req;
-        req.set_player_id("player_b"); req.set_room_id(room_id);
-        std::string buf; req.SerializeToString(&buf);
+        req.set_player_id("player_b");
+        req.set_room_id(room_id);
+        std::string buf;
+        req.SerializeToString(&buf);
         ClientSendReq(fdB, 6, "LeaveRoom", std::vector<uint8_t>(buf.begin(), buf.end()));
 
         auto f = ClientRecvFrame(fdB);
@@ -559,8 +583,10 @@ void TestE2ERoomLifecycle() {
     // Step 7: A 离开 → 房间自动销毁
     {
         game::LeaveRoomReq req;
-        req.set_player_id("player_a"); req.set_room_id(room_id);
-        std::string buf; req.SerializeToString(&buf);
+        req.set_player_id("player_a");
+        req.set_room_id(room_id);
+        std::string buf;
+        req.SerializeToString(&buf);
         ClientSendReq(fdA, 7, "LeaveRoom", std::vector<uint8_t>(buf.begin(), buf.end()));
 
         auto f = ClientRecvFrame(fdA);

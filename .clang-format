@@ -1,0 +1,65 @@
+---
+# TinyRPC clang-format 配置
+# 基于项目现有代码风格：4空格缩进、驼峰/下划线命名、中文注释
+---
+Language: Cpp
+Standard: c++20
+
+# === 缩进 ===
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+AccessModifierOffset: -4          # public:/private: 与 class 左对齐
+NamespaceIndentation: None        # namespace 内不缩进
+IndentCaseLabels: false           # switch-case 与 switch 对齐
+
+# === 大括号 ===
+BreakBeforeBraces: Attach         # 类/函数/控制流大括号紧跟不换行
+BreakConstructorInitializers: BeforeComma  # 初始化列表逗号前置
+ConstructorInitializerIndentWidth: 4
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+
+# === 指针/引用 ===
+PointerAlignment: Left            # Type* ptr / Type& ref
+ReferenceAlignment: Left
+
+# === 列宽 ===
+ColumnLimit: 100
+
+# === 函数声明/定义 ===
+AlwaysBreakAfterReturnType: None  # 返回类型不强制换行
+AllowShortFunctionsOnASingleLine: None      # 不用单行函数
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AlignAfterOpenBracket: Align      # 参数对齐
+BinPackArguments: true            # 参数尽量同行
+BinPackParameters: true
+
+# === include ===
+SortIncludes: false               # 不自动排序/删除 include
+IncludeBlocks: Preserve
+
+# === 空行/空格 ===
+MaxEmptyLinesToKeep: 1
+SpaceBeforeParens: ControlStatements # if/for/while 后加空格
+SpaceInEmptyParentheses: false
+SpacesInCStyleCastParentheses: false
+SpacesInAngles: false             # 模板 C++20 风格
+SpaceAfterCStyleCast: true
+
+# === 注释 ===
+ReflowComments: false             # 不重新排版注释（保护中文注释）
+AlignTrailingComments: false      # 不自动对齐行尾注释
+
+# === 换行 ===
+PenaltyBreakAssignment: 100
+PenaltyBreakBeforeFirstCallParameter: 100
+PenaltyBreakString: 100
+PenaltyExcessCharacter: 10
+PenaltyReturnTypeOnItsOwnLine: 200
+
+# === 其他 ===
+FixNamespaceComments: true        # 自动补 namespace 注释
+CompactNamespaces: false
+DerivePointerAlignment: false
