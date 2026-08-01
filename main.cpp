@@ -10,6 +10,7 @@
 #include <cstdio>
 
 int main() {
+    setbuf(stdout, NULL);  // Docker 容器里 stdout 默认全缓冲，显式禁用
     printf("=== TinyRPC 游戏服务端 ===\n\n");
 
     game::GameService server;

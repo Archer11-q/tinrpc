@@ -1,0 +1,25 @@
+# Docker
+Dockerfile
+.dockerignore
+
+# Build outputs
+build/
+cmake-build-*/
+*.o
+*.a
+*.exe
+
+# IDE
+.idea/
+.vscode/
+
+# Doxygen
+docs/doxygen/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
