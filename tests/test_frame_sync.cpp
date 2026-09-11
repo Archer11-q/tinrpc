@@ -467,7 +467,9 @@ void TestManyPlayers() {
 
 void TestRapidTicks() {
     game::TimerManager timer;
-    game::InputBuffer buf(60);
+    // 本用例先预填充 100 帧输入再逐帧消费，因此缓冲容量必须 > 100，
+    // 否则默认的 60 帧窗口会按设计淘汰帧 1~40（这正是 Jitter Buffer 的内存上限行为）
+    game::InputBuffer buf(120);
     game::FrameSyncManager fsm(&timer, &buf);
 
     for (uint32_t i = 1; i <= 100; i++) {

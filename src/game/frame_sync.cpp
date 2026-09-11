@@ -83,10 +83,10 @@ std::vector<FrameSyncManager::FrameRecord> FrameSyncManager::GetCatchUpFrames(
         return result;
     }
 
-    // 从历史中找 client_frame_no+1 到 min(client_frame_no+3, frame_no_）
+    // 从历史中找 client_frame_no+1 到 min(client_frame_no+2, frame_no_）
     // 每次最多 2 帧
     uint32_t start = client_frame_no + 1;
-    uint32_t end = std::min(client_frame_no + 3, frame_no_); // +3 即最多 2 帧
+    uint32_t end = std::min(client_frame_no + 2, frame_no_); // +2 即最多 2 帧
 
     for (auto& rec : frame_history_) {
         if (rec.frame_no >= start && rec.frame_no <= end) {
