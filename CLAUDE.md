@@ -278,7 +278,7 @@ SendInput(frame_no, input) ───────────────→   �
 6. **RpcClient 使用直接 send()**：客户端请求通过 `send()` 直接发送。Connection 所有权在 Register 后转移给 EventLoop。
 7. **TimerManager**：跨模块基础设施，不归属任一业务模块。房间超时、帧同步 tick、匹配超时共用。
 8. **Benchmark 独立目录**：RPC 框架层对比代码在 `bench/`，游戏业务压测在 `stress/`，层次清晰。
-9. **文档上传策略（按实际 .gitignore 修正）**：`docs/` 下的**理论文档、踩坑记录、压测报告、reconnect-design.md 均已提交 GitHub**（自 v0.1 起）。`.gitignore` 实际只排除 `docs/doxygen/`、`.codegraph/`、`.claude/`、`build/`、`claude聊天记录/`、`实现原理/`。目前唯一未跟踪的是 `docs/interview-prep-guide.md`。
+9. **文档上传策略（按实际 .gitignore 修正）**：`docs/` 下的**理论文档、踩坑记录、压测报告、reconnect-design.md 均已提交 GitHub**（自 v0.1 起）。`.gitignore` 实际排除 `docs/doxygen/`、`docs/interview-prep-guide.md`、`.codegraph/`、`.claude/`、`build/`、`claude聊天记录/`、`实现原理/`。
 
 ### v0.13 断线重连关键决策（已与用户确认）
 
@@ -325,7 +325,7 @@ SendInput(frame_no, input) ───────────────→   �
 
 ### 严格告警
 
-建议构建时加 `-Wall -Wextra`（2026-09 核对时全项目仅 3 处告警，已修复 2 处）：
+建议构建时加 `-Wall -Wextra`（2026-09 核对时全项目共 2 处告警，均已修复）：
 ```bash
 cmake .. -DCMAKE_CXX_FLAGS="-Wall -Wextra"
 ```
