@@ -156,7 +156,7 @@ static bool JsonDecode(const std::string& json, TestData& out) {
         return false;
     pos += 8;
     end = pos;
-    while (end < json.size() && (json[end] >= '0' && json[end] <= '9' || json[end] == '.'))
+    while (end < json.size() && ((json[end] >= '0' && json[end] <= '9') || json[end] == '.'))
         end++;
     out.score = std::stod(json.substr(pos, end - pos));
 

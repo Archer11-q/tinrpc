@@ -501,9 +501,6 @@ void TestE2EMatchToRoomFlow() {
         room_mgr.JoinRoom(rid, p2);
 
         // 2. 通知双方（MatchFoundNtf）
-        int64_t now = std::chrono::duration_cast<std::chrono::milliseconds>(
-                          std::chrono::system_clock::now().time_since_epoch())
-                          .count();
         notifications.push_back({rid, p1, p2});
         notifications.push_back({rid, p2, p1});
 
