@@ -11,6 +11,19 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 - **构建系统**：CMake ≥ 3.16，GCC ≥ 9（C++20）
 - **语言约定**：所有文档和注释使用中文
 
+### 实测环境（2026-09 核对）
+
+| 工具 | 版本 | 说明 |
+|------|------|------|
+| GCC | 15.2.0 | 最低要求 GCC 9 |
+| CMake | 4.2.3 | 最低要求 3.16 |
+| protoc | 3.21.12 | Protobuf |
+| 核心数 | 16 | `make -j16` |
+| 构建目录 | `build/`（WSL2 侧） | 推荐 `cmake .. && make -j16` |
+
+> **注意**：`build/` 中的二进制可能早于当前源码。跑测试前务必先 `make`，
+> 否则会被陈旧产物误导（v0.12 排查 `test_frame_sync` 时就踩过：旧二进制通过、新源码实际失败）。
+
 ## 当前进度
 
 | 版本 | 模块 | 状态 |
@@ -43,13 +56,18 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 | v0.10 | SessionManager 接口 + 断线重连方案文档 | ✅ |
 | v0.11 | 压测工具 + 服务端 Metrics + 全档位容量测试 | ✅ |
 | v0.11 | Bug 修复：RoomServiceImpl 悬空指针、Connection::OnClose UAF、RpcClient 并发 send、GetMetricsRes 字段缺失 | ✅ |
+| v0.11 | perf + FlameGraph 火焰图分析（3 业务场景 × 3 并发档位） | ✅ |
+| v0.12 | 代码质量 — clang-format 统一风格 + Doxygen 注释规范化 | ✅ |
+| v0.12 | Docker 化部署 — Dockerfile + stdout 缓冲修复 | ✅ |
+| v0.12 | Bug 修复：CatchUp 追帧 off-by-one（每次补 3 帧 → 修正为 2 帧） | ✅ |
+| v0.13 | 断线重连（SessionManager 实现 + 心跳 + 快照恢复） | 🚧 进行中 |
 
 ## 演化方向
 
 项目从纯 RPC 框架向**游戏服务端**演进。底层 RPC 六层保持不变，之上逐步叠加游戏业务模块：
 
 ```
-游戏业务层（✅ v0.11 已完成）
+游戏业务层（✅ v0.11 已完成，🚧 v0.12/v0.13 增补中）
 ├── 游戏协议层           ← Protobuf proto3，定义 LoginReq、Room、Frame、Match 等消息
 ├── TimerManager         ← 跨模块基础设施，小顶堆定时器
 ├── 游戏房间服务器
@@ -60,6 +78,7 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 │   └── 断连检测            ← EPOLLRDHUP + 自动房间清理 ✅
 ├── 帧同步系统
 │   ├── FrameSyncManager  ← 输入收集 + 帧广播 + 追帧 + Timer驱动 ✅
+│   │                        🚧 v0.13 — 内置服务端权威 GameState + 每帧自动快照
 │   ├── InputBuffer       ← Jitter Buffer（deque, 乱序支持）✅
 │   ├── GameState         ← 确定性状态更新（tickLogic）✅
 │   ├── SnapshotManager   ← 环形缓冲区快照/回滚（断线重连）✅
@@ -69,9 +88,16 @@ TinyRPC 是一个基于 C++20 的轻量级 RPC 框架。已完成六层通信内
 │   ├── EloCalculator     ← ELO 分计算 ✅
 │   ├── MatchQueue        ← 匹配队列 + 超时放宽 ✅
 │   └── MatchService      ← 匹配→房间→通知→超时 ✅
+├── 会话与断线重连（v0.13 🚧）
+│   ├── SessionManager    ← 会话生命周期 ACTIVE→DISCONNECTED→EXPIRED 🚧
+│   ├── 心跳机制           ← Ping/Pong + 心跳超时判定 🚧
+│   ├── 宽限期             ← 断连后 30s 保留房间位置/匹配状态 🚧
+│   └── 重连恢复           ← 快照 + 批量追帧一次性下发 🚧
 ├── GameService           ← 集中入口: 组装全部模块 ✅
-├── SessionManager        ← 会话管理 + 断线重连（接口定义）✅
-└── 压测工具              ← 游戏业务全流程压测 ✅
+│                            🚧 v0.13 — 接入 SessionManager + 周期性 Tick 驱动
+├── ServerMetrics         ← 服务端实时指标 ✅
+├── 压测工具              ← 游戏业务全流程压测 ✅
+└── Docker 部署           ← Dockerfile + stdout 缓冲修复 ✅ v0.12
 
 RPC 通信层（已完成）
 ├── 序列化层              ← TLV（保留，不再扩展）+ Protobuf（游戏业务主力）
@@ -83,7 +109,9 @@ RPC 通信层（已完成）
 ```
 
 关键转型原则：
-- **RPC 六层零改动**：协议帧的 `body` 字段是 `vector<uint8_t>`，帧层不关心内容是 TLV 还是 Protobuf
+- **RPC 六层基本零改动**：协议帧的 `body` 字段是 `vector<uint8_t>`，帧层不关心内容是 TLV 还是 Protobuf
+  - 唯一例外（v0.13）：`EventLoop` 增加周期性 Tick 钩子（`SetTickInterval`/`SetTickCallback`），
+    用于驱动游戏业务定时器。这是纯追加接口，不改动既有事件分发路径
 - **TLV 保留不删**：作为"从零造轮子"的能力证明，但不再扩展新类型
 - **Protobuf 接管游戏业务**：新增文件（`proto/`、`game/`），不修改现有框架代码
 - **仓库不换**：在旧仓库上继续开发，git 历史完整记录从 RPC 框架到游戏服务器的演进过程
@@ -93,7 +121,7 @@ RPC 通信层（已完成）
 ```
 D:\CLion\rpc\
 ├── include/
-│   ├── rpc/                  # RPC 框架头文件（已有）
+│   ├── rpc/                  # RPC 框架头文件（13 个）
 │   │   ├── common.h          # 类型枚举、字节序转换、协议常量
 │   │   ├── serializer.h      # TLV 序列化器
 │   │   ├── protocol.h        # ProtocolFrame — 帧编解码
@@ -106,22 +134,23 @@ D:\CLion\rpc\
 │   │   ├── thread_pool.h     # ThreadPool — 生产者-消费者
 │   │   ├── dispatch.h        # Dispatch — 方法注册表
 │   │   ├── rpc_client.h      # RpcClient — 客户端代理 + pending 表
-│   │   └── bench_stats.h     # ✅ v0.11 — 压测统计工具（直方图/分位数/QPS计数器）
-│   └── game/                 # 游戏模块头文件
-│       ├── timer_manager.h    ✅ v0.8
-│       ├── game_room.h        ✅ v0.8
-│       ├── room_manager.h     ✅ v0.8
-│       ├── broadcast.h        ✅ v0.8
-│       ├── room_service.h     ✅ v0.8
-│       ├── input_buffer.h     ✅ v0.9
-│       ├── frame_sync.h       ✅ v0.9
-│       ├── game_state.h       ✅ v0.9
-│       ├── snapshot_manager.h ✅ v0.9
-│       ├── match_queue.h
-│       ├── match_service.h
-│       ├── game_service.h
-│       ├── server_metrics.h    ✅ v0.11
-│       └── session_manager.h
+│   │   └── bench_stats.h     # ✅ v0.11 — 压测统计（直方图/分位数/QPS计数器）
+│   └── game/                 # 游戏模块头文件（15 个）
+│       ├── timer_manager.h     ✅ v0.8
+│       ├── game_room.h         ✅ v0.8
+│       ├── room_manager.h      ✅ v0.8
+│       ├── broadcast.h         ✅ v0.8
+│       ├── room_service.h      ✅ v0.8
+│       ├── input_buffer.h      ✅ v0.9
+│       ├── frame_sync.h        ✅ v0.9
+│       ├── game_state.h        ✅ v0.9
+│       ├── snapshot_manager.h  ✅ v0.9
+│       ├── elo_calculator.h    ✅ v0.10
+│       ├── match_queue.h       ✅ v0.10
+│       ├── match_service.h     ✅ v0.10
+│       ├── game_service.h      ✅ v0.10
+│       ├── session_manager.h   🚧 v0.13 — 接口已定义，实现中
+│       └── server_metrics.h    ✅ v0.11
 ├── src/                      # 实现文件
 │   ├── serializer.cpp        # RPC 框架（已有，位置不动）
 │   ├── protocol.cpp
@@ -133,82 +162,110 @@ D:\CLion\rpc\
 │   ├── thread_pool.cpp
 │   ├── dispatch.cpp
 │   ├── rpc_client.cpp
-│   └── game/                 # 游戏模块实现
-│       ├── timer_manager.cpp  ✅ v0.8
-│       ├── game_room.cpp     ✅ v0.8
-│       ├── room_manager.cpp  ✅ v0.8
-│       ├── broadcast.cpp     ✅ v0.8
-│       ├── room_service.cpp  ✅ v0.8
-│       ├── input_buffer.cpp  ✅ v0.9
-│       ├── frame_sync.cpp    ✅ v0.9
-│       ├── game_state.cpp    ✅ v0.9
-│       ├── snapshot_manager.cpp ✅ v0.9
-│       ├── match_queue.cpp
-│       ├── match_service.cpp
-│       ├── game_service.cpp
-│       └── session_manager.cpp
+│   └── game/                 # 游戏模块实现（14 个）
+│       ├── timer_manager.cpp     ✅ v0.8
+│       ├── game_room.cpp         ✅ v0.8
+│       ├── room_manager.cpp      ✅ v0.8
+│       ├── broadcast.cpp         ✅ v0.8
+│       ├── room_service.cpp      ✅ v0.8
+│       ├── input_buffer.cpp      ✅ v0.9
+│       ├── frame_sync.cpp        ✅ v0.9
+│       ├── game_state.cpp        ✅ v0.9
+│       ├── snapshot_manager.cpp  ✅ v0.9
+│       ├── elo_calculator.cpp    ✅ v0.10
+│       ├── match_queue.cpp       ✅ v0.10
+│       ├── match_service.cpp     ✅ v0.10
+│       ├── game_service.cpp      ✅ v0.10
+│       └── session_manager.cpp   🚧 v0.13 — 骨架（全 TODO）
 ├── proto/                    # Protobuf 协议定义（.proto，非 C++ 源码）
-│   └── game.proto            # Login/Room/Frame/Match 等消息（v0.7~v0.9 持续扩展）
-├── scripts/                  # ✅ v0.11 — 压测脚本（一键执行基线/容量/序列化/异常/Lv3全流程）
+│   └── game.proto            # Login/Room/Frame/Match/Metrics 等消息
+├── scripts/                  # 压测 / 火焰图 / 一键执行脚本
 │   ├── run_baseline.sh
 │   ├── run_capacity_test.sh
 │   ├── run_serialize_bench.sh
 │   ├── run_exception_test.sh
-│   └── run_lv3_e2e.sh
+│   ├── run_lv3_e2e.sh
+│   ├── run_profile_flamegraph.sh
+│   ├── run_profile_framesync.sh
+│   └── run_profile_match.sh
+├── perf/                     # perf 采集脚本 + 火焰图产物
+│   ├── gen_flame.sh
+│   ├── run_perf.sh
+│   └── *.svg
 ├── bench/                    # Benchmark 工具
 │   ├── bench_client.cpp      # RPC 层压测（TLV vs HTTP+JSON）
 │   ├── bench_server.cpp
 │   ├── bench_serialize.cpp   # 序列化性能对比
-│   ├── bench_game_client.cpp # ✅ v0.11 — 游戏层全流程压测（single/ramp/steady/chaos 模式）
-│   └── packet_frag_test.cpp
-├── tests/
-│   ├── test_serializer.cpp    # 11 项
-│   ├── test_protocol.cpp      # 16 项
-│   ├── test_network.cpp       # 7 项
-│   ├── test_thread_pool.cpp   # 6 项
-│   ├── test_rpc.cpp           # 4 项
-│   ├── test_room_service.cpp  # 14 项
-│   ├── test_input_buffer.cpp   # 20 项（InputBuffer 单元）
-│   ├── test_frame_sync.cpp     # 27 项（FrameSyncManager + 追帧）
-│   ├── test_game_state.cpp     # 21 项（tickLogic 确定性 + 预测/和解）
-│   ├── test_snapshot_manager.cpp # 17 项（SnapshotManager）
-│   ├── test_frame_sync_flow.cpp  # 全流程模拟 + 耗时报告
-│   ├── test_match_queue.cpp      # 33 项（匹配系统单元+集成）
-│   （共 165 项测试，全部通过）
+│   ├── bench_game_client.cpp # ✅ v0.11 — 游戏层全流程压测（6 种模式）
+│   ├── packet_frag_test.cpp
+│   └── run_all.sh
+├── tests/                    # ✅ 19 个独立 test target，共 260 项断言
+│   ├── test_serializer.cpp       # 11 项
+│   ├── test_protocol.cpp         # 16 项
+│   ├── test_network.cpp          # 7 项
+│   ├── test_thread_pool.cpp      # 6 项
+│   ├── test_rpc.cpp              # 4 项
+│   ├── test_proto_vs_tlv.cpp     # 4 项（TLV vs Protobuf 体积/速度对比）
+│   ├── test_game_proto.cpp       # 7 项（游戏协议消息正确性）
+│   ├── test_timer_manager.cpp    # 8 项（小顶堆定时器）
+│   ├── test_game_room.cpp        # 37 项（GameRoom/RoomManager 状态机 + 超时）
+│   ├── test_broadcast.cpp        # 8 项（房间广播）
+│   ├── test_room_events.cpp      # 14 项（加入/离开/开始 事件通知）
+│   ├── test_game_e2e.cpp         # 4 项（房间端到端流程）
+│   ├── test_room_service.cpp     # 16 项（Stub → Dispatch → RoomManager）
+│   ├── test_input_buffer.cpp     # 20 项（Jitter Buffer）
+│   ├── test_frame_sync.cpp       # 27 项（FrameSyncManager + 追帧）
+│   ├── test_game_state.cpp       # 21 项（tickLogic 确定性 + 预测/和解）
+│   ├── test_snapshot_manager.cpp # 17 项（环形快照）
+│   ├── test_frame_sync_flow.cpp  # 全流程模拟 + 耗时报告（无断言计数）
+│   └── test_match_queue.cpp      # 33 项（匹配系统单元 + 集成）
 ├── docs/
-│   ├── 01-serialization-layer.md
-│   ├── 02-protocol-frame-layer.md
-│   ├── 03-epoll-network-io.md
-│   ├── 04-thread-pool.md
-│   ├── 05-stub-dispatch.md
-│   ├── 06-benchmark.md
-│   ├── bench/                # ✅ v0.11 — 压测报告（01-基线 02-容量 03-序列化 05-异常 06-Lv3全流程 + 综合报告）
-│   ├── devlog.md
-│   └── pitfalls/          # 踩坑记录（8 篇：按模块/版本归档）
-├── main.cpp              # 空壳，尚未使用
+│   ├── 01~06-*.md            # 各层理论文档（已提交 GitHub）
+│   ├── game-room-state-machine.md
+│   ├── room-service-interface.md
+│   ├── frame-sync-flow-bench.md
+│   ├── reconnect-design.md   # 断线重连方案设计（v0.13 依据）
+│   ├── interview-prep-guide.md
+│   ├── bench/                # ✅ v0.11 — 压测报告 + perf 火焰图分析
+│   ├── doxygen/              # Doxygen 生成（忽略）
+│   ├── devlog.md             # 工程日志（上传 GitHub）
+│   └── pitfalls/             # 踩坑记录（8 篇，按模块/版本归档）
+├── main.cpp                  # 游戏服务端入口（GameService::Run(8080)）
+├── Dockerfile                # ✅ v0.12 — Ubuntu 24.04 + g++ + CMake + Protobuf
+├── .clang-format             # ✅ v0.12 — 4 空格缩进 / 驼峰 / 下划线命名 / 中文注释
+├── Doxyfile                  # ✅ v0.12 — Doxygen 配置
 ├── CMakeLists.txt
 ├── README.md
 └── .gitignore
 ```
 
-## 当前架构（v0.5 完整 RPC 闭环）
+## 当前架构（v0.13 — 游戏服务端完整闭环）
 
 ```
-客户端                                        服务端
-
-stub->Call("Add", body)
-  → Serializer(参数)
-  → ProtocolFrame::Encode(id, Request, "Add", body)
-  → send()
-  → return future<int>                       epoll_wait → Connection::OnRead [IO线程]
-                                                  → Buffer → ProtocolFrame::Decode
-                                                  → FrameCallback(frame, conn)
-                                                        → Dispatch::Call("Add", body)
-                                                        → Add(a,b) → result
-                                                        → ProtocolFrame::Encode(id, Response, ...)
-                                                        → conn->Send(rsp_bytes)
-  → future.get()  ← promise.set_value ──── ← OnRead → FrameCallback → 匹配 request_id
-  → Serializer(rsp_body).ReadInt32() → 8
+客户端                                        服务端 GameService
+                                              ┌──────────────────────────────┐
+Login(token) ─────────────────────────────→   │ OnServerFrame                │
+  ←──────────────── LoginRes(player_id)       │   ├─ Login → RegisterPlayerConn
+                                              │   └─ 其他 → Dispatch::Call    │
+StartGame(room_id) ───────────────────────→   │        → RoomService(8方法)   │
+  ←──────────── StartGameRes + GameStartNtf   │        → EnterMatch/CancelMatch
+                                              │        → Ping/Reconnect  🚧v0.13
+SendInput(frame_no, input) ───────────────→   │                              │
+                                              │ RoomManager                  │
+                                              │   └─ GameRoom                │
+                                              │        ├─ TimerManager       │
+                                              │        ├─ InputBuffer        │
+                                              │        ├─ FrameSyncManager   │
+                                              │        │    └─ GameState 🚧  │
+                                              │        └─ SnapshotManager    │
+  ←──── FrameData(frame_no, inputs) 广播 ────  │   Timer 20fps Tick           │
+                                              │                              │
+[断网] EPOLLRDHUP ────────────────────────→   │ OnPlayerDisconnected         │
+                                              │   └─ session → DISCONNECTED 🚧│
+[30s 内重连] ReconnectReq(session_id, frame)  │   validateSession → 快照+追帧 │
+  ←──── ReconnectRes(snapshot, catchup) ───── │   session → ACTIVE      🚧   │
+[30s 未重连]                                   │   EXPIRED → 退房+退队    🚧   │
+                                              └──────────────────────────────┘
 ```
 
 ## 关键设计决策
@@ -221,7 +278,15 @@ stub->Call("Add", body)
 6. **RpcClient 使用直接 send()**：客户端请求通过 `send()` 直接发送。Connection 所有权在 Register 后转移给 EventLoop。
 7. **TimerManager**：跨模块基础设施，不归属任一业务模块。房间超时、帧同步 tick、匹配超时共用。
 8. **Benchmark 独立目录**：RPC 框架层对比代码在 `bench/`，游戏业务压测在 `stress/`，层次清晰。
-9. **理论文档不上传**：`docs/0*-*.md` 在 `.gitignore`，仅 `devlog.md` 上传 GitHub。
+9. **文档上传策略（按实际 .gitignore 修正）**：`docs/` 下的**理论文档、踩坑记录、压测报告、reconnect-design.md 均已提交 GitHub**（自 v0.1 起）。`.gitignore` 实际只排除 `docs/doxygen/`、`.codegraph/`、`.claude/`、`build/`、`claude聊天记录/`、`实现原理/`。目前唯一未跟踪的是 `docs/interview-prep-guide.md`。
+
+### v0.13 断线重连关键决策（已与用户确认）
+
+10. **服务端权威状态归属**：由 `FrameSyncManager` 内置 `GameState`，在 `Tick()` 中调用 `tickLogic()` 做确定性推演，并自动 `SaveSnapshot()`。理由：快照本来就是帧同步的产物，集中在一处可以避免"回调只在有输入时触发 → 空帧不推演 → 帧号错位"的坑。
+11. **追帧语义分两套**：`GetCatchUpFrames()` 保持"每次最多 2 帧"（渐进追帧，用于正常运行期）；**新增批量只读取帧接口**供重连一次性下发全量缺失帧。理由：断线 5 秒（100 帧）若按 2 帧/次需 50 轮 RTT，不可接受。
+12. **时钟注入**：`SessionManager::Tick()` / `Heartbeat()` / `ValidateSession()` 接受 `now_ms` 参数（默认取 `steady_clock`）。理由：15s/30s 超时若用真实 `sleep` 测试，既慢又 flaky（devlog 已记录过时间同步踩坑）。
+13. **断连语义变更**：`OnPlayerDisconnected` 不再立即退房/退队，只把 session 标记为 `DISCONNECTED`；退房 + 退队迁移到**宽限期到期回调**。这是"宽限期内保留房间位置"的前提。
+14. **EventLoop 增加周期性 Tick 钩子**：当前 `epoll_wait(..., -1)` 无限阻塞，全服务端无人驱动 `TimerManager`（房间超时淘汰、匹配 30s 超时、`TryMatch` 周期扫描全都失效）。v0.13 通过 `SetTickInterval` + `SetTickCallback` 补上，`epoll_wait` 使用超时参数唤醒。
 
 ## 开发协作模式（必须遵守）
 
@@ -242,8 +307,28 @@ stub->Call("Add", body)
 ## 测试约定
 
 - 不使用 Google Test，所有测试用 `assert()` + `printf()` 手写
-- 每个模块独立测试 target（test_serializer、test_protocol、test_network）
-- CMake 中 `rpc_lib` 是静态库，所有 test target 链接它
+- 测试输出统一以 `Results: N passed, M failed` 结尾（`test_frame_sync_flow` 是耗时报告，无此行）
+- **当前规模：19 个 test target，260 项断言，全部通过**
+- 每个模块独立测试 target，CMake 中 `rpc_lib` 是静态库，所有 test target 链接它
+- **必须加 `pthread`**：`target_link_libraries(test_xxx rpc_lib pthread)`，漏了会链接失败
+
+### 两条硬性纪律（v0.12 踩坑后确立）
+
+1. **跑测试前先 `make`**。`build/` 里的二进制可能早于源码——v0.12 排查 `test_frame_sync`
+   时，旧二进制通过、重新编译后才发现真实的断言失败。
+2. **每个版本至少跑一次 ASan 全量**：
+   ```bash
+   cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=ON && make -j16
+   ```
+   v0.12 记录：`ENABLE_ASAN` 选项自 v0.8 起存在，但此前只用于排查单个 bug，
+   从未跑过全量。2026-09 首次全量验证：**19/19 通过，零内存错误**。
+
+### 严格告警
+
+建议构建时加 `-Wall -Wextra`（2026-09 核对时全项目仅 3 处告警，已修复 2 处）：
+```bash
+cmake .. -DCMAKE_CXX_FLAGS="-Wall -Wextra"
+```
 
 ## README 约定
 

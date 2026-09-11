@@ -45,3 +45,6 @@ docs/doxygen/
 # My notes
 claude聊天记录/
 实现原理/
+
+# 个人材料（面试准备等），不随项目发布
+docs/interview-prep-guide.md

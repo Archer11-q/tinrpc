@@ -1,8 +1,22 @@
 # 断线重连方案设计
 
-> 版本：v0.11（规划）  
+> 版本：v0.10 设计 / **v0.13 实施依据**  
 > 依赖：v0.9 帧同步系统 + v0.8 EPOLLRDHUP  
-> 状态：接口已定义，实现待第10周
+> 状态：**v0.13 实施中**（5 项关键决策已于 2026-09 与用户确认，见下）
+>
+> **v0.13 实施补充（原设计方案的两处前提缺失，已确认修正）**
+>
+> 1. **服务端既要存快照，就必须先有权威状态。** 原方案假定
+>    `SnapshotManager` 已在工作，但全项目除自身单元测试外**从未调用过 `SaveSnapshot`**，
+>    服务端也不持有 `GameState`、从不跑 `tickLogic`。→ 决策：由 `FrameSyncManager`
+>    内置 `GameState`，在 `Tick()` 中确定性推演并自动保存快照。
+> 2. **追帧语义冲突。** 原第四章写"catchup_frames = N+1 到 server_current 的所有输入"，
+>    但 `GetCatchUpFrames()` 按设计每次只返回 2 帧，一次重连响应根本追不上。→ 决策：
+>    `GetCatchUpFrames()` 保持 2 帧（运行期渐进追帧），**另增批量只读取帧接口**供重连一次性下发。
+> 3. 时钟注入：`SessionManager` 的超时判定接受 `now_ms` 参数，测试传假时间（不 sleep）。
+> 4. 断连语义变更：`EPOLLRDHUP` 回调只标记 `DISCONNECTED`，退房/退队移到宽限期到期。
+> 5. `EventLoop` 增加周期 Tick 钩子——原设计依赖"外部 Timer 驱动"，
+>    但 `epoll_wait(..., -1)` 无限阻塞，服务端实际无人驱动任何定时器。
 
 ---
 
@@ -88,12 +102,17 @@ ReconnectRes:
   │ 1. snapshot: GameState(frame_no=N)  │ ← 从 SnapshotManager::GetSnapshot(N)
   │    （客户端最后确认的帧号）            │
   ├─────────────────────────────────────┤
-  │ 2. catchup_frames: [FrameRecord×M]  │ ← 从 FrameSyncManager::GetCatchUpFrames(N)
-  │    （N+1 到 server_current 的所有输入）│
+  │ 2. catchup_frames: [FrameRecord×M]  │ ← 批量接口: GetFramesAfter(N)
+  │    （N+1 到 server_current 的所有输入）│    一次性返回全部缺失帧（不限于 2 帧）
   ├─────────────────────────────────────┤
   │ 3. server_frame: uint32            │ ← 服务端当前帧号
   └─────────────────────────────────────┘
 ```
+
+> **v0.13 修正**：第 2 项不用 `GetCatchUpFrames()`（那是运行期"每次 2 帧"的渐进追帧），
+> 而是新增的**批量只读取帧接口** `GetFramesAfter(frame_no, max_frames)`。
+> 原因：断线 5 秒 ≈ 100 帧，按 2 帧/次需要 50 轮 RTT 才能追上，不可接受。
+> 批量接口带 `max_frames` 上限（默认按帧历史上限），避免超长断线一次打包过大。
 
 ### 客户端恢复流程
 
@@ -242,11 +261,13 @@ message ReconnectRes {
 | `PlayerConn` | `player_conns` 映射 | session 创建/销毁时更新 |
 | `EPOLLRDHUP` | 断连回调 | 现有断连回调中标记 session → DISCONNECTED（不立即销毁） |
 
-## 九、实现计划
+## 九、实现计划（v0.13）
 
 | 阶段 | 内容 | 状态 |
 |------|------|:--:|
-| 第 9 周（当前） | 接口设计 + 文档 | ✅ |
-| 第 10 周 | SessionManager 实现 + 单元测试 | 🔲 |
-| 第 10 周 | 心跳 Pong/Ping 协议 + RPC | 🔲 |
-| 第 10 周 | 重连流程端到端测试 | 🔲 |
+| v0.10 | 接口设计 + 方案文档 | ✅ |
+| v0.13 | 前置补齐：服务端权威状态 + 每帧自动快照 + 批量取帧接口 | 🚧 |
+| v0.13 | SessionManager 实现（时钟注入）+ 单元测试 | 🚧 |
+| v0.13 | 心跳 Ping/Pong + ReconnectReq/Res 协议 | 🚧 |
+| v0.13 | EventLoop 周期 Tick 钩子 + GameService 集成 | 🚧 |
+| v0.13 | 重连流程端到端测试 | 🚧 |
